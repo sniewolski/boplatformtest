@@ -127,11 +127,9 @@ export function AuditOverview() {
         })}
       </ol>
 
-      <p className="text-ink-muted text-xs">
-        {CURRENCY === "£"
-          ? "Figures are in pounds sterling."
-          : `Figures are shown in ${CURRENCY}.`}
-      </p>
+      {currency && (
+        <p className="text-ink-muted text-xs">Figures are shown in {currency}.</p>
+      )}
     </div>
   );
 }
