@@ -40,7 +40,7 @@ export function AuditOverview() {
   const total = AUDIT_SECTIONS.length;
 
   return (
-    <div className="max-w-3xl mx-auto px-8 py-16 flex flex-col gap-10">
+    <div className="app-content py-16 flex flex-col gap-10">
       <header className="flex flex-col gap-3">
         <h1 className="text-3xl" style={{ letterSpacing: "-0.02em" }}>
           Selling Systems Audit
