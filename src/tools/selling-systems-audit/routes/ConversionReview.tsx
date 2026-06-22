@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, AlertCircle } from "lucide-react";
 import { useSession } from "@/core/auth/useSession";
 import { Button } from "@/components/ui/button";
+import { useCurrency } from "@/core/settings/useCurrency";
+import { CurrencySelect } from "@/core/settings/CurrencySelect";
 import { useConversionReview, useSaveConversionReview } from "../data/useConversionReview";
 import { computeFunnel } from "../lib/computeFunnel";
+import { validateInputs } from "../lib/validation";
 import { InputPanel } from "../components/InputPanel";
 import { FunnelDiagram } from "../components/FunnelDiagram";
 import { BottleneckList } from "../components/BottleneckList";
@@ -28,6 +31,7 @@ export function ConversionReview() {
   const userId = session?.user.id;
   const { data: saved, isLoading } = useConversionReview(userId);
   const save = useSaveConversionReview(userId);
+  const { currency, setCurrency, isLoading: currencyLoading } = useCurrency();
 
   const [inputs, setInputs] = useState<ConversionInputs>(DEFAULT_INPUTS);
   const [hydrated, setHydrated] = useState(false);
@@ -51,12 +55,21 @@ export function ConversionReview() {
     setHydrated(true);
   }, [saved, isLoading, hydrated]);
 
-  const result = useMemo(() => computeFunnel(inputs), [inputs]);
+  // Live validation runs on every keystroke; field-level errors render
+  // inline and block result computation.
+  const validation = useMemo(() => validateInputs(inputs), [inputs]);
+
+  // Only compute the funnel when inputs are structurally valid — never
+  // render leak math against garbage data.
+  const result = useMemo(
+    () => (validation.hasErrors ? null : computeFunnel(inputs)),
+    [inputs, validation.hasErrors],
+  );
 
   // When result becomes valid (or worst bottleneck changes), default the
   // selected bottleneck to the worst leak.
   useEffect(() => {
-    if (!result.valid) return;
+    if (!result?.valid) return;
     if (result.rankedBottlenecks.length === 0) {
       setSelectedKey(null);
       return;
@@ -70,7 +83,7 @@ export function ConversionReview() {
   }, [result, selectedKey]);
 
   const selectedTransition =
-    result.valid && selectedKey
+    result?.valid && selectedKey
       ? result.transitions.find((t) => t.key === selectedKey) ?? null
       : null;
 
@@ -96,9 +109,14 @@ export function ConversionReview() {
   }
 
   const headlineRecoverable =
-    result.valid && result.rankedBottlenecks.length > 0
+    result?.valid && result.rankedBottlenecks.length > 0
       ? result.rankedBottlenecks[0].recoverableAnnualRevenue
       : 0;
+
+  // Money outputs are gated behind a chosen currency. We still render inputs
+  // (industry, period, volumes) so the owner can keep entering data; only the
+  // result panes that show money wait for currency.
+  const needsCurrency = !currencyLoading && !currency;
 
   return (
     <div className="app-canvas py-12 flex flex-col gap-10">
@@ -121,9 +139,15 @@ export function ConversionReview() {
         </p>
       </header>
 
-      <InputPanel inputs={inputs} onChange={setInputs} />
+      <InputPanel
+        inputs={inputs}
+        onChange={setInputs}
+        validation={validation}
+        currency={currency}
+        onCurrencyChange={(next) => void setCurrency(next)}
+      />
 
-      {result.notes.length > 0 && (
+      {result?.notes && result.notes.length > 0 && (
         <div className="flex flex-col gap-1.5 text-sm text-ink-muted">
           {result.notes.map((n, i) => (
             <p key={i}>· {n}</p>
@@ -131,8 +155,15 @@ export function ConversionReview() {
         </div>
       )}
 
-      {!result.valid ? (
-        <EmptyState reason={result.reason} />
+      {validation.hasErrors ? (
+        <ErrorsBlocker count={validation.errorCount} />
+      ) : needsCurrency ? (
+        <CurrencyGate
+          currency={currency}
+          onChange={(next) => void setCurrency(next)}
+        />
+      ) : !result?.valid ? (
+        <EmptyState reason={result?.reason} />
       ) : (
         <>
           <section className="flex flex-col gap-6">
@@ -140,11 +171,11 @@ export function ConversionReview() {
               <h2 className="text-lg font-medium" style={{ letterSpacing: "-0.01em" }}>
                 Your funnel
               </h2>
-              {headlineRecoverable > 0 && (
+              {headlineRecoverable > 0 && currency && (
                 <p className="text-ink-muted text-sm tabular-nums">
                   Biggest leak —{" "}
                   <span className="text-[var(--red)] font-semibold">
-                    {fmtMoneyExact(headlineRecoverable)}/yr
+                    {fmtMoneyExact(headlineRecoverable, currency)}/yr
                   </span>{" "}
                   recoverable
                 </p>
@@ -162,6 +193,7 @@ export function ConversionReview() {
               selectedKey={selectedKey}
               onSelect={(k) => setSelectedKey(k)}
               onOpenLesson={(k) => openLesson(k)}
+              currency={currency!}
             />
 
             {selectedTransition && selectedTransition.isBottleneck && inputs.avgDealValue ? (
@@ -170,6 +202,7 @@ export function ConversionReview() {
                 transition={selectedTransition}
                 avgDealValue={inputs.avgDealValue}
                 period={inputs.period}
+                currency={currency!}
               />
             ) : (
               <div aria-hidden />
@@ -193,5 +226,45 @@ export function ConversionReview() {
         lessonKey={drawerKey}
       />
     </div>
+  );
+}
+
+function ErrorsBlocker({ count }: { count: number }) {
+  return (
+    <section className="flex items-start gap-3 border border-[var(--red)]/40 bg-[var(--red-tint)] rounded-xl px-5 py-4">
+      <AlertCircle className="size-4 text-[var(--red)] mt-0.5 shrink-0" aria-hidden />
+      <div className="flex flex-col gap-0.5">
+        <p className="text-ink text-sm font-medium">
+          Resolve the highlighted {count === 1 ? "field" : "fields"} to see your results
+        </p>
+        <p className="text-ink-muted text-sm">
+          Your funnel, leaks and revenue projection appear once the numbers are
+          consistent.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function CurrencyGate({
+  currency,
+  onChange,
+}: {
+  currency: import("@/lib/format-currency").CurrencyCode | null;
+  onChange: (next: import("@/lib/format-currency").CurrencyCode) => void;
+}) {
+  return (
+    <section className="flex flex-col gap-3 border border-dashed border-border rounded-xl px-6 py-8">
+      <h2 className="text-base font-medium text-ink">
+        Choose your currency to see figures
+      </h2>
+      <p className="text-ink-muted text-sm max-w-prose">
+        Your funnel results — leaks, recoverable revenue, the what-if projection
+        — render in your chosen currency. Pick one once; it applies everywhere.
+      </p>
+      <div className="max-w-xs">
+        <CurrencySelect value={currency} onChange={onChange} />
+      </div>
+    </section>
   );
 }
