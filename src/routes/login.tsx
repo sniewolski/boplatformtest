@@ -57,8 +57,7 @@ function LoginPage() {
           data: { email: email.trim(), code: trimmed },
         });
         const { error: verifyErr } = await supabase.auth.verifyOtp({
-          email: email.trim(),
-          token,
+          token_hash: token,
           type: "magiclink",
         });
         if (verifyErr) throw new Error(verifyErr.message);
