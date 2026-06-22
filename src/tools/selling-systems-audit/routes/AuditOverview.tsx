@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Lock } from "lucide-react";
 import { useSession } from "@/core/auth/useSession";
-import { AUDIT_SECTIONS, CURRENCY } from "../config";
+import { useCurrency } from "@/core/settings/useCurrency";
+import { AUDIT_SECTIONS } from "../config";
 import { useConversionReview } from "../data/useConversionReview";
 import { computeFunnel } from "../lib/computeFunnel";
 import type { IndustryKey, PeriodKey } from "../config";
