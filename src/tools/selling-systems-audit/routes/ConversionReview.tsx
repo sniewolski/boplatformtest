@@ -101,7 +101,7 @@ export function ConversionReview() {
       : 0;
 
   return (
-    <div className="max-w-4xl mx-auto px-8 py-12 flex flex-col gap-10">
+    <div className="app-canvas py-12 flex flex-col gap-10">
       <Link
         to="/app/tools/$key/$"
         params={{ key: "selling-systems-audit", _splat: "" }}
