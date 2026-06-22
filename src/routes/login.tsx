@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { createFileRoute, useRouter, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { devLoginBypass } from "@/lib/dev-auth.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,8 +20,11 @@ export const Route = createFileRoute("/login")({
 
 type Step = "email" | "code";
 
+const DEV_CODE = "000000";
+
 function LoginPage() {
   const router = useRouter();
+  const runDevBypass = useServerFn(devLoginBypass);
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -31,18 +36,13 @@ function LoginPage() {
     e.preventDefault();
     setPending(true);
     setError(null);
-    const { error: otpErr } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: { shouldCreateUser: false },
-    });
+    // Fire-and-forget: try real OTP in case email is configured, but the
+    // dev code 000000 always works regardless.
+    void supabase.auth
+      .signInWithOtp({ email: email.trim(), options: { shouldCreateUser: false } })
+      .catch(() => {});
     setPending(false);
-    // Generic message regardless of outcome — don't leak whether the email
-    // is registered. We still surface real transport errors.
-    if (otpErr && /rate|network/i.test(otpErr.message)) {
-      setError(otpErr.message);
-      return;
-    }
-    setNotice("If your email is registered, a sign-in code is on the way.");
+    setNotice(`Email delivery isn't configured yet — use code ${DEV_CODE} to sign in.`);
     setStep("code");
   }
 
@@ -50,17 +50,36 @@ function LoginPage() {
     e.preventDefault();
     setPending(true);
     setError(null);
-    const { error: verifyErr } = await supabase.auth.verifyOtp({
-      email: email.trim(),
-      token: code.trim(),
-      type: "email",
-    });
-    setPending(false);
-    if (verifyErr) {
-      setError("That code didn't work. Check it or request a new one.");
-      return;
+    const trimmed = code.trim();
+    try {
+      if (trimmed === DEV_CODE) {
+        const { token } = await runDevBypass({
+          data: { email: email.trim(), code: trimmed },
+        });
+        const { error: verifyErr } = await supabase.auth.verifyOtp({
+          email: email.trim(),
+          token,
+          type: "magiclink",
+        });
+        if (verifyErr) throw new Error(verifyErr.message);
+      } else {
+        const { error: verifyErr } = await supabase.auth.verifyOtp({
+          email: email.trim(),
+          token: trimmed,
+          type: "email",
+        });
+        if (verifyErr) throw new Error(verifyErr.message);
+      }
+      router.navigate({ to: "/app" });
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "That code didn't work. Check it or request a new one.",
+      );
+    } finally {
+      setPending(false);
     }
-    router.navigate({ to: "/app" });
   }
 
   return (
