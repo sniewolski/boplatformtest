@@ -25,12 +25,15 @@ function Dashboard() {
       ) : (
         <ul className="flex flex-col gap-3">
           {toolRegistry.map((tool) => (
-            <li
-              key={tool.key}
-              className="border border-border rounded-xl px-5 py-4 flex flex-col gap-1"
-            >
-              <span className="text-ink font-medium">{tool.name}</span>
-              <span className="text-ink-muted text-sm">{tool.description}</span>
+            <li key={tool.key}>
+              {tool.dashboardWidget ? (
+                tool.dashboardWidget.render()
+              ) : (
+                <div className="border border-border rounded-xl px-5 py-4 flex flex-col gap-1">
+                  <span className="text-ink font-medium">{tool.name}</span>
+                  <span className="text-ink-muted text-sm">{tool.description}</span>
+                </div>
+              )}
             </li>
           ))}
         </ul>
