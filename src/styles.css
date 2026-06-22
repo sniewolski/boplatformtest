@@ -31,6 +31,11 @@
   --red-pressed: oklch(0.47 0.20 27);
   --red-tint:    oklch(0.97 0.02 27);
 
+  /* Layout widths — PC-first. Cap so content doesn't stretch on ultrawide. */
+  --content-max: 1240px; /* standard app surfaces */
+  --canvas-max:  1440px; /* dashboard / data-dense surfaces */
+  --prose-max:   68ch;   /* running-text blocks ONLY (paragraphs) */
+
   /* shadcn variables mapped onto the tokens above. */
   --background: var(--white);
   --foreground: var(--ink);
