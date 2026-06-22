@@ -19,7 +19,7 @@ function AdminHome() {
 
   const owners = useQuery({
     queryKey: ["admin", "owners"],
-    queryFn: () => list({}),
+    queryFn: () => list(),
   });
 
   const [email, setEmail] = useState("");
