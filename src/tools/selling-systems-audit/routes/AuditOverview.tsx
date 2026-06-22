@@ -13,6 +13,7 @@ export function AuditOverview() {
   const { session } = useSession();
   const userId = session?.user.id;
   const { data: saved } = useConversionReview(userId);
+  const { currency } = useCurrency();
 
   const conversionDone =
     !!saved &&
@@ -31,7 +32,10 @@ export function AuditOverview() {
     });
     if (result.valid && result.rankedBottlenecks.length > 0) {
       const worst = result.rankedBottlenecks[0];
-      conversionHeadline = `Biggest leak: ${worst.fromLabel} → ${worst.toLabel} · ~${fmtMoney(worst.recoverableAnnualRevenue)}/yr recoverable`;
+      const moneyPart = currency
+        ? ` · ~${fmtMoney(worst.recoverableAnnualRevenue, currency)}/yr recoverable`
+        : "";
+      conversionHeadline = `Biggest leak: ${worst.fromLabel} → ${worst.toLabel}${moneyPart}`;
     } else if (result.valid) {
       conversionHeadline = "No leaks — hitting the standard across the funnel.";
     }
