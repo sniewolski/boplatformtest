@@ -23,7 +23,7 @@ function Dashboard() {
           </p>
         </div>
       ) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(320px,1fr))]">
           {toolRegistry.map((tool) => (
             <li key={tool.key}>
               {tool.dashboardWidget ? (
