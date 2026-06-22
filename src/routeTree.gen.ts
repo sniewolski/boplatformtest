@@ -18,6 +18,9 @@ import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticat
 import { Route as RTokenSplatRouteImport } from './routes/r.$token.$'
 import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
 import { Route as AuthenticatedAppAdminIndexRouteImport } from './routes/_authenticated/app.admin.index'
+import { Route as ApiPublicRValidateRouteImport } from './routes/api/public/r/validate'
+import { Route as ApiPublicRCompleteRouteImport } from './routes/api/public/r/complete'
+import { Route as ApiPublicRCaptureRouteImport } from './routes/api/public/r/capture'
 import { Route as AuthenticatedAppToolsKeySplatRouteImport } from './routes/_authenticated/app.tools.$key.$'
 
 const LoginRoute = LoginRouteImport.update({
@@ -65,6 +68,21 @@ const AuthenticatedAppAdminIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedAppAdminRoute,
   } as any)
+const ApiPublicRValidateRoute = ApiPublicRValidateRouteImport.update({
+  id: '/api/public/r/validate',
+  path: '/api/public/r/validate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicRCompleteRoute = ApiPublicRCompleteRouteImport.update({
+  id: '/api/public/r/complete',
+  path: '/api/public/r/complete',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicRCaptureRoute = ApiPublicRCaptureRouteImport.update({
+  id: '/api/public/r/capture',
+  path: '/api/public/r/capture',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAppToolsKeySplatRoute =
   AuthenticatedAppToolsKeySplatRouteImport.update({
     id: '/app/tools/$key/$',
@@ -80,6 +98,9 @@ export interface FileRoutesByFullPath {
   '/r/$token/$': typeof RTokenSplatRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/r/$token/': typeof RTokenIndexRoute
+  '/api/public/r/capture': typeof ApiPublicRCaptureRoute
+  '/api/public/r/complete': typeof ApiPublicRCompleteRoute
+  '/api/public/r/validate': typeof ApiPublicRValidateRoute
   '/app/admin/': typeof AuthenticatedAppAdminIndexRoute
   '/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
 }
@@ -89,6 +110,9 @@ export interface FileRoutesByTo {
   '/r/$token/$': typeof RTokenSplatRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/r/$token': typeof RTokenIndexRoute
+  '/api/public/r/capture': typeof ApiPublicRCaptureRoute
+  '/api/public/r/complete': typeof ApiPublicRCompleteRoute
+  '/api/public/r/validate': typeof ApiPublicRValidateRoute
   '/app/admin': typeof AuthenticatedAppAdminIndexRoute
   '/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
 }
@@ -102,6 +126,9 @@ export interface FileRoutesById {
   '/r/$token/$': typeof RTokenSplatRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/r/$token/': typeof RTokenIndexRoute
+  '/api/public/r/capture': typeof ApiPublicRCaptureRoute
+  '/api/public/r/complete': typeof ApiPublicRCompleteRoute
+  '/api/public/r/validate': typeof ApiPublicRValidateRoute
   '/_authenticated/app/admin/': typeof AuthenticatedAppAdminIndexRoute
   '/_authenticated/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
 }
@@ -115,6 +142,9 @@ export interface FileRouteTypes {
     | '/r/$token/$'
     | '/app/'
     | '/r/$token/'
+    | '/api/public/r/capture'
+    | '/api/public/r/complete'
+    | '/api/public/r/validate'
     | '/app/admin/'
     | '/app/tools/$key/$'
   fileRoutesByTo: FileRoutesByTo
@@ -124,6 +154,9 @@ export interface FileRouteTypes {
     | '/r/$token/$'
     | '/app'
     | '/r/$token'
+    | '/api/public/r/capture'
+    | '/api/public/r/complete'
+    | '/api/public/r/validate'
     | '/app/admin'
     | '/app/tools/$key/$'
   id:
@@ -136,6 +169,9 @@ export interface FileRouteTypes {
     | '/r/$token/$'
     | '/_authenticated/app/'
     | '/r/$token/'
+    | '/api/public/r/capture'
+    | '/api/public/r/complete'
+    | '/api/public/r/validate'
     | '/_authenticated/app/admin/'
     | '/_authenticated/app/tools/$key/$'
   fileRoutesById: FileRoutesById
@@ -145,6 +181,9 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   LoginRoute: typeof LoginRoute
   RTokenRoute: typeof RTokenRouteWithChildren
+  ApiPublicRCaptureRoute: typeof ApiPublicRCaptureRoute
+  ApiPublicRCompleteRoute: typeof ApiPublicRCompleteRoute
+  ApiPublicRValidateRoute: typeof ApiPublicRValidateRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -212,6 +251,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAppAdminRoute
     }
+    '/api/public/r/validate': {
+      id: '/api/public/r/validate'
+      path: '/api/public/r/validate'
+      fullPath: '/api/public/r/validate'
+      preLoaderRoute: typeof ApiPublicRValidateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/r/complete': {
+      id: '/api/public/r/complete'
+      path: '/api/public/r/complete'
+      fullPath: '/api/public/r/complete'
+      preLoaderRoute: typeof ApiPublicRCompleteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/r/capture': {
+      id: '/api/public/r/capture'
+      path: '/api/public/r/capture'
+      fullPath: '/api/public/r/capture'
+      preLoaderRoute: typeof ApiPublicRCaptureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/app/tools/$key/$': {
       id: '/_authenticated/app/tools/$key/$'
       path: '/app/tools/$key/$'
@@ -268,6 +328,9 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   LoginRoute: LoginRoute,
   RTokenRoute: RTokenRouteWithChildren,
+  ApiPublicRCaptureRoute: ApiPublicRCaptureRoute,
+  ApiPublicRCompleteRoute: ApiPublicRCompleteRoute,
+  ApiPublicRValidateRoute: ApiPublicRValidateRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

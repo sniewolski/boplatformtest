@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { PublicSession } from "@/lib/respondent.server";
+import type { PublicSession } from "@/lib/respondent.types";
 
 export const Route = createFileRoute("/r/$token/")({
   ssr: false,

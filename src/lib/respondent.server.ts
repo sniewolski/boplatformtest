@@ -14,22 +14,9 @@
  */
 import { randomBytes } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { PublicSession, SessionStatus } from "@/lib/respondent.types";
 
-export type SessionStatus =
-  | "pending"
-  | "in_progress"
-  | "completed"
-  | "expired"
-  | "revoked";
-
-export type PublicSession = {
-  token: string;
-  toolKey: string;
-  status: SessionStatus;
-  respondentName: string | null;
-  respondentEmail: string | null;
-  expiresAt: string | null;
-};
+export type { PublicSession, SessionStatus };
 
 export function generateToken(): string {
   // 32 chars of url-safe base64 ≈ 192 bits entropy.
