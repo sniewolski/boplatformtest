@@ -34,14 +34,7 @@ function LoginPage() {
 
   async function handleRequestCode(e: React.FormEvent) {
     e.preventDefault();
-    setPending(true);
     setError(null);
-    // Fire-and-forget: try real OTP in case email is configured, but the
-    // dev code 000000 always works regardless.
-    void supabase.auth
-      .signInWithOtp({ email: email.trim(), options: { shouldCreateUser: false } })
-      .catch(() => {});
-    setPending(false);
     setNotice(`Email delivery isn't configured yet — use code ${DEV_CODE} to sign in.`);
     setStep("code");
   }
