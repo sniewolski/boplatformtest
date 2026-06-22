@@ -92,6 +92,36 @@ export type Database = {
         }
         Relationships: []
       }
+      selling_systems_audit_conversion: {
+        Row: {
+          avg_deal_value: number | null
+          created_at: string
+          industry: string | null
+          owner_id: string
+          period: string
+          stage_volumes: Json | null
+          updated_at: string
+        }
+        Insert: {
+          avg_deal_value?: number | null
+          created_at?: string
+          industry?: string | null
+          owner_id: string
+          period?: string
+          stage_volumes?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          avg_deal_value?: number | null
+          created_at?: string
+          industry?: string | null
+          owner_id?: string
+          period?: string
+          stage_volumes?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
