@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      owner_settings: {
+        Row: {
+          currency: string | null
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          currency?: string | null
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          currency?: string | null
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           account_status: string

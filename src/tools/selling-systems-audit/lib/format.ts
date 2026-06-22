@@ -1,24 +1,21 @@
-import { CURRENCY } from "../config";
+import {
+  formatCurrency,
+  formatCurrencyCompact,
+  type CurrencyCode,
+} from "@/lib/format-currency";
 
-export function fmtMoney(value: number): string {
-  if (!Number.isFinite(value)) return `${CURRENCY}0`;
-  const abs = Math.abs(value);
-  let body: string;
-  if (abs >= 1_000_000) {
-    body = `${(value / 1_000_000).toFixed(1)}m`;
-  } else if (abs >= 10_000) {
-    body = `${(value / 1_000).toFixed(0)}k`;
-  } else if (abs >= 1_000) {
-    body = `${(value / 1_000).toFixed(1)}k`;
-  } else {
-    body = `${Math.round(value)}`;
-  }
-  return `${CURRENCY}${body}`;
+/**
+ * Money helpers in this tool route through the shared `formatCurrency` util,
+ * which is the single way money renders anywhere in the app. The owner's
+ * currency is passed in; this tool never hardcodes a symbol or locale.
+ */
+
+export function fmtMoney(value: number, currency: CurrencyCode): string {
+  return formatCurrencyCompact(value, currency);
 }
 
-export function fmtMoneyExact(value: number): string {
-  if (!Number.isFinite(value)) return `${CURRENCY}0`;
-  return `${CURRENCY}${Math.round(value).toLocaleString("en-GB")}`;
+export function fmtMoneyExact(value: number, currency: CurrencyCode): string {
+  return formatCurrency(value, currency);
 }
 
 export function fmtPct(rate: number | null | undefined, digits = 0): string {
@@ -28,5 +25,5 @@ export function fmtPct(rate: number | null | undefined, digits = 0): string {
 
 export function fmtInt(value: number): string {
   if (!Number.isFinite(value)) return "0";
-  return Math.round(value).toLocaleString("en-GB");
+  return Math.round(value).toLocaleString();
 }

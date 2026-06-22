@@ -2,9 +2,10 @@
  * Editable data spine for the Selling Systems Audit tool.
  * Every number/label/lesson the UI shows lives here.
  * No magic numbers in components. No content edits require touching code.
+ *
+ * Currency is NOT defined here. It's an owner-level platform setting consumed
+ * via `useCurrency()` and rendered via `@/lib/format-currency`.
  */
-
-export const CURRENCY = "£";
 
 export const STAGES = [
   { key: "leads", label: "Leads" },

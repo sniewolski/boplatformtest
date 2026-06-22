@@ -3,17 +3,20 @@ import { fmtInt, fmtMoneyExact, fmtPct } from "../lib/format";
 import type { PeriodKey } from "../config";
 import type { FunnelResult, StageTransition } from "../lib/types";
 import { projectWhatIf } from "../lib/computeFunnel";
+import type { CurrencyCode } from "@/lib/format-currency";
 
 export function WhatIfSlider({
   result,
   transition,
   avgDealValue,
   period,
+  currency,
 }: {
   result: FunnelResult;
   transition: StageTransition;
   avgDealValue: number;
   period: PeriodKey;
+  currency: CurrencyCode;
 }) {
   const current = transition.currentRate ?? 0;
   const target = transition.targetRate;
@@ -90,7 +93,7 @@ export function WhatIfSlider({
         <span className="tabular-nums">{fmtPct(current, 0)}</span> to{" "}
         <span className="tabular-nums">{fmtPct(value, 0)}</span> →{" "}
         <span className="text-[var(--red)] font-semibold tabular-nums">
-          +{fmtMoneyExact(displayed)}
+          +{fmtMoneyExact(displayed, currency)}
         </span>{" "}
         <span className="text-ink-muted">a year</span>
       </p>

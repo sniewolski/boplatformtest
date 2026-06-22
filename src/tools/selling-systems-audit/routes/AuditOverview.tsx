@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Lock } from "lucide-react";
 import { useSession } from "@/core/auth/useSession";
-import { AUDIT_SECTIONS, CURRENCY } from "../config";
+import { useCurrency } from "@/core/settings/useCurrency";
+import { AUDIT_SECTIONS } from "../config";
 import { useConversionReview } from "../data/useConversionReview";
 import { computeFunnel } from "../lib/computeFunnel";
 import type { IndustryKey, PeriodKey } from "../config";
@@ -12,6 +13,7 @@ export function AuditOverview() {
   const { session } = useSession();
   const userId = session?.user.id;
   const { data: saved } = useConversionReview(userId);
+  const { currency } = useCurrency();
 
   const conversionDone =
     !!saved &&
@@ -30,7 +32,10 @@ export function AuditOverview() {
     });
     if (result.valid && result.rankedBottlenecks.length > 0) {
       const worst = result.rankedBottlenecks[0];
-      conversionHeadline = `Biggest leak: ${worst.fromLabel} → ${worst.toLabel} · ~${fmtMoney(worst.recoverableAnnualRevenue)}/yr recoverable`;
+      const moneyPart = currency
+        ? ` · ~${fmtMoney(worst.recoverableAnnualRevenue, currency)}/yr recoverable`
+        : "";
+      conversionHeadline = `Biggest leak: ${worst.fromLabel} → ${worst.toLabel}${moneyPart}`;
     } else if (result.valid) {
       conversionHeadline = "No leaks — hitting the standard across the funnel.";
     }
@@ -122,11 +127,9 @@ export function AuditOverview() {
         })}
       </ol>
 
-      <p className="text-ink-muted text-xs">
-        {CURRENCY === "£"
-          ? "Figures are in pounds sterling."
-          : `Figures are shown in ${CURRENCY}.`}
-      </p>
+      {currency && (
+        <p className="text-ink-muted text-xs">Figures are shown in {currency}.</p>
+      )}
     </div>
   );
 }

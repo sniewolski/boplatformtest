@@ -1,16 +1,19 @@
 import { fmtMoneyExact, fmtPct } from "../lib/format";
 import type { FunnelResult, StageTransition } from "../lib/types";
+import type { CurrencyCode } from "@/lib/format-currency";
 
 export function BottleneckList({
   result,
   selectedKey,
   onSelect,
   onOpenLesson,
+  currency,
 }: {
   result: FunnelResult;
   selectedKey: StageTransition["key"] | null;
   onSelect: (key: StageTransition["key"]) => void;
   onOpenLesson: (key: StageTransition["key"]) => void;
+  currency: CurrencyCode;
 }) {
   if (!result.valid) return null;
 
@@ -39,6 +42,7 @@ export function BottleneckList({
       <ul className="flex flex-col">
         <BottleneckRow
           t={worst}
+          currency={currency}
           isWorst
           isSelected={selectedKey === worst.key}
           onSelect={() => onSelect(worst.key)}
@@ -48,6 +52,7 @@ export function BottleneckList({
           <BottleneckRow
             key={t.key}
             t={t}
+            currency={currency}
             isSelected={selectedKey === t.key}
             onSelect={() => onSelect(t.key)}
             onOpenLesson={() => onOpenLesson(t.key)}
@@ -60,12 +65,14 @@ export function BottleneckList({
 
 function BottleneckRow({
   t,
+  currency,
   isWorst,
   isSelected,
   onSelect,
   onOpenLesson,
 }: {
   t: StageTransition;
+  currency: CurrencyCode;
   isWorst?: boolean;
   isSelected: boolean;
   onSelect: () => void;
@@ -101,7 +108,7 @@ function BottleneckRow({
             isWorst ? "text-[var(--red)] font-semibold text-lg" : "text-ink font-medium text-base"
           }`}
         >
-          {fmtMoneyExact(t.recoverableAnnualRevenue)}
+          {fmtMoneyExact(t.recoverableAnnualRevenue, currency)}
         </span>
         <span className="text-ink-muted text-xs">recoverable / yr</span>
         <button
