@@ -156,21 +156,25 @@ export function ConversionReview() {
             />
           </section>
 
-          <BottleneckList
-            result={result}
-            selectedKey={selectedKey}
-            onSelect={(k) => setSelectedKey(k)}
-            onOpenLesson={(k) => openLesson(k)}
-          />
-
-          {selectedTransition && selectedTransition.isBottleneck && inputs.avgDealValue && (
-            <WhatIfSlider
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-12 lg:items-start">
+            <BottleneckList
               result={result}
-              transition={selectedTransition}
-              avgDealValue={inputs.avgDealValue}
-              period={inputs.period}
+              selectedKey={selectedKey}
+              onSelect={(k) => setSelectedKey(k)}
+              onOpenLesson={(k) => openLesson(k)}
             />
-          )}
+
+            {selectedTransition && selectedTransition.isBottleneck && inputs.avgDealValue ? (
+              <WhatIfSlider
+                result={result}
+                transition={selectedTransition}
+                avgDealValue={inputs.avgDealValue}
+                period={inputs.period}
+              />
+            ) : (
+              <div aria-hidden />
+            )}
+          </div>
         </>
       )}
 
