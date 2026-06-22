@@ -16,7 +16,6 @@ import { Route as RTokenRouteImport } from './routes/r.$token'
 import { Route as RTokenIndexRouteImport } from './routes/r.$token.index'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as RTokenSplatRouteImport } from './routes/r.$token.$'
-import { Route as ApiPublicBootstrapAdminRouteImport } from './routes/api/public/bootstrap-admin'
 import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
 import { Route as AuthenticatedAppAdminIndexRouteImport } from './routes/_authenticated/app.admin.index'
 import { Route as AuthenticatedAppToolsKeySplatRouteImport } from './routes/_authenticated/app.tools.$key.$'
@@ -55,11 +54,6 @@ const RTokenSplatRoute = RTokenSplatRouteImport.update({
   path: '/$',
   getParentRoute: () => RTokenRoute,
 } as any)
-const ApiPublicBootstrapAdminRoute = ApiPublicBootstrapAdminRouteImport.update({
-  id: '/api/public/bootstrap-admin',
-  path: '/api/public/bootstrap-admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthenticatedAppAdminRoute = AuthenticatedAppAdminRouteImport.update({
   id: '/app/admin',
   path: '/app/admin',
@@ -83,7 +77,6 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/r/$token': typeof RTokenRouteWithChildren
   '/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
-  '/api/public/bootstrap-admin': typeof ApiPublicBootstrapAdminRoute
   '/r/$token/$': typeof RTokenSplatRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/r/$token/': typeof RTokenIndexRoute
@@ -93,7 +86,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/api/public/bootstrap-admin': typeof ApiPublicBootstrapAdminRoute
   '/r/$token/$': typeof RTokenSplatRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/r/$token': typeof RTokenIndexRoute
@@ -107,7 +99,6 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/r/$token': typeof RTokenRouteWithChildren
   '/_authenticated/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
-  '/api/public/bootstrap-admin': typeof ApiPublicBootstrapAdminRoute
   '/r/$token/$': typeof RTokenSplatRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/r/$token/': typeof RTokenIndexRoute
@@ -121,7 +112,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/r/$token'
     | '/app/admin'
-    | '/api/public/bootstrap-admin'
     | '/r/$token/$'
     | '/app/'
     | '/r/$token/'
@@ -131,7 +121,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
-    | '/api/public/bootstrap-admin'
     | '/r/$token/$'
     | '/app'
     | '/r/$token'
@@ -144,7 +133,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/r/$token'
     | '/_authenticated/app/admin'
-    | '/api/public/bootstrap-admin'
     | '/r/$token/$'
     | '/_authenticated/app/'
     | '/r/$token/'
@@ -157,7 +145,6 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   LoginRoute: typeof LoginRoute
   RTokenRoute: typeof RTokenRouteWithChildren
-  ApiPublicBootstrapAdminRoute: typeof ApiPublicBootstrapAdminRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -210,13 +197,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/r/$token/$'
       preLoaderRoute: typeof RTokenSplatRouteImport
       parentRoute: typeof RTokenRoute
-    }
-    '/api/public/bootstrap-admin': {
-      id: '/api/public/bootstrap-admin'
-      path: '/api/public/bootstrap-admin'
-      fullPath: '/api/public/bootstrap-admin'
-      preLoaderRoute: typeof ApiPublicBootstrapAdminRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app/admin': {
       id: '/_authenticated/app/admin'
@@ -288,7 +268,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   LoginRoute: LoginRoute,
   RTokenRoute: RTokenRouteWithChildren,
-  ApiPublicBootstrapAdminRoute: ApiPublicBootstrapAdminRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

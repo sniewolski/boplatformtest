@@ -41,6 +41,57 @@ export type Database = {
         }
         Relationships: []
       }
+      respondent_sessions: {
+        Row: {
+          completed_at: string | null
+          consent: Json | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          owner_id: string
+          payload: Json
+          respondent_email: string | null
+          respondent_name: string | null
+          result: Json | null
+          status: string
+          token: string
+          tool_key: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          consent?: Json | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          owner_id: string
+          payload?: Json
+          respondent_email?: string | null
+          respondent_name?: string | null
+          result?: Json | null
+          status?: string
+          token: string
+          tool_key: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          consent?: Json | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          owner_id?: string
+          payload?: Json
+          respondent_email?: string | null
+          respondent_name?: string | null
+          result?: Json | null
+          status?: string
+          token?: string
+          tool_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
