@@ -197,3 +197,24 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Layout width utilities. Wrap an app surface; the wrapper provides max-width
+   + horizontal padding only — the inner layout (flex/grid) is what uses the
+   width. Never apply --prose-max to a page wrapper; it is for <p> blocks. */
+@utility app-content {
+  width: 100%;
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding-inline: 2rem;
+}
+
+@utility app-canvas {
+  width: 100%;
+  max-width: var(--canvas-max);
+  margin-inline: auto;
+  padding-inline: 2rem;
+}
+
+@utility prose-measure {
+  max-width: var(--prose-max);
+}
