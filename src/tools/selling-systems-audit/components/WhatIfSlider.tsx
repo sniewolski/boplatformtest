@@ -93,7 +93,7 @@ export function WhatIfSlider({
         <span className="tabular-nums">{fmtPct(current, 0)}</span> to{" "}
         <span className="tabular-nums">{fmtPct(value, 0)}</span> →{" "}
         <span className="text-[var(--red)] font-semibold tabular-nums">
-          +{fmtMoneyExact(displayed)}
+          +{fmtMoneyExact(displayed, currency)}
         </span>{" "}
         <span className="text-ink-muted">a year</span>
       </p>
