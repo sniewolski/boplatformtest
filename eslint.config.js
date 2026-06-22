@@ -36,5 +36,43 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": "off",
     },
   },
+  // Modularity: tools/* must not import sibling tools. Each tool is
+  // self-contained; cross-tool composition happens through the registry.
+  {
+    files: ["src/tools/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/tools/*", "@/tools/*/**"],
+              message:
+                "Tools must not import sibling tools. Use the registry, or extract shared code to src/core/.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // Modularity: core/* must not depend on tools/*. Core ships the shell,
+  // guards, and registry contract — never knowledge of any specific tool.
+  {
+    files: ["src/core/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/tools/*", "@/tools/*/**"],
+              message:
+                "core/* cannot import from tools/*. Tools depend on core, not the other way round.",
+            },
+          ],
+        },
+      ],
+    },
+  },
   eslintPluginPrettier,
 );
