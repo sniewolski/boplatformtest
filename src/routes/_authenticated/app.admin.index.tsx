@@ -47,7 +47,7 @@ function AdminHome() {
   });
 
   return (
-    <div className="max-w-4xl mx-auto px-8 py-16 flex flex-col gap-12">
+    <div className="app-content py-16 flex flex-col gap-12">
       <header className="flex flex-col gap-2">
         <h1 className="text-3xl">Admin</h1>
         <p className="text-ink-muted text-sm">

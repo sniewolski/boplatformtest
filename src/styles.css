@@ -31,6 +31,11 @@
   --red-pressed: oklch(0.47 0.20 27);
   --red-tint:    oklch(0.97 0.02 27);
 
+  /* Layout widths — PC-first. Cap so content doesn't stretch on ultrawide. */
+  --content-max: 1240px; /* standard app surfaces */
+  --canvas-max:  1440px; /* dashboard / data-dense surfaces */
+  --prose-max:   68ch;   /* running-text blocks ONLY (paragraphs) */
+
   /* shadcn variables mapped onto the tokens above. */
   --background: var(--white);
   --foreground: var(--ink);
@@ -191,4 +196,25 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Layout width utilities. Wrap an app surface; the wrapper provides max-width
+   + horizontal padding only — the inner layout (flex/grid) is what uses the
+   width. Never apply --prose-max to a page wrapper; it is for <p> blocks. */
+@utility app-content {
+  width: 100%;
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding-inline: 2rem;
+}
+
+@utility app-canvas {
+  width: 100%;
+  max-width: var(--canvas-max);
+  margin-inline: auto;
+  padding-inline: 2rem;
+}
+
+@utility prose-measure {
+  max-width: var(--prose-max);
 }

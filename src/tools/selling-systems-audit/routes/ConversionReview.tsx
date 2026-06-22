@@ -101,7 +101,7 @@ export function ConversionReview() {
       : 0;
 
   return (
-    <div className="max-w-4xl mx-auto px-8 py-12 flex flex-col gap-10">
+    <div className="app-canvas py-12 flex flex-col gap-10">
       <Link
         to="/app/tools/$key/$"
         params={{ key: "selling-systems-audit", _splat: "" }}
@@ -156,21 +156,25 @@ export function ConversionReview() {
             />
           </section>
 
-          <BottleneckList
-            result={result}
-            selectedKey={selectedKey}
-            onSelect={(k) => setSelectedKey(k)}
-            onOpenLesson={(k) => openLesson(k)}
-          />
-
-          {selectedTransition && selectedTransition.isBottleneck && inputs.avgDealValue && (
-            <WhatIfSlider
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-12 lg:items-start">
+            <BottleneckList
               result={result}
-              transition={selectedTransition}
-              avgDealValue={inputs.avgDealValue}
-              period={inputs.period}
+              selectedKey={selectedKey}
+              onSelect={(k) => setSelectedKey(k)}
+              onOpenLesson={(k) => openLesson(k)}
             />
-          )}
+
+            {selectedTransition && selectedTransition.isBottleneck && inputs.avgDealValue ? (
+              <WhatIfSlider
+                result={result}
+                transition={selectedTransition}
+                avgDealValue={inputs.avgDealValue}
+                period={inputs.period}
+              />
+            ) : (
+              <div aria-hidden />
+            )}
+          </div>
         </>
       )}
 
