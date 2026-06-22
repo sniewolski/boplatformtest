@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
@@ -23,15 +23,15 @@ function Index() {
         </h1>
 
         <div className="flex flex-col gap-2">
-          <p className="text-ink text-base">
-            A private, invite-only workspace.
-          </p>
+          <p className="text-ink text-base">A private, invite-only workspace.</p>
           <p className="text-ink-muted text-sm">
             Access is provisioned by an administrator. There is no public sign-up.
           </p>
         </div>
 
-        <Button type="button">Sign in</Button>
+        <Button asChild>
+          <Link to="/login">Sign in</Link>
+        </Button>
       </section>
     </main>
   );
