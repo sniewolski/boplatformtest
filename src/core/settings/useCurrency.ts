@@ -23,7 +23,7 @@ export function useCurrency() {
         .eq("owner_id", ownerId!)
         .maybeSingle();
       if (error) throw error;
-      return (data?.currency as CurrencyCode | null) ?? null;
+      return (data?.currency as CurrencyCode | null) ?? "USD";
     },
   });
 
