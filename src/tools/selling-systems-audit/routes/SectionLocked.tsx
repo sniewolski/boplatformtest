@@ -10,7 +10,7 @@ export function SectionLocked({
   description: string;
 }) {
   return (
-    <div className="max-w-2xl mx-auto px-8 py-16 flex flex-col gap-8">
+    <div className="app-content py-16 flex flex-col gap-8">
       <Link
         to="/app/tools/$key/$"
         params={{ key: "selling-systems-audit", _splat: "" }}
