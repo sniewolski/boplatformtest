@@ -9,38 +9,160 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RTokenRouteImport } from './routes/r.$token'
+import { Route as RTokenIndexRouteImport } from './routes/r.$token.index'
+import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
+import { Route as RTokenSplatRouteImport } from './routes/r.$token.$'
+import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
+import { Route as AuthenticatedAppAdminIndexRouteImport } from './routes/_authenticated/app.admin.index'
+import { Route as AuthenticatedAppToolsKeySplatRouteImport } from './routes/_authenticated/app.tools.$key.$'
 
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RTokenRoute = RTokenRouteImport.update({
+  id: '/r/$token',
+  path: '/r/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RTokenIndexRoute = RTokenIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => RTokenRoute,
+} as any)
+const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
+  id: '/app/',
+  path: '/app/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const RTokenSplatRoute = RTokenSplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => RTokenRoute,
+} as any)
+const AuthenticatedAppAdminRoute = AuthenticatedAppAdminRouteImport.update({
+  id: '/app/admin',
+  path: '/app/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAppAdminIndexRoute =
+  AuthenticatedAppAdminIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAppAdminRoute,
+  } as any)
+const AuthenticatedAppToolsKeySplatRoute =
+  AuthenticatedAppToolsKeySplatRouteImport.update({
+    id: '/app/tools/$key/$',
+    path: '/app/tools/$key/$',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/r/$token': typeof RTokenRouteWithChildren
+  '/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
+  '/r/$token/$': typeof RTokenSplatRoute
+  '/app/': typeof AuthenticatedAppIndexRoute
+  '/r/$token/': typeof RTokenIndexRoute
+  '/app/admin/': typeof AuthenticatedAppAdminIndexRoute
+  '/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/r/$token/$': typeof RTokenSplatRoute
+  '/app': typeof AuthenticatedAppIndexRoute
+  '/r/$token': typeof RTokenIndexRoute
+  '/app/admin': typeof AuthenticatedAppAdminIndexRoute
+  '/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/login': typeof LoginRoute
+  '/r/$token': typeof RTokenRouteWithChildren
+  '/_authenticated/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
+  '/r/$token/$': typeof RTokenSplatRoute
+  '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/r/$token/': typeof RTokenIndexRoute
+  '/_authenticated/app/admin/': typeof AuthenticatedAppAdminIndexRoute
+  '/_authenticated/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/r/$token'
+    | '/app/admin'
+    | '/r/$token/$'
+    | '/app/'
+    | '/r/$token/'
+    | '/app/admin/'
+    | '/app/tools/$key/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/login'
+    | '/r/$token/$'
+    | '/app'
+    | '/r/$token'
+    | '/app/admin'
+    | '/app/tools/$key/$'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/login'
+    | '/r/$token'
+    | '/_authenticated/app/admin'
+    | '/r/$token/$'
+    | '/_authenticated/app/'
+    | '/r/$token/'
+    | '/_authenticated/app/admin/'
+    | '/_authenticated/app/tools/$key/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  LoginRoute: typeof LoginRoute
+  RTokenRoute: typeof RTokenRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +170,104 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/r/$token': {
+      id: '/r/$token'
+      path: '/r/$token'
+      fullPath: '/r/$token'
+      preLoaderRoute: typeof RTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/r/$token/': {
+      id: '/r/$token/'
+      path: '/'
+      fullPath: '/r/$token/'
+      preLoaderRoute: typeof RTokenIndexRouteImport
+      parentRoute: typeof RTokenRoute
+    }
+    '/_authenticated/app/': {
+      id: '/_authenticated/app/'
+      path: '/app'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/r/$token/$': {
+      id: '/r/$token/$'
+      path: '/$'
+      fullPath: '/r/$token/$'
+      preLoaderRoute: typeof RTokenSplatRouteImport
+      parentRoute: typeof RTokenRoute
+    }
+    '/_authenticated/app/admin': {
+      id: '/_authenticated/app/admin'
+      path: '/app/admin'
+      fullPath: '/app/admin'
+      preLoaderRoute: typeof AuthenticatedAppAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/app/admin/': {
+      id: '/_authenticated/app/admin/'
+      path: '/'
+      fullPath: '/app/admin/'
+      preLoaderRoute: typeof AuthenticatedAppAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAppAdminRoute
+    }
+    '/_authenticated/app/tools/$key/$': {
+      id: '/_authenticated/app/tools/$key/$'
+      path: '/app/tools/$key/$'
+      fullPath: '/app/tools/$key/$'
+      preLoaderRoute: typeof AuthenticatedAppToolsKeySplatRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedAppAdminRouteChildren {
+  AuthenticatedAppAdminIndexRoute: typeof AuthenticatedAppAdminIndexRoute
+}
+
+const AuthenticatedAppAdminRouteChildren: AuthenticatedAppAdminRouteChildren = {
+  AuthenticatedAppAdminIndexRoute: AuthenticatedAppAdminIndexRoute,
+}
+
+const AuthenticatedAppAdminRouteWithChildren =
+  AuthenticatedAppAdminRoute._addFileChildren(
+    AuthenticatedAppAdminRouteChildren,
+  )
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAppAdminRoute: typeof AuthenticatedAppAdminRouteWithChildren
+  AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
+  AuthenticatedAppToolsKeySplatRoute: typeof AuthenticatedAppToolsKeySplatRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAppAdminRoute: AuthenticatedAppAdminRouteWithChildren,
+  AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
+  AuthenticatedAppToolsKeySplatRoute: AuthenticatedAppToolsKeySplatRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
+interface RTokenRouteChildren {
+  RTokenSplatRoute: typeof RTokenSplatRoute
+  RTokenIndexRoute: typeof RTokenIndexRoute
+}
+
+const RTokenRouteChildren: RTokenRouteChildren = {
+  RTokenSplatRoute: RTokenSplatRoute,
+  RTokenIndexRoute: RTokenIndexRoute,
+}
+
+const RTokenRouteWithChildren =
+  RTokenRoute._addFileChildren(RTokenRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  LoginRoute: LoginRoute,
+  RTokenRoute: RTokenRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
