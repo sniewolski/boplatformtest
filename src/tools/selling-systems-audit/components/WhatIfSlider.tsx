@@ -1,10 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { GraduationCap, PlayCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { fmtInt, fmtMoneyExact, fmtPct } from "../lib/format";
-import { LESSONS, type LessonKey, type PeriodKey } from "../config";
-import type { FunnelResult, StageTransition } from "../lib/types";
 import { projectWhatIf } from "../lib/computeFunnel";
+import type { PeriodKey } from "../config";
+import type { FunnelResult, StageTransition } from "../lib/types";
 import type { CurrencyCode } from "@/lib/format-currency";
 
 export function WhatIfSlider({
@@ -13,14 +11,12 @@ export function WhatIfSlider({
   avgDealValue,
   period,
   currency,
-  onOpenLesson,
 }: {
   result: FunnelResult;
   transition: StageTransition;
   avgDealValue: number;
   period: PeriodKey;
   currency: CurrencyCode;
-  onOpenLesson: () => void;
 }) {
   const current = transition.currentRate ?? 0;
   const target = transition.targetRate;
@@ -101,25 +97,6 @@ export function WhatIfSlider({
         </span>{" "}
         <span className="text-ink-muted">a year</span>
       </p>
-
-      <div className="flex flex-wrap items-center gap-3">
-        <p className="text-ink-muted text-sm">
-          This is how you close the gap —&nbsp;
-        </p>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onOpenLesson}
-          className="shrink-0 w-fit active:scale-[0.97] transition-transform"
-        >
-          {LESSONS[transition.key as LessonKey]?.videoUrl ? (
-            <PlayCircle className="size-4 mr-2" aria-hidden />
-          ) : (
-            <GraduationCap className="size-4 mr-2" aria-hidden />
-          )}
-          Watch the training
-        </Button>
-      </div>
 
       <style>{`
         .ssa-slider {

@@ -236,7 +236,6 @@ export function ConversionReview() {
                 avgDealValue={analysed.avgDealValue}
                 period={analysed.period}
                 currency={currency!}
-                onOpenLesson={() => openLesson(selectedTransition.key)}
               />
             ) : (
               <div aria-hidden />
