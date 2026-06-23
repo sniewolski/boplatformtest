@@ -104,7 +104,7 @@ export function WhatIfSlider({
 
       <div className="flex flex-wrap items-center gap-3">
         <p className="text-ink-muted text-sm">
-          That's the prize — here's exactly how to close it.
+          This is how you close the gap —&nbsp;
         </p>
         <Button
           type="button"
