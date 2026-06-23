@@ -238,6 +238,7 @@ export function ConversionReview() {
       await submit.mutateAsync({ draft: currentDraft });
       lastSavedRef.current = JSON.stringify(currentDraft);
       setSaveState("saved");
+      setEditingAfterSubmit(false);
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : "Could not submit.");
     }
