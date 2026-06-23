@@ -209,7 +209,8 @@ export function ConversionReview() {
     return () => clearTimeout(t);
   }, [currentDraft, hydrated, userId, save, intake?.submitted_at]);
 
-  const isReceived = !!intake?.submitted_at && !intake.has_unsubmitted_changes;
+  const isReceived =
+    !!intake?.submitted_at && !intake.has_unsubmitted_changes && !editingAfterSubmit;
   const needsCurrency = !currencyLoading && !currency;
   const validation = useMemo(() => validateInputs(foundation), [foundation]);
 
