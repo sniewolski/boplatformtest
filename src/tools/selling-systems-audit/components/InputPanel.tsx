@@ -48,39 +48,64 @@ export function InputPanel({
       <Group label="Your business">
         <div className="flex flex-wrap gap-5 items-end">
           <Field label="Industry" className="min-w-[260px]" style={{ flex: 2 }}>
-            <select
+            <Select
               value={inputs.industry ?? ""}
-              onChange={(e) =>
+              onValueChange={(v) =>
                 onChange({
                   ...inputs,
-                  industry: (e.target.value || null) as IndustryKey | null,
+                  industry: (v || null) as IndustryKey | null,
                 })
               }
-              className="w-full h-10 px-3 rounded-xl border border-border bg-background text-ink text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
-              <option value="">Select industry…</option>
-              {INDUSTRIES.map((i) => (
-                <option key={i.key} value={i.key}>
-                  {i.label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="h-10 w-full rounded-xl border-border bg-background text-ink text-sm pr-3 focus:ring-2 focus:ring-ring motion-safe:transition-colors motion-safe:duration-150">
+                <SelectValue placeholder="Select industry…" />
+              </SelectTrigger>
+              <SelectContent
+                className="rounded-2xl border-border bg-popover text-popover-foreground shadow-md p-1"
+                style={{ animationDuration: "150ms", animationTimingFunction: "var(--ease-out)" }}
+              >
+                <SelectItem
+                  value=""
+                  className="rounded-lg pl-2 pr-8 py-1.5 text-sm text-ink data-[highlighted]:bg-[var(--red-tint)] data-[highlighted]:text-[var(--red)] data-[state=checked]:text-[var(--red)] focus:bg-[var(--red-tint)] focus:text-[var(--red)] motion-reduce:![animation-duration:0ms]"
+                >
+                  Select industry…
+                </SelectItem>
+                {INDUSTRIES.map((i) => (
+                  <SelectItem
+                    key={i.key}
+                    value={i.key}
+                    className="rounded-lg pl-2 pr-8 py-1.5 text-sm text-ink data-[highlighted]:bg-[var(--red-tint)] data-[highlighted]:text-[var(--red)] data-[state=checked]:text-[var(--red)] focus:bg-[var(--red-tint)] focus:text-[var(--red)] motion-reduce:![animation-duration:0ms]"
+                  >
+                    {i.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </Field>
 
           <Field label="Reporting period" className="min-w-[160px]" style={{ flex: 1 }}>
-            <select
+            <Select
               value={inputs.period}
-              onChange={(e) =>
-                onChange({ ...inputs, period: e.target.value as PeriodKey })
-              }
-              className="w-full h-10 px-3 rounded-xl border border-border bg-background text-ink text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              onValueChange={(v) => onChange({ ...inputs, period: v as PeriodKey })}
             >
-              {PERIODS.map((p) => (
-                <option key={p.key} value={p.key}>
-                  {p.label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="h-10 w-full rounded-xl border-border bg-background text-ink text-sm pr-3 focus:ring-2 focus:ring-ring motion-safe:transition-colors motion-safe:duration-150">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent
+                className="rounded-2xl border-border bg-popover text-popover-foreground shadow-md p-1"
+                style={{ animationDuration: "150ms", animationTimingFunction: "var(--ease-out)" }}
+              >
+                {PERIODS.map((p) => (
+                  <SelectItem
+                    key={p.key}
+                    value={p.key}
+                    className="rounded-lg pl-2 pr-8 py-1.5 text-sm text-ink data-[highlighted]:bg-[var(--red-tint)] data-[highlighted]:text-[var(--red)] data-[state=checked]:text-[var(--red)] focus:bg-[var(--red-tint)] focus:text-[var(--red)] motion-reduce:![animation-duration:0ms]"
+                  >
+                    {p.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </Field>
         </div>
       </Group>
