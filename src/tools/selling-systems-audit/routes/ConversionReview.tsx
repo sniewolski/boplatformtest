@@ -144,9 +144,12 @@ export function ConversionReview() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [editingAfterSubmit, setEditingAfterSubmit] = useState(false);
 
-  // Hydrate once from draft.
+  // Hydrate once from draft. Wait for userId — otherwise the query is
+  // disabled (isLoading=false, intake=undefined) and we'd lock hydration
+  // against an empty payload before the session resolves.
   useEffect(() => {
-    if (hydrated || isLoading) return;
+    if (hydrated || !userId || isLoading) return;
+
     const d = (intake?.draft_answers ?? {}) as AllAnswers;
     if (d.foundation) {
       setFoundation({
