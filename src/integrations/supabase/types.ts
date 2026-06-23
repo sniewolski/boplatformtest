@@ -195,30 +195,27 @@ export type Database = {
       }
       selling_systems_audit_conversion: {
         Row: {
-          avg_deal_value: number | null
-          created_at: string
-          industry: string | null
+          draft_answers: Json | null
+          has_unsubmitted_changes: boolean
           owner_id: string
-          period: string
-          stage_volumes: Json | null
+          submitted_answers: Json | null
+          submitted_at: string | null
           updated_at: string
         }
         Insert: {
-          avg_deal_value?: number | null
-          created_at?: string
-          industry?: string | null
+          draft_answers?: Json | null
+          has_unsubmitted_changes?: boolean
           owner_id: string
-          period?: string
-          stage_volumes?: Json | null
+          submitted_answers?: Json | null
+          submitted_at?: string | null
           updated_at?: string
         }
         Update: {
-          avg_deal_value?: number | null
-          created_at?: string
-          industry?: string | null
+          draft_answers?: Json | null
+          has_unsubmitted_changes?: boolean
           owner_id?: string
-          period?: string
-          stage_volumes?: Json | null
+          submitted_answers?: Json | null
+          submitted_at?: string | null
           updated_at?: string
         }
         Relationships: []
