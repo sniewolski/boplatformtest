@@ -129,10 +129,22 @@ export function UploadDialog({
           </div>
 
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="text-ink-muted">Title</span>
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-ink-muted">Title</span>
+              {title.length >= 60 && (
+                <span
+                  className="text-xs tabular-nums"
+                  style={{ color: title.length >= 80 ? "var(--red)" : "var(--ink-muted)" }}
+                >
+                  {title.length}/80
+                </span>
+              )}
+            </div>
             <input
+              type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              maxLength={80}
               placeholder="e.g. Cold opener — agency v3"
               className="h-10 px-3 rounded-xl border border-border bg-background text-ink text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
