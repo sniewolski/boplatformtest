@@ -98,25 +98,6 @@ export function WhatIfSlider({
         <span className="text-ink-muted">a year</span>
       </p>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <p className="text-ink-muted text-sm">
-          This is how you close the gap —&nbsp;
-        </p>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onOpenLesson}
-          className="shrink-0 w-fit active:scale-[0.97] transition-transform"
-        >
-          {LESSONS[transition.key as LessonKey]?.videoUrl ? (
-            <PlayCircle className="size-4 mr-2" aria-hidden />
-          ) : (
-            <GraduationCap className="size-4 mr-2" aria-hidden />
-          )}
-          Watch the training
-        </Button>
-      </div>
-
       <style>{`
         .ssa-slider {
           -webkit-appearance: none;
