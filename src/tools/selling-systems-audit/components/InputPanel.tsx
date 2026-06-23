@@ -64,12 +64,6 @@ export function InputPanel({
                 className="rounded-2xl border-border bg-popover text-popover-foreground shadow-md p-1"
                 style={{ animationDuration: "150ms", animationTimingFunction: "var(--ease-out)" }}
               >
-                <SelectItem
-                  value=""
-                  className="rounded-lg pl-2 pr-8 py-1.5 text-sm text-ink data-[highlighted]:bg-[var(--red-tint)] data-[highlighted]:text-[var(--red)] data-[state=checked]:text-[var(--red)] focus:bg-[var(--red-tint)] focus:text-[var(--red)] motion-reduce:![animation-duration:0ms]"
-                >
-                  Select industry…
-                </SelectItem>
                 {INDUSTRIES.map((i) => (
                   <SelectItem
                     key={i.key}
