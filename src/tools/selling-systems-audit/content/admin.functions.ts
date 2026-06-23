@@ -180,7 +180,7 @@ export const updateReviewNote = createServerFn({ method: "POST" })
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const patch: Record<string, unknown> = {};
+    const patch: { body?: string; status?: "draft" | "published" } = {};
     if (data.body !== undefined) patch.body = data.body;
     if (data.status !== undefined) patch.status = data.status;
     if (Object.keys(patch).length === 0) return { ok: true };
@@ -192,6 +192,7 @@ export const updateReviewNote = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
 
 export const deleteReviewNote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
