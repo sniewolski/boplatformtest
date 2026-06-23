@@ -142,6 +142,7 @@ export function ConversionReview() {
   const [hydrated, setHydrated] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [editingAfterSubmit, setEditingAfterSubmit] = useState(false);
 
   // Hydrate once from draft.
   useEffect(() => {
@@ -208,7 +209,8 @@ export function ConversionReview() {
     return () => clearTimeout(t);
   }, [currentDraft, hydrated, userId, save, intake?.submitted_at]);
 
-  const isReceived = !!intake?.submitted_at && !intake.has_unsubmitted_changes;
+  const isReceived =
+    !!intake?.submitted_at && !intake.has_unsubmitted_changes && !editingAfterSubmit;
   const needsCurrency = !currencyLoading && !currency;
   const validation = useMemo(() => validateInputs(foundation), [foundation]);
 
@@ -236,6 +238,7 @@ export function ConversionReview() {
       await submit.mutateAsync({ draft: currentDraft });
       lastSavedRef.current = JSON.stringify(currentDraft);
       setSaveState("saved");
+      setEditingAfterSubmit(false);
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : "Could not submit.");
     }
@@ -263,7 +266,12 @@ export function ConversionReview() {
       </header>
 
       {isReceived ? (
-        <ReceivedState onEdit={() => setStepIdx(0)} />
+        <ReceivedState
+          onEdit={() => {
+            setEditingAfterSubmit(true);
+            setStepIdx(0);
+          }}
+        />
       ) : (
         <>
           <ProgressBar currentIdx={stepIdx} onJump={setStepIdx} />
