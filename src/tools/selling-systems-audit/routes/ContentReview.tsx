@@ -36,8 +36,6 @@ export function ContentReview() {
     return map;
   }, [assets]);
 
-  const totalAssets = assets?.length ?? 0;
-  const reviewedCount = (assets ?? []).filter((a) => a.review_status === "reviewed").length;
 
   function openUpload(category?: string) {
     setUploadCategory(category);
@@ -112,13 +110,6 @@ export function ContentReview() {
                             <div className="flex items-center gap-2 text-ink-muted text-xs">
                               <Icon className="size-3.5" />
                               <span className="uppercase tracking-wider">{a.input_type}</span>
-                              <span className="ml-auto">
-                                {a.review_status === "reviewed" ? (
-                                  <span className="text-ink">Reviewed</span>
-                                ) : (
-                                  <span>Awaiting</span>
-                                )}
-                              </span>
                             </div>
                             <p className="text-ink text-sm font-medium line-clamp-2">{a.title}</p>
                             {a.body_text && (
