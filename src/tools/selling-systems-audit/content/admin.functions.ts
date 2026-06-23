@@ -224,8 +224,8 @@ export const generateAiDraftNote = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("LOVABLE_API_KEY not configured");
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) throw new Error("GEMINI_API_KEY not configured");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -248,58 +248,50 @@ export const generateAiDraftNote = createServerFn({ method: "POST" })
       CONTENT_FEEDBACK_STYLE,
     ].join("\n");
 
-    // Build user content blocks. Text/md → inline text. PDF/image → base64.
-    const userBlocks: any[] = [
-      { type: "text", text: `Title: ${asset.title}` },
-    ];
+    // Build Gemini "parts" array. Text/md → inline text. PDF/image → inlineData base64.
+    const parts: any[] = [{ text: `Title: ${asset.title}` }];
 
     if (asset.input_type === "text" || asset.input_type === "md") {
       const body =
         asset.body_text ??
         (asset.storage_path ? await downloadAsText(asset.storage_path) : "");
-      userBlocks.push({ type: "text", text: body || "(empty)" });
+      parts.push({ text: body || "(empty)" });
     } else if (asset.input_type === "pdf" && asset.storage_path) {
       const { base64 } = await downloadAsBase64(asset.storage_path);
-      userBlocks.push({
-        type: "file",
-        file: {
-          filename: asset.storage_path.split("/").pop() ?? "doc.pdf",
-          file_data: `data:application/pdf;base64,${base64}`,
-        },
+      parts.push({
+        inlineData: { mimeType: "application/pdf", data: base64 },
       });
     } else if (asset.input_type === "image" && asset.storage_path) {
       const { base64, contentType } = await downloadAsBase64(asset.storage_path);
-      userBlocks.push({
-        type: "image_url",
-        image_url: { url: `data:${contentType};base64,${base64}` },
+      parts.push({
+        inlineData: { mimeType: contentType || "image/png", data: base64 },
       });
     }
 
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    // Call Google Gemini API directly with the user's own API key.
+    const model = "gemini-2.5-flash";
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+    const res = await fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: system },
-          { role: "user", content: userBlocks },
-        ],
+        systemInstruction: { parts: [{ text: system }] },
+        contents: [{ role: "user", parts }],
       }),
     });
 
     if (!res.ok) {
       const text = await res.text();
-      if (res.status === 429) throw new Error("AI rate limit exceeded. Try again shortly.");
-      if (res.status === 402) throw new Error("AI credits exhausted. Top up workspace credits.");
+      if (res.status === 429) throw new Error("Gemini rate limit exceeded. Try again shortly.");
       throw new Error(`AI draft failed (${res.status}): ${text.slice(0, 300)}`);
     }
 
     const json: any = await res.json();
     const draftBody: string =
-      json?.choices?.[0]?.message?.content?.trim() ?? "";
+      (json?.candidates?.[0]?.content?.parts ?? [])
+        .map((p: any) => p?.text ?? "")
+        .join("")
+        .trim();
     if (!draftBody) throw new Error("AI returned an empty draft.");
 
     const { data: note, error: nErr } = await supabaseAdmin
