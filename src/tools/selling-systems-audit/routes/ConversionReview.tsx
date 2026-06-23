@@ -142,6 +142,7 @@ export function ConversionReview() {
   const [hydrated, setHydrated] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [editingAfterSubmit, setEditingAfterSubmit] = useState(false);
 
   // Hydrate once from draft.
   useEffect(() => {
