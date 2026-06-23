@@ -36,8 +36,6 @@ export function ContentReview() {
     return map;
   }, [assets]);
 
-  const totalAssets = assets?.length ?? 0;
-  const reviewedCount = (assets ?? []).filter((a) => a.review_status === "reviewed").length;
 
   function openUpload(category?: string) {
     setUploadCategory(category);
@@ -61,20 +59,16 @@ export function ContentReview() {
             Sales Content Review
           </h1>
           <p className="text-ink-muted text-base max-w-prose">
-            Upload the messages, scripts and assets your sales motion runs on.
-            Your coach reads them and publishes focused feedback you can act on.
+            Upload the messages, scripts and cadences your sales motion runs on,
+            organized by type. We'll go through them together on your call.
           </p>
-          {totalAssets > 0 && (
-            <p className="text-ink-muted text-sm tabular-nums">
-              {reviewedCount} of {totalAssets} reviewed
-            </p>
-          )}
         </div>
         <Button onClick={() => openUpload()} className="active:scale-[0.97] transition-transform">
           <Plus className="size-4 mr-1.5" />
           Add content
         </Button>
       </header>
+
 
       {isLoading ? (
         <p className="text-ink-muted text-sm">Loading…</p>
@@ -116,13 +110,6 @@ export function ContentReview() {
                             <div className="flex items-center gap-2 text-ink-muted text-xs">
                               <Icon className="size-3.5" />
                               <span className="uppercase tracking-wider">{a.input_type}</span>
-                              <span className="ml-auto">
-                                {a.review_status === "reviewed" ? (
-                                  <span className="text-ink">Reviewed</span>
-                                ) : (
-                                  <span>Awaiting</span>
-                                )}
-                              </span>
                             </div>
                             <p className="text-ink text-sm font-medium line-clamp-2">{a.title}</p>
                             {a.body_text && (

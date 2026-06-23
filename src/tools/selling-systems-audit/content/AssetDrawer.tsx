@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Trash2, ExternalLink, FileText, Image as ImageIcon, FileType } from "lucide-react";
-import { useAssetNotes, useDeleteAsset, getSignedAssetUrl, type ContentAsset } from "./useContentReview";
+import { useDeleteAsset, getSignedAssetUrl, type ContentAsset } from "./useContentReview";
 import { CONTENT_CATEGORIES } from "./config";
 
 function categoryLabel(key: string) {
@@ -29,7 +29,6 @@ export function AssetDrawer({
   onOpenChange: (next: boolean) => void;
   ownerId: string;
 }) {
-  const { data: notes } = useAssetNotes(asset?.id ?? null);
   const del = useDeleteAsset(ownerId);
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
 
@@ -42,11 +41,9 @@ export function AssetDrawer({
 
   if (!asset) return null;
 
-  const published = (notes ?? []).filter((n) => n.status === "published");
-
   async function handleDelete() {
     if (!asset) return;
-    if (!confirm("Delete this piece of content and its feedback? This cannot be undone.")) return;
+    if (!confirm("Delete this piece of content? This cannot be undone.")) return;
     try {
       await del.mutateAsync(asset);
       onOpenChange(false);
@@ -63,16 +60,12 @@ export function AssetDrawer({
             <span>{categoryLabel(asset.category)}</span>
             <span>·</span>
             <span>{relativeTime(asset.created_at)}</span>
-            <span>·</span>
-            <span className={asset.review_status === "reviewed" ? "text-ink" : ""}>
-              {asset.review_status === "reviewed" ? "Reviewed" : "Awaiting review"}
-            </span>
           </div>
           <SheetTitle className="text-xl" style={{ letterSpacing: "-0.01em" }}>
             {asset.title}
           </SheetTitle>
           <SheetDescription className="text-ink-muted text-sm">
-            Your content, plus any feedback your coach has published.
+            Your uploaded content.
           </SheetDescription>
         </SheetHeader>
 
@@ -85,26 +78,6 @@ export function AssetDrawer({
           ) : asset.storage_path ? (
             <AssetFilePreview asset={asset} signedUrl={signedUrl} />
           ) : null}
-        </section>
-
-        <section className="flex flex-col gap-3">
-          <h3 className="text-sm font-medium text-ink">
-            Coach feedback {published.length > 0 ? `(${published.length})` : ""}
-          </h3>
-          {published.length === 0 ? (
-            <p className="text-ink-muted text-sm">
-              No feedback yet. Your coach will review this and publish notes here.
-            </p>
-          ) : (
-            <ul className="flex flex-col gap-3">
-              {published.map((n) => (
-                <li key={n.id} className="border border-border rounded-lg p-4 flex flex-col gap-2">
-                  <div className="text-ink-muted text-xs">{relativeTime(n.created_at)}</div>
-                  <p className="whitespace-pre-wrap text-sm text-ink leading-relaxed">{n.body}</p>
-                </li>
-              ))}
-            </ul>
-          )}
         </section>
 
         <div className="mt-auto pt-4 border-t border-border flex justify-end">
