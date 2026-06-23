@@ -14,6 +14,89 @@ export type Database = {
   }
   public: {
     Tables: {
+      content_review_assets: {
+        Row: {
+          body_text: string | null
+          category: string
+          created_at: string
+          id: string
+          input_type: string
+          owner_id: string
+          review_status: string
+          storage_path: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body_text?: string | null
+          category: string
+          created_at?: string
+          id?: string
+          input_type: string
+          owner_id: string
+          review_status?: string
+          storage_path?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body_text?: string | null
+          category?: string
+          created_at?: string
+          id?: string
+          input_type?: string
+          owner_id?: string
+          review_status?: string
+          storage_path?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      content_review_notes: {
+        Row: {
+          asset_id: string
+          author_id: string | null
+          body: string
+          created_at: string
+          id: string
+          owner_id: string
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          asset_id: string
+          author_id?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          owner_id: string
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          asset_id?: string
+          author_id?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          owner_id?: string
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_review_notes_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "content_review_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       owner_settings: {
         Row: {
           currency: string | null
