@@ -102,7 +102,7 @@ export const AUDIT_SECTIONS = [
     key: "content",
     label: "Sales Content Review",
     description: "Audit of the messages, scripts and assets your sales motion runs on.",
-    status: "locked" as const,
+    status: "available" as const,
   },
   {
     key: "infrastructure",

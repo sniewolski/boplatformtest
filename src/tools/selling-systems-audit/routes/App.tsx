@@ -1,6 +1,7 @@
 import type { ToolComponentProps } from "@/tools/registry";
 import { AuditOverview } from "./AuditOverview";
 import { ConversionReview } from "./ConversionReview";
+import { ContentReview } from "./ContentReview";
 import { SectionLocked } from "./SectionLocked";
 import { AUDIT_SECTIONS } from "../config";
 
@@ -14,6 +15,7 @@ export function SellingSystemsAuditApp({ splat }: ToolComponentProps) {
 
   if (!segment) return <AuditOverview />;
   if (segment === "conversion") return <ConversionReview />;
+  if (segment === "content") return <ContentReview />;
 
   const locked = AUDIT_SECTIONS.find(
     (s) => s.key === segment && s.status === "locked",
