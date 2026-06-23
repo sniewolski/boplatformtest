@@ -237,9 +237,9 @@ function Field({
         {label}
       </span>
       {children}
-      {error && (
-        <span className="text-[var(--red)] text-xs leading-snug">{error}</span>
-      )}
+      <span className="min-h-[20px] text-[var(--red)] text-xs leading-snug">
+        {error ?? ""}
+      </span>
     </label>
   );
 }
