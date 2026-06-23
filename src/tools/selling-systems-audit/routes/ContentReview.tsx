@@ -60,7 +60,7 @@ export function ContentReview() {
           </h1>
           <p className="text-ink-muted text-base max-w-prose">
             Upload the messages, scripts and cadences your sales motion runs on,
-            organized by type. We'll go through them together on your call.
+            organized by type. We'll go through them together on our call.
           </p>
         </div>
         <Button onClick={() => openUpload()} className="active:scale-[0.97] transition-transform">
