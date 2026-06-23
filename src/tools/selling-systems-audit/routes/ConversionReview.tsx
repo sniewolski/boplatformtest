@@ -165,8 +165,8 @@ export function ConversionReview() {
     if (d.proposal) setProposal(d.proposal);
     if (d.closing) setClosing(d.closing);
     if (d.summary) setSummary(d.summary);
-    setHydrated(true);
-  }, [intake, isLoading, hydrated]);
+  }, [intake, isLoading, hydrated, userId]);
+
 
   // Assemble current draft.
   const currentDraft = useMemo<IntakeAnswers>(() => {
