@@ -266,7 +266,12 @@ export function ConversionReview() {
       </header>
 
       {isReceived ? (
-        <ReceivedState onEdit={() => setStepIdx(0)} />
+        <ReceivedState
+          onEdit={() => {
+            setEditingAfterSubmit(true);
+            setStepIdx(0);
+          }}
+        />
       ) : (
         <>
           <ProgressBar currentIdx={stepIdx} onJump={setStepIdx} />
