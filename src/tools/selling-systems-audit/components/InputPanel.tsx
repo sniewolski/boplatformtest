@@ -181,9 +181,6 @@ export function InputPanel({
   );
 }
 
-function periodLabel(period: PeriodKey): string {
-  return PERIODS.find((p) => p.key === period)?.label ?? "";
-}
 
 function Group({
   label,
