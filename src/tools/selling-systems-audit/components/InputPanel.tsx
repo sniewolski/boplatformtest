@@ -83,7 +83,7 @@ export function InputPanel({
         label="Your funnel"
         hint={`Volumes ${periodLabel(inputs.period)}`}
       >
-        <div className="flex flex-wrap items-end gap-x-3 gap-y-4">
+        <div className="flex flex-wrap items-start gap-x-3 gap-y-4">
           {STAGES.map((s, i) => {
             const err = showErrors
               ? validation.volumeErrors[s.key as StageKey]
@@ -124,8 +124,7 @@ export function InputPanel({
                 {i < STAGES.length - 1 && (
                   <div
                     aria-hidden
-                    className="hidden sm:flex items-center justify-center h-10 shrink-0 text-ink-muted/60"
-                    style={{ marginBottom: err ? "1.25rem" : 0 }}
+                    className="hidden sm:flex items-center justify-center h-10 mt-6 shrink-0 text-ink-muted/60"
                   >
                     <ArrowRight className="size-4" />
                   </div>
