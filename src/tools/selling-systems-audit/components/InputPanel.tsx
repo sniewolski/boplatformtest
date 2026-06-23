@@ -1,6 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import {
   INDUSTRIES,
+  PERIODS,
   STAGES,
   type IndustryKey,
   type PeriodKey,
