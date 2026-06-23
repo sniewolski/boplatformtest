@@ -102,6 +102,25 @@ export function WhatIfSlider({
         <span className="text-ink-muted">a year</span>
       </p>
 
+      <div className="flex flex-col gap-3">
+        <p className="text-ink-muted text-sm">
+          That's the prize — here's exactly how to close it.
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onOpenLesson}
+          className="w-fit active:scale-[0.97] transition-transform"
+        >
+          {LESSONS[transition.key as LessonKey]?.videoUrl ? (
+            <PlayCircle className="size-4 mr-2" aria-hidden />
+          ) : (
+            <GraduationCap className="size-4 mr-2" aria-hidden />
+          )}
+          Watch the training
+        </Button>
+      </div>
+
       <style>{`
         .ssa-slider {
           -webkit-appearance: none;
