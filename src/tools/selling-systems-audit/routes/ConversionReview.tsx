@@ -5,7 +5,7 @@ import { useSession } from "@/core/auth/useSession";
 import { Button } from "@/components/ui/button";
 import { useCurrency } from "@/core/settings/useCurrency";
 import { CurrencySelect } from "@/core/settings/CurrencySelect";
-import { useConversionReview, useSaveConversionReview } from "../data/useConversionReview";
+import { useConversionIntake, useSaveDraft } from "../data/useConversionReview";
 import { computeFunnel } from "../lib/computeFunnel";
 import { validateInputs } from "../lib/validation";
 import { InputPanel } from "../components/InputPanel";
@@ -28,8 +28,8 @@ const DEFAULT_INPUTS: ConversionInputs = {
 export function ConversionReview() {
   const { session } = useSession();
   const userId = session?.user.id;
-  const { data: saved, isLoading } = useConversionReview(userId);
-  const save = useSaveConversionReview(userId);
+  const { data: intake, isLoading } = useConversionIntake(userId);
+  const save = useSaveDraft(userId);
   const { currency, setCurrency, isLoading: currencyLoading } = useCurrency();
 
   const [inputs, setInputs] = useState<ConversionInputs>(DEFAULT_INPUTS);
@@ -45,20 +45,29 @@ export function ConversionReview() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [savedNotice, setSavedNotice] = useState<string | null>(null);
 
-  // Hydrate from saved row once.
+  // Hydrate from the saved draft once. Pass A: the Foundation step's answers
+  // live under `draft_answers.foundation`. Other stages are added in Pass C.
   useEffect(() => {
     if (hydrated) return;
     if (isLoading) return;
-    if (saved) {
+    const f = (intake?.draft_answers?.foundation ?? null) as
+      | {
+          industry?: IndustryKey | null;
+          period?: PeriodKey;
+          avgDealValue?: number | null;
+          volumes?: Partial<StageVolumes>;
+        }
+      | null;
+    if (f) {
       setInputs({
-        industry: (saved.industry as IndustryKey | null) ?? null,
-        period: (saved.period as PeriodKey) ?? "month",
-        avgDealValue: saved.avg_deal_value != null ? Number(saved.avg_deal_value) : null,
-        volumes: (saved.stage_volumes ?? {}) as Partial<StageVolumes>,
+        industry: f.industry ?? null,
+        period: f.period ?? "month",
+        avgDealValue: f.avgDealValue != null ? Number(f.avgDealValue) : null,
+        volumes: (f.volumes ?? {}) as Partial<StageVolumes>,
       });
     }
     setHydrated(true);
-  }, [saved, isLoading, hydrated]);
+  }, [intake, isLoading, hydrated]);
 
   const validation = useMemo(() => validateInputs(inputs), [inputs]);
 
@@ -107,11 +116,18 @@ export function ConversionReview() {
   async function handleSave() {
     setSavedNotice(null);
     try {
+      const nextDraft = {
+        ...(intake?.draft_answers ?? {}),
+        foundation: {
+          industry: inputs.industry,
+          period: inputs.period,
+          avgDealValue: inputs.avgDealValue,
+          volumes: inputs.volumes,
+        },
+      };
       await save.mutateAsync({
-        industry: inputs.industry,
-        period: inputs.period,
-        avgDealValue: inputs.avgDealValue,
-        volumes: inputs.volumes,
+        draft: nextDraft,
+        hasSubmitted: !!intake?.submitted_at,
       });
       setSavedNotice("Saved.");
       setTimeout(() => setSavedNotice(null), 2000);

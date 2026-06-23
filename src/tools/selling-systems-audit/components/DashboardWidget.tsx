@@ -1,35 +1,19 @@
 import { Link } from "@tanstack/react-router";
 import { useSession } from "@/core/auth/useSession";
-import { useCurrency } from "@/core/settings/useCurrency";
-import { useConversionReview } from "../data/useConversionReview";
-import { computeFunnel } from "../lib/computeFunnel";
-import { fmtMoney } from "../lib/format";
-import type { IndustryKey, PeriodKey } from "../config";
-import type { StageVolumes } from "../lib/types";
+import { useConversionIntake } from "../data/useConversionReview";
 
 export function DashboardWidget() {
   const { session } = useSession();
   const userId = session?.user.id;
-  const { data: saved } = useConversionReview(userId);
-  const { currency } = useCurrency();
+  const { data: intake } = useConversionIntake(userId);
 
   let summary = "Not started — 0 of 4 reviews complete.";
-  if (saved && saved.industry && saved.avg_deal_value && saved.stage_volumes) {
-    const result = computeFunnel({
-      industry: saved.industry as IndustryKey,
-      period: saved.period as PeriodKey,
-      avgDealValue: Number(saved.avg_deal_value),
-      volumes: saved.stage_volumes as Partial<StageVolumes>,
-    });
-    if (result.valid && result.rankedBottlenecks.length > 0) {
-      const worst = result.rankedBottlenecks[0];
-      const moneyPart = currency
-        ? ` · biggest leak ~${fmtMoney(worst.recoverableAnnualRevenue, currency)}/yr`
-        : " · choose a currency to see figures";
-      summary = `1 of 4 reviews complete${moneyPart}`;
-    } else if (result.valid) {
-      summary = "1 of 4 reviews complete · no leaks against target.";
-    }
+  if (intake?.submitted_at) {
+    summary = intake.has_unsubmitted_changes
+      ? "Submitted · edits pending re-submission."
+      : "Submitted — your coach has what they need.";
+  } else if (intake?.draft_answers) {
+    summary = "Draft in progress.";
   }
 
   return (

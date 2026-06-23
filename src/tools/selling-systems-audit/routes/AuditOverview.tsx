@@ -1,47 +1,29 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Lock } from "lucide-react";
 import { useSession } from "@/core/auth/useSession";
-import { useCurrency } from "@/core/settings/useCurrency";
 import { AUDIT_SECTIONS } from "../config";
-import { useConversionReview } from "../data/useConversionReview";
-import { computeFunnel } from "../lib/computeFunnel";
-import type { IndustryKey, PeriodKey } from "../config";
-import type { StageVolumes } from "../lib/types";
-import { fmtMoney } from "../lib/format";
+import { useConversionIntake } from "../data/useConversionReview";
 
 export function AuditOverview() {
   const { session } = useSession();
   const userId = session?.user.id;
-  const { data: saved } = useConversionReview(userId);
-  const { currency } = useCurrency();
+  const { data: intake } = useConversionIntake(userId);
 
-  const conversionDone =
-    !!saved &&
-    !!saved.industry &&
-    !!saved.avg_deal_value &&
-    !!saved.stage_volumes &&
-    Object.keys(saved.stage_volumes).length > 0;
+  const conversionSubmitted = !!intake?.submitted_at;
+  const conversionHasDraft = !!intake?.draft_answers;
 
-  let conversionHeadline: string | null = null;
-  if (conversionDone) {
-    const result = computeFunnel({
-      industry: saved!.industry as IndustryKey,
-      period: saved!.period as PeriodKey,
-      avgDealValue: Number(saved!.avg_deal_value),
-      volumes: (saved!.stage_volumes ?? {}) as Partial<StageVolumes>,
-    });
-    if (result.valid && result.rankedBottlenecks.length > 0) {
-      const worst = result.rankedBottlenecks[0];
-      const moneyPart = currency
-        ? ` · ~${fmtMoney(worst.recoverableAnnualRevenue, currency)}/yr recoverable`
-        : "";
-      conversionHeadline = `Biggest leak: ${worst.fromLabel} → ${worst.toLabel}${moneyPart}`;
-    } else if (result.valid) {
-      conversionHeadline = "No leaks — hitting the standard across the funnel.";
-    }
+  let conversionStatus: string;
+  if (conversionSubmitted) {
+    conversionStatus = intake!.has_unsubmitted_changes
+      ? "Submitted · edits pending re-submission"
+      : "Submitted — your coach has what they need";
+  } else if (conversionHasDraft) {
+    conversionStatus = "Draft in progress";
+  } else {
+    conversionStatus = "Not started";
   }
 
-  const completed = conversionDone ? 1 : 0;
+  const completed = conversionSubmitted ? 1 : 0;
   const total = AUDIT_SECTIONS.length;
 
   return (
@@ -79,13 +61,8 @@ export function AuditOverview() {
                   )}
                 </div>
                 <span className="text-ink-muted text-sm">{section.description}</span>
-                {isConversion && conversionHeadline && (
-                  <span className="text-ink text-sm mt-1 tabular-nums">
-                    {conversionHeadline}
-                  </span>
-                )}
-                {isConversion && !conversionHeadline && (
-                  <span className="text-ink-muted text-sm mt-1">Not started</span>
+                {isConversion && (
+                  <span className="text-ink-muted text-sm mt-1">{conversionStatus}</span>
                 )}
                 {isLocked && (
                   <span className="text-ink-muted text-xs mt-1">Available soon</span>
@@ -126,10 +103,6 @@ export function AuditOverview() {
           );
         })}
       </ol>
-
-      {currency && (
-        <p className="text-ink-muted text-xs">Figures are shown in {currency}.</p>
-      )}
     </div>
   );
 }
