@@ -189,7 +189,7 @@ export function MaturitySpectrum<K extends string>({
   onChange: (k: K) => void;
 }) {
   return (
-    <div className="flex w-full rounded-xl border border-border overflow-hidden">
+    <div className="w-fit inline-flex items-center rounded-xl border border-border overflow-hidden">
       {steps.map((s) => {
         const on = value === s.key;
         return (
@@ -198,7 +198,7 @@ export function MaturitySpectrum<K extends string>({
             type="button"
             onClick={() => onChange(s.key)}
             aria-pressed={on}
-            className={`flex-1 h-11 text-sm transition-colors border-r border-border last:border-r-0 ${
+            className={`flex-none h-11 px-4 text-sm whitespace-nowrap transition-colors border-r border-border last:border-r-0 ${
               on
                 ? "bg-ink text-background"
                 : "bg-background text-ink hover:bg-[var(--surface-raised)]"
@@ -212,7 +212,8 @@ export function MaturitySpectrum<K extends string>({
   );
 }
 
-// ───────── Segmented (single choice, equal-width) ─────────
+
+// ───────── Segmented (single choice, hugs content) ─────────
 
 export function Segmented<K extends string>({
   options,
@@ -224,7 +225,7 @@ export function Segmented<K extends string>({
   onChange: (k: K) => void;
 }) {
   return (
-    <div className="inline-flex rounded-xl border border-border overflow-hidden">
+    <div className="w-fit inline-flex items-center rounded-xl border border-border overflow-hidden">
       {options.map((o) => {
         const on = value === o.key;
         return (
@@ -233,7 +234,7 @@ export function Segmented<K extends string>({
             type="button"
             onClick={() => onChange(o.key)}
             aria-pressed={on}
-            className={`h-10 px-4 text-sm transition-colors border-r border-border last:border-r-0 ${
+            className={`flex-none h-10 px-4 text-sm whitespace-nowrap transition-colors border-r border-border last:border-r-0 ${
               on
                 ? "bg-ink text-background"
                 : "bg-background text-ink hover:bg-[var(--surface-raised)]"
@@ -246,6 +247,7 @@ export function Segmented<K extends string>({
     </div>
   );
 }
+
 
 // ───────── Yes/No toggle ─────────
 
