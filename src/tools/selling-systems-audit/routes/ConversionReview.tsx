@@ -13,7 +13,6 @@ import { FunnelDiagram } from "../components/FunnelDiagram";
 import { BottleneckList } from "../components/BottleneckList";
 import { WhatIfSlider } from "../components/WhatIfSlider";
 import { CoachingDrawer } from "../components/CoachingDrawer";
-import { EmptyState } from "../components/EmptyState";
 import type { ConversionInputs, StageTransition } from "../lib/types";
 import type { IndustryKey, LessonKey, PeriodKey } from "../config";
 import type { StageVolumes } from "../lib/types";
@@ -35,6 +34,12 @@ export function ConversionReview() {
 
   const [inputs, setInputs] = useState<ConversionInputs>(DEFAULT_INPUTS);
   const [hydrated, setHydrated] = useState(false);
+  // Inputs snapshot of the last successful Analyse press — the only source
+  // the funnel computes from. Until the owner presses Analyse, this is null
+  // and no results render.
+  const [analysed, setAnalysed] = useState<ConversionInputs | null>(null);
+  const [attempted, setAttempted] = useState(false);
+  const [animationKey, setAnimationKey] = useState(0);
   const [selectedKey, setSelectedKey] = useState<StageTransition["key"] | null>(null);
   const [drawerKey, setDrawerKey] = useState<LessonKey | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -55,19 +60,15 @@ export function ConversionReview() {
     setHydrated(true);
   }, [saved, isLoading, hydrated]);
 
-  // Live validation runs on every keystroke; field-level errors render
-  // inline and block result computation.
   const validation = useMemo(() => validateInputs(inputs), [inputs]);
 
-  // Only compute the funnel when inputs are structurally valid — never
-  // render leak math against garbage data.
+  // Compute strictly from the analysed snapshot. Editing fields does not
+  // recompute on its own — the owner must press Analyse again.
   const result = useMemo(
-    () => (validation.hasErrors ? null : computeFunnel(inputs)),
-    [inputs, validation.hasErrors],
+    () => (analysed ? computeFunnel(analysed) : null),
+    [analysed],
   );
 
-  // When result becomes valid (or worst bottleneck changes), default the
-  // selected bottleneck to the worst leak.
   useEffect(() => {
     if (!result?.valid) return;
     if (result.rankedBottlenecks.length === 0) {
@@ -92,6 +93,17 @@ export function ConversionReview() {
     setDrawerOpen(true);
   }
 
+  function handleAnalyse() {
+    setAttempted(true);
+    if (validation.hasErrors || !validation.valid) {
+      // Hide stale results until inputs are consistent and complete.
+      setAnalysed(null);
+      return;
+    }
+    setAnalysed(inputs);
+    setAnimationKey((k) => k + 1);
+  }
+
   async function handleSave() {
     setSavedNotice(null);
     try {
@@ -113,13 +125,15 @@ export function ConversionReview() {
       ? result.rankedBottlenecks[0].recoverableAnnualRevenue
       : 0;
 
-  // Money outputs are gated behind a chosen currency. We still render inputs
-  // (industry, period, volumes) so the owner can keep entering data; only the
-  // result panes that show money wait for currency.
   const needsCurrency = !currencyLoading && !currency;
+  // Show errors only after the first Analyse press; then live as the owner
+  // corrects them.
+  const showErrors = attempted && validation.hasErrors;
+  const showIncompleteNotice =
+    attempted && !validation.hasErrors && !validation.valid;
 
   return (
-    <div className="app-canvas py-12 flex flex-col gap-10">
+    <div className="app-content py-12 flex flex-col gap-10">
       <Link
         to="/app/tools/$key/$"
         params={{ key: "selling-systems-audit", _splat: "" }}
@@ -143,29 +157,48 @@ export function ConversionReview() {
         inputs={inputs}
         onChange={setInputs}
         validation={validation}
+        showErrors={attempted}
         currency={currency}
         onCurrencyChange={(next) => void setCurrency(next)}
       />
 
-      {result?.notes && result.notes.length > 0 && (
-        <div className="flex flex-col gap-1.5 text-sm text-ink-muted">
-          {result.notes.map((n, i) => (
-            <p key={i}>· {n}</p>
-          ))}
-        </div>
-      )}
+      <div className="flex flex-wrap items-center gap-4">
+        <Button
+          onClick={handleAnalyse}
+          className="active:scale-[0.97] transition-transform"
+        >
+          Analyse funnel
+        </Button>
+        {showErrors && (
+          <span className="inline-flex items-center gap-2 text-[var(--red)] text-sm">
+            <AlertCircle className="size-4" aria-hidden />
+            Resolve the highlighted {validation.errorCount === 1 ? "field" : "fields"} to analyse.
+          </span>
+        )}
+        {showIncompleteNotice && (
+          <span className="text-ink-muted text-sm">
+            Fill in industry, deal value and all four stage volumes to analyse.
+          </span>
+        )}
+      </div>
 
-      {validation.hasErrors ? (
-        <ErrorsBlocker count={validation.errorCount} />
-      ) : needsCurrency ? (
+      {needsCurrency && (
         <CurrencyGate
           currency={currency}
           onChange={(next) => void setCurrency(next)}
         />
-      ) : !result?.valid ? (
-        <EmptyState reason={result?.reason} />
-      ) : (
+      )}
+
+      {result?.valid && !needsCurrency && (
         <>
+          {result.notes && result.notes.length > 0 && (
+            <div className="flex flex-col gap-1.5 text-sm text-ink-muted">
+              {result.notes.map((n, i) => (
+                <p key={i}>· {n}</p>
+              ))}
+            </div>
+          )}
+
           <section className="flex flex-col gap-6">
             <div className="flex items-baseline justify-between gap-6 flex-wrap">
               <h2 className="text-lg font-medium" style={{ letterSpacing: "-0.01em" }}>
@@ -183,7 +216,7 @@ export function ConversionReview() {
             </div>
             <FunnelDiagram
               result={result}
-              animationKey={`${inputs.industry ?? ""}-${result.valid}`}
+              animationKey={`analyse-${animationKey}`}
             />
           </section>
 
@@ -196,29 +229,34 @@ export function ConversionReview() {
               currency={currency!}
             />
 
-            {selectedTransition && selectedTransition.isBottleneck && inputs.avgDealValue ? (
+            {selectedTransition && selectedTransition.isBottleneck && analysed?.avgDealValue ? (
               <WhatIfSlider
                 result={result}
                 transition={selectedTransition}
-                avgDealValue={inputs.avgDealValue}
-                period={inputs.period}
+                avgDealValue={analysed.avgDealValue}
+                period={analysed.period}
                 currency={currency!}
               />
             ) : (
               <div aria-hidden />
             )}
+
+            <div className="lg:col-span-2 flex items-center gap-4 pt-4 border-t border-border">
+              <Button
+                variant="outline"
+                onClick={handleSave}
+                disabled={save.isPending}
+                className="active:scale-[0.97] transition-transform"
+              >
+                {save.isPending ? "Saving…" : "Save review"}
+              </Button>
+              {savedNotice && (
+                <span className="text-ink-muted text-sm">{savedNotice}</span>
+              )}
+            </div>
           </div>
         </>
       )}
-
-      <div className="flex items-center gap-4 pt-4 border-t border-border">
-        <Button onClick={handleSave} disabled={save.isPending}>
-          {save.isPending ? "Saving…" : "Save review"}
-        </Button>
-        {savedNotice && (
-          <span className="text-ink-muted text-sm">{savedNotice}</span>
-        )}
-      </div>
 
       <CoachingDrawer
         open={drawerOpen}
@@ -226,23 +264,6 @@ export function ConversionReview() {
         lessonKey={drawerKey}
       />
     </div>
-  );
-}
-
-function ErrorsBlocker({ count }: { count: number }) {
-  return (
-    <section className="flex items-start gap-3 border border-[var(--red)]/40 bg-[var(--red-tint)] rounded-xl px-5 py-4">
-      <AlertCircle className="size-4 text-[var(--red)] mt-0.5 shrink-0" aria-hidden />
-      <div className="flex flex-col gap-0.5">
-        <p className="text-ink text-sm font-medium">
-          Resolve the highlighted {count === 1 ? "field" : "fields"} to see your results
-        </p>
-        <p className="text-ink-muted text-sm">
-          Your funnel, leaks and revenue projection appear once the numbers are
-          consistent.
-        </p>
-      </div>
-    </section>
   );
 }
 
