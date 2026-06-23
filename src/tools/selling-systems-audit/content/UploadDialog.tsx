@@ -134,9 +134,9 @@ export function UploadDialog({
               {title.length >= 60 && (
                 <span
                   className="text-xs tabular-nums"
-                  style={{ color: title.length >= 80 ? "var(--red)" : "var(--ink-muted)" }}
+                  style={{ color: title.length >= 120 ? "var(--red)" : "var(--ink-muted)" }}
                 >
-                  {title.length}/80
+                  {title.length}/120
                 </span>
               )}
             </div>
@@ -144,7 +144,7 @@ export function UploadDialog({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              maxLength={80}
+              maxLength={120}
               placeholder="e.g. Cold opener — agency v3"
               className="h-10 px-3 rounded-xl border border-border bg-background text-ink text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
