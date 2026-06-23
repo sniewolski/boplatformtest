@@ -79,10 +79,7 @@ export function InputPanel({
       </Group>
 
       {/* Group 2 — Your funnel */}
-      <Group
-        label="Your funnel"
-        hint={`Volumes ${periodLabel(inputs.period)}`}
-      >
+      <Group label="Your funnel">
         <div className="flex flex-wrap items-start gap-x-3 gap-y-4">
           {STAGES.map((s, i) => {
             const err = showErrors
@@ -184,9 +181,6 @@ export function InputPanel({
   );
 }
 
-function periodLabel(period: PeriodKey): string {
-  return PERIODS.find((p) => p.key === period)?.label ?? "";
-}
 
 function Group({
   label,
