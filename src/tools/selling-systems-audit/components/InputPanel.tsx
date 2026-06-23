@@ -124,8 +124,7 @@ export function InputPanel({
                 {i < STAGES.length - 1 && (
                   <div
                     aria-hidden
-                    className="hidden sm:flex items-center justify-center h-10 shrink-0 text-ink-muted/60"
-                    style={{ marginBottom: err ? "1.25rem" : 0 }}
+                    className="hidden sm:flex items-center justify-center h-10 mt-6 shrink-0 text-ink-muted/60"
                   >
                     <ArrowRight className="size-4" />
                   </div>
