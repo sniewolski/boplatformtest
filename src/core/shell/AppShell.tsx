@@ -47,8 +47,8 @@ export function AppShell({
   }
 
   return (
-    <div className="min-h-screen flex bg-background">
-      <aside className="w-64 shrink-0 border-r border-border bg-[var(--surface-raised)] flex flex-col">
+    <div className="flex bg-background" style={{ height: "100dvh", overflow: "hidden" }}>
+      <aside className="w-64 shrink-0 border-r border-border bg-[var(--surface-raised)] flex flex-col h-full">
         <div className="px-6 py-6">
           <Link
             to="/app"
@@ -59,7 +59,7 @@ export function AppShell({
           </Link>
         </div>
 
-        <nav className="flex-1 px-3 flex flex-col gap-1">
+        <nav className="flex-1 min-h-0 overflow-y-auto px-3 flex flex-col gap-1">
           {items.map((item) => (
             <Link
               key={item.to}
@@ -101,7 +101,7 @@ export function AppShell({
         </div>
       </aside>
 
-      <main className="flex-1 min-w-0">{children}</main>
+      <main className="flex-1 min-w-0 min-h-0 h-full overflow-y-auto">{children}</main>
     </div>
   );
 }
