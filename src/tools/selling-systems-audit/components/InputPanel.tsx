@@ -83,7 +83,7 @@ export function InputPanel({
         label="Your funnel"
         hint={`Volumes ${periodLabel(inputs.period)}`}
       >
-        <div className="flex flex-wrap items-end gap-x-3 gap-y-4">
+        <div className="flex flex-wrap items-start gap-x-3 gap-y-4">
           {STAGES.map((s, i) => {
             const err = showErrors
               ? validation.volumeErrors[s.key as StageKey]
