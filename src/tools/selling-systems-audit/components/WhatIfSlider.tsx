@@ -13,12 +13,14 @@ export function WhatIfSlider({
   avgDealValue,
   period,
   currency,
+  onOpenLesson,
 }: {
   result: FunnelResult;
   transition: StageTransition;
   avgDealValue: number;
   period: PeriodKey;
   currency: CurrencyCode;
+  onOpenLesson: () => void;
 }) {
   const current = transition.currentRate ?? 0;
   const target = transition.targetRate;
