@@ -317,7 +317,7 @@ export function ConversionReview() {
         <>
           <ProgressBar currentIdx={stepIdx} onJump={setStepIdx} />
 
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-8" onBlurCapture={flushSave}>
             {step.key === "foundation" && (
               <FoundationStep
                 inputs={foundation}
@@ -361,12 +361,17 @@ export function ConversionReview() {
           <StepNav
             currentIdx={stepIdx}
             total={INTAKE_STEPS.length}
-            onPrev={() => setStepIdx((i) => Math.max(0, i - 1))}
-            onNext={() =>
-              setStepIdx((i) => Math.min(INTAKE_STEPS.length - 1, i + 1))
-            }
+            onPrev={() => {
+              flushSave();
+              setStepIdx((i) => Math.max(0, i - 1));
+            }}
+            onNext={() => {
+              flushSave();
+              setStepIdx((i) => Math.min(INTAKE_STEPS.length - 1, i + 1));
+            }}
             saveState={saveState}
           />
+
         </>
       )}
     </div>
