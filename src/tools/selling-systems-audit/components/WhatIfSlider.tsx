@@ -102,7 +102,7 @@ export function WhatIfSlider({
         <span className="text-ink-muted">a year</span>
       </p>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <p className="text-ink-muted text-sm">
           That's the prize — here's exactly how to close it.
         </p>
@@ -110,7 +110,7 @@ export function WhatIfSlider({
           type="button"
           variant="outline"
           onClick={onOpenLesson}
-          className="w-fit active:scale-[0.97] transition-transform"
+          className="shrink-0 w-fit active:scale-[0.97] transition-transform"
         >
           {LESSONS[transition.key as LessonKey]?.videoUrl ? (
             <PlayCircle className="size-4 mr-2" aria-hidden />
