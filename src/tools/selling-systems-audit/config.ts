@@ -119,3 +119,20 @@ export const AUDIT_SECTIONS = [
 ] as const;
 
 export type AuditSectionKey = (typeof AUDIT_SECTIONS)[number]["key"];
+
+/**
+ * Conversion intake is a stepped flow: Foundation → five selling-stage steps
+ * → Summary. Each step has its own answers blob under `draft_answers[key]`.
+ * Pass B scaffolds the shell; Pass C fills the per-step question UIs.
+ */
+export const INTAKE_STEPS = [
+  { key: "foundation", label: "Foundation", short: "Foundation" },
+  { key: "leadGeneration", label: "Lead Generation", short: "Leads" },
+  { key: "prospecting", label: "Prospecting", short: "Prospecting" },
+  { key: "discovery", label: "Discovery", short: "Discovery" },
+  { key: "proposal", label: "Proposal", short: "Proposal" },
+  { key: "closing", label: "Closing", short: "Closing" },
+  { key: "summary", label: "Review & submit", short: "Submit" },
+] as const;
+
+export type IntakeStepKey = (typeof INTAKE_STEPS)[number]["key"];
