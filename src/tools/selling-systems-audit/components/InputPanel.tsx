@@ -61,14 +61,14 @@ export function InputPanel({
                 <SelectValue placeholder="Select industry…" />
               </SelectTrigger>
               <SelectContent
-                className="rounded-2xl border-border bg-popover text-popover-foreground shadow-md p-1"
+                className="rounded-2xl border-border bg-popover text-popover-foreground shadow-md p-1 motion-reduce:![animation-duration:0ms]"
                 style={{ animationDuration: "150ms", animationTimingFunction: "var(--ease-out)" }}
               >
                 {INDUSTRIES.map((i) => (
                   <SelectItem
                     key={i.key}
                     value={i.key}
-                    className="rounded-lg pl-2 pr-8 py-1.5 text-sm text-ink data-[highlighted]:bg-[var(--red-tint)] data-[highlighted]:text-[var(--red)] data-[state=checked]:text-[var(--red)] focus:bg-[var(--red-tint)] focus:text-[var(--red)] motion-reduce:![animation-duration:0ms]"
+                    className="rounded-lg pl-2 pr-8 py-1.5 text-sm text-ink data-[highlighted]:bg-[var(--red-tint)] data-[highlighted]:text-[var(--red)] data-[state=checked]:text-[var(--red)] focus:bg-[var(--red-tint)] focus:text-[var(--red)]"
                   >
                     {i.label}
                   </SelectItem>
