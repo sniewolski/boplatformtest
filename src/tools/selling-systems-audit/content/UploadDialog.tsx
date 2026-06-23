@@ -105,18 +105,28 @@ export function UploadDialog({
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
-          <label className="flex flex-col gap-1.5 text-sm">
-            <span className="text-ink-muted">Category</span>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="h-10 px-3 rounded-xl border border-border bg-background text-ink text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              {CONTENT_CATEGORIES.map((c) => (
-                <option key={c.key} value={c.key}>{c.label}</option>
-              ))}
-            </select>
-          </label>
+          <div className="flex flex-col gap-1.5 text-sm">
+            <label htmlFor="upload-category" className="text-ink-muted">Category</label>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger
+                id="upload-category"
+                className="h-10 rounded-xl border-border bg-background text-ink text-sm pr-3 focus:ring-2 focus:ring-ring motion-safe:transition-colors motion-safe:duration-150"
+              >
+                <SelectValue placeholder="Select a category" />
+              </SelectTrigger>
+              <SelectContent className="rounded-2xl border-border bg-popover text-popover-foreground shadow-md p-1">
+                {CONTENT_CATEGORIES.map((c) => (
+                  <SelectItem
+                    key={c.key}
+                    value={c.key}
+                    className="rounded-lg pl-2 pr-8 py-1.5 text-sm text-ink data-[highlighted]:bg-[var(--red-tint)] data-[highlighted]:text-[var(--red)] data-[state=checked]:text-[var(--red)] focus:bg-[var(--red-tint)] focus:text-[var(--red)]"
+                  >
+                    {c.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="text-ink-muted">Title</span>
