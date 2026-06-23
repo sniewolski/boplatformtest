@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Check } from "lucide-react";
 import { useSession } from "@/core/auth/useSession";
@@ -183,8 +183,47 @@ export function ConversionReview() {
     } as unknown as IntakeAnswers;
   }, [foundation, leadGen, prospecting, discovery, proposal, closing, summary]);
 
-  // Debounced autosave.
+  // Refs the flush path reads — must stay current so cleanup doesn't write
+  // a stale closure of the form state.
   const lastSavedRef = useRef<string | null>(null);
+  const latestDraftRef = useRef<IntakeAnswers>(currentDraft);
+  const dirtyRef = useRef(false);
+  const hasSubmittedRef = useRef(!!intake?.submitted_at);
+  const saveMutateRef = useRef(save.mutate);
+
+  useEffect(() => {
+    latestDraftRef.current = currentDraft;
+  }, [currentDraft]);
+  useEffect(() => {
+    saveMutateRef.current = save.mutate;
+  }, [save.mutate]);
+  useEffect(() => {
+    hasSubmittedRef.current = !!intake?.submitted_at;
+  }, [intake?.submitted_at]);
+
+  // Immediate save from refs. Safe to call from cleanup / event handlers —
+  // never closes over stale state. No-op when not dirty.
+  const flushSave = useCallback(() => {
+    if (!dirtyRef.current || !userId) return;
+    const draft = latestDraftRef.current;
+    const serialized = JSON.stringify(draft);
+    dirtyRef.current = false;
+    lastSavedRef.current = serialized;
+    setSaveState("saving");
+    saveMutateRef.current(
+      { draft, hasSubmitted: hasSubmittedRef.current },
+      {
+        onSuccess: () => setSaveState("saved"),
+        onError: () => {
+          dirtyRef.current = true;
+          setSaveState("idle");
+        },
+      },
+    );
+  }, [userId]);
+
+  // Debounced autosave — mid-typing backstop. Commit-point + unmount flushes
+  // are the primary mechanisms below.
   useEffect(() => {
     if (!hydrated || !userId) return;
     const serialized = JSON.stringify(currentDraft);
@@ -193,21 +232,23 @@ export function ConversionReview() {
       return;
     }
     if (lastSavedRef.current === serialized) return;
+    dirtyRef.current = true;
     setSaveState("saving");
-    const t = setTimeout(() => {
-      save
-        .mutateAsync({
-          draft: currentDraft,
-          hasSubmitted: !!intake?.submitted_at,
-        })
-        .then(() => {
-          lastSavedRef.current = serialized;
-          setSaveState("saved");
-        })
-        .catch(() => setSaveState("idle"));
-    }, AUTOSAVE_MS);
+    const t = setTimeout(() => flushSave(), AUTOSAVE_MS);
     return () => clearTimeout(t);
-  }, [currentDraft, hydrated, userId, save, intake?.submitted_at]);
+  }, [currentDraft, hydrated, userId, flushSave]);
+
+  // Flush on unmount (e.g. "Back to audit") and on tab hide.
+  useEffect(() => {
+    function onVisibility() {
+      if (document.visibilityState === "hidden") flushSave();
+    }
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      flushSave();
+    };
+  }, [flushSave]);
 
   const isReceived =
     !!intake?.submitted_at && !intake.has_unsubmitted_changes && !editingAfterSubmit;
@@ -276,7 +317,7 @@ export function ConversionReview() {
         <>
           <ProgressBar currentIdx={stepIdx} onJump={setStepIdx} />
 
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-8" onBlurCapture={flushSave}>
             {step.key === "foundation" && (
               <FoundationStep
                 inputs={foundation}
@@ -320,12 +361,17 @@ export function ConversionReview() {
           <StepNav
             currentIdx={stepIdx}
             total={INTAKE_STEPS.length}
-            onPrev={() => setStepIdx((i) => Math.max(0, i - 1))}
-            onNext={() =>
-              setStepIdx((i) => Math.min(INTAKE_STEPS.length - 1, i + 1))
-            }
+            onPrev={() => {
+              flushSave();
+              setStepIdx((i) => Math.max(0, i - 1));
+            }}
+            onNext={() => {
+              flushSave();
+              setStepIdx((i) => Math.min(INTAKE_STEPS.length - 1, i + 1));
+            }}
             saveState={saveState}
           />
+
         </>
       )}
     </div>

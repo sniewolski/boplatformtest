@@ -48,6 +48,10 @@ export function useConversionIntake(ownerId: string | undefined) {
   return useQuery({
     queryKey: ["ssa-conversion-intake", ownerId],
     enabled: !!ownerId,
+    // Keep cached draft warm across in-app navigation so returning to the tool
+    // hydrates instantly from cache instead of flashing defaults during refetch.
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
     queryFn: async (): Promise<ConversionIntakeRow | null> => {
       const { data, error } = await supabase
         // Table types regenerate after the migration; cast through unknown
