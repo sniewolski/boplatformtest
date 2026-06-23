@@ -136,3 +136,90 @@ export const INTAKE_STEPS = [
 ] as const;
 
 export type IntakeStepKey = (typeof INTAKE_STEPS)[number]["key"];
+
+// ───────── Intake option lists ─────────
+// All editable here; never hardcode in components. Reword/extend freely
+// without touching UI code or migrations (answers store raw keys).
+
+export const LEAD_SOURCES = [
+  { key: "referrals", label: "Referrals" },
+  { key: "outbound", label: "Outbound (cold outreach)" },
+  { key: "inbound", label: "Inbound (website / SEO)" },
+  { key: "paid_ads", label: "Paid ads" },
+  { key: "events", label: "Events" },
+  { key: "partnerships", label: "Partnerships" },
+  { key: "social", label: "Social media" },
+  { key: "repeat", label: "Repeat customers" },
+] as const;
+
+export const SOURCE_QUALITY_LEVELS = [
+  { key: "low", label: "Low" },
+  { key: "mixed", label: "Mixed" },
+  { key: "high", label: "High" },
+] as const;
+
+export const QUALIFICATION_CRITERIA = [
+  { key: "budget", label: "Budget" },
+  { key: "authority", label: "Authority (decision-maker)" },
+  { key: "need", label: "Need" },
+  { key: "timing", label: "Timing" },
+  { key: "industry_fit", label: "Industry fit" },
+  { key: "company_size", label: "Company size" },
+  { key: "geography", label: "Geography" },
+] as const;
+
+export const NON_QUALIFY_PATTERNS = [
+  { key: "industry", label: "Industry" },
+  { key: "company_size", label: "Company size" },
+  { key: "source", label: "Lead source" },
+  { key: "budget", label: "Budget" },
+  { key: "geography", label: "Geography" },
+] as const;
+
+export const DISCOVERY_LENGTH_BANDS = [
+  { key: "lt_15", label: "Under 15 min" },
+  { key: "15_30", label: "15–30 min" },
+  { key: "30_60", label: "30–60 min" },
+  { key: "gt_60", label: "60+ min" },
+] as const;
+
+export const DISCOVERY_STALL_REASONS = [
+  { key: "no_pain", label: "No real pain" },
+  { key: "no_budget", label: "No budget" },
+  { key: "no_authority", label: "No authority" },
+  { key: "bad_timing", label: "Bad timing" },
+  { key: "lost_competitor", label: "Lost to competitor" },
+  { key: "went_silent", label: "Went silent" },
+] as const;
+
+export const DISCOVERY_STRUCTURE_LEVELS = [
+  { key: "freeform", label: "Freeform" },
+  { key: "some_structure", label: "Some structure" },
+  { key: "documented", label: "Documented framework" },
+] as const;
+
+export const RATING_LEVELS = [
+  { key: "low", label: "Low" },
+  { key: "medium", label: "Medium" },
+  { key: "high", label: "High" },
+] as const;
+
+export const CYCLE_LENGTH_UNITS = [
+  { key: "days", label: "days" },
+  { key: "weeks", label: "weeks" },
+  { key: "months", label: "months" },
+] as const;
+
+export const TOUCHPOINT_BANDS = [
+  { key: "1_2", label: "1–2" },
+  { key: "3_5", label: "3–5" },
+  { key: "6_10", label: "6–10" },
+  { key: "gt_10", label: "10+" },
+] as const;
+
+export const CLOSE_TREND_OPTIONS = [
+  { key: "improved", label: "Improved" },
+  { key: "flat", label: "Flat" },
+  { key: "declined", label: "Declined" },
+] as const;
+
