@@ -1,10 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { GraduationCap, PlayCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fmtInt, fmtMoneyExact, fmtPct } from "../lib/format";
-import { LESSONS, type LessonKey, type PeriodKey } from "../config";
-import type { FunnelResult, StageTransition } from "../lib/types";
 import { projectWhatIf } from "../lib/computeFunnel";
+import type { FunnelResult, StageTransition } from "../lib/types";
 import type { CurrencyCode } from "@/lib/format-currency";
 
 export function WhatIfSlider({
