@@ -1,13 +1,14 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Lock } from "lucide-react";
+import { ArrowRight, Check, Circle, Lock } from "lucide-react";
 import { useSession } from "@/core/auth/useSession";
-import { AUDIT_SECTIONS } from "../config";
+import { AUDIT_SECTIONS, type AuditSectionKey } from "../config";
 import { useConversionIntake } from "../data/useConversionReview";
 import { usePipelineIntake } from "../data/usePipelineReview";
 import { useProcessIntake } from "../data/useProcessReview";
 import { useActivityIntake } from "../data/useActivityReview";
 import { useMessagingIntake } from "../data/useMessagingReview";
 import { useAlignmentIntake } from "../data/useAlignmentReview";
+import { useContentAssets } from "../content/useContentReview";
 
 export function AuditOverview() {
   const { session } = useSession();
@@ -18,34 +19,18 @@ export function AuditOverview() {
   const { data: activityIntake } = useActivityIntake(userId);
   const { data: messagingIntake } = useMessagingIntake(userId);
   const { data: alignmentIntake } = useAlignmentIntake(userId);
+  const { data: contentAssets } = useContentAssets(userId);
 
-  const conversionSubmitted = !!intake?.submitted_at;
-  const conversionHasDraft = !!intake?.draft_answers;
-  const pipelineSubmitted = !!pipelineIntake?.submitted_at;
-  const processSubmitted = !!processIntake?.submitted_at;
-  const activitySubmitted = !!activityIntake?.submitted_at;
-  const messagingSubmitted = !!messagingIntake?.submitted_at;
-  const alignmentSubmitted = !!alignmentIntake?.submitted_at;
+  const submittedByKey: Partial<Record<AuditSectionKey, boolean>> = {
+    conversion: !!intake?.submitted_at,
+    pipeline: !!pipelineIntake?.submitted_at,
+    process: !!processIntake?.submitted_at,
+    activity: !!activityIntake?.submitted_at,
+    messaging: !!messagingIntake?.submitted_at,
+    alignment: !!alignmentIntake?.submitted_at,
+  };
 
-  let conversionStatus: string;
-  if (conversionSubmitted) {
-    conversionStatus = intake!.has_unsubmitted_changes
-      ? "Submitted · edits pending re-submission"
-      : "Submitted — your coach has what they need";
-  } else if (conversionHasDraft) {
-    conversionStatus = "Draft in progress";
-  } else {
-    conversionStatus = "Not started";
-  }
-
-  const completed =
-    (conversionSubmitted ? 1 : 0) +
-    (pipelineSubmitted ? 1 : 0) +
-    (processSubmitted ? 1 : 0) +
-    (activitySubmitted ? 1 : 0) +
-    (messagingSubmitted ? 1 : 0) +
-    (alignmentSubmitted ? 1 : 0);
-  const total = AUDIT_SECTIONS.length;
+  const contentCount = contentAssets?.length ?? 0;
 
   return (
     <div className="app-content py-16 flex flex-col gap-10">
@@ -59,16 +44,41 @@ export function AuditOverview() {
         <p className="text-ink-muted text-sm max-w-prose">
           Work through each section at your own pace — your coach reviews what you submit before your call.
         </p>
-        <p className="text-ink-muted text-sm tabular-nums">
-          {completed} of {total} reviews complete
-        </p>
       </header>
 
       <ol className="flex flex-col">
         {AUDIT_SECTIONS.map((section, i) => {
           const isLast = i === AUDIT_SECTIONS.length - 1;
-          const isConversion = section.key === "conversion";
           const isLocked = section.status === "locked";
+          const isContent = section.key === "content";
+          const submitted = submittedByKey[section.key];
+
+          const indicator = isLocked ? null : isContent ? (
+            <div className="flex flex-col items-end shrink-0 min-w-[88px]">
+              {contentCount > 0 ? (
+                <>
+                  <span className="text-2xl text-ink tabular-nums leading-none">
+                    {contentCount}
+                  </span>
+                  <span className="text-xs text-ink-muted mt-1">items submitted</span>
+                </>
+              ) : (
+                <span className="text-sm text-ink-muted">No items yet</span>
+              )}
+            </div>
+          ) : submitted ? (
+            <Check
+              className="size-6 text-ink shrink-0 mt-0.5"
+              strokeWidth={2.5}
+              aria-label="Submitted"
+            />
+          ) : (
+            <Circle
+              className="size-6 text-ink-muted shrink-0 mt-0.5"
+              strokeWidth={1.5}
+              aria-label="Not submitted"
+            />
+          );
 
           const rowBody = (
             <div
@@ -84,18 +94,18 @@ export function AuditOverview() {
                   )}
                 </div>
                 <span className="text-ink-muted text-sm">{section.description}</span>
-                {isConversion && (
-                  <span className="text-ink-muted text-sm mt-1">{conversionStatus}</span>
-                )}
                 {isLocked && (
                   <span className="text-ink-muted text-xs mt-1">Available soon</span>
                 )}
               </div>
               {!isLocked && (
-                <ArrowRight
-                  className="size-4 text-ink-muted mt-1 shrink-0"
-                  aria-hidden
-                />
+                <div className="flex items-center gap-4 shrink-0">
+                  {indicator}
+                  <ArrowRight
+                    className="size-4 text-ink-muted mt-1 shrink-0"
+                    aria-hidden
+                  />
+                </div>
               )}
             </div>
           );
