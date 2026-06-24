@@ -120,11 +120,19 @@ export const AUDIT_SECTIONS = [
     status: "available" as const,
   },
   {
+    key: "messaging",
+    label: "Messaging & Positioning",
+    description:
+      "Who you sell to, the problem you solve in their words, your value proposition, the proof behind it, and how consistent the message is across touchpoints.",
+    status: "available" as const,
+  },
+  {
     key: "content",
     label: "Sales Content Review",
     description: "Audit of the messages, scripts and assets your sales motion runs on.",
     status: "locked" as const,
   },
+
 ] as const;
 
 export type AuditSectionKey = (typeof AUDIT_SECTIONS)[number]["key"];
