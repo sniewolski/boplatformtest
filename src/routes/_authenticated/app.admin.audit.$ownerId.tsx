@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listOwners } from "@/lib/admin.functions";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ConversionAdminTab } from "@/tools/selling-systems-audit/admin/ConversionAdminTab";
 
 const SECTION_TABS = [
   { key: "conversion", label: "Conversion" },
