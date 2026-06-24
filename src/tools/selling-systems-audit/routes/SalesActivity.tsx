@@ -210,6 +210,9 @@ export function SalesActivity() {
             )}
             {step.key === "review" && (
               <ReviewStep
+                tracking={tracking}
+                volume={volume}
+                quality={quality}
                 hasSubmitted={hasSubmitted}
                 hasUnsubmittedChanges={hasUnsubmittedChanges}
                 submitting={submit.isPending}
