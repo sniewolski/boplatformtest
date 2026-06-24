@@ -111,21 +111,39 @@ export const listOwners = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     await assertAdmin(context.supabase, context.userId);
 
-    // RLS already permits admins to read all profiles, but we go through
-    // the admin client to also surface owner-role joins cleanly.
+    // profiles ↔ user_roles have no direct FK (both reference auth.users),
+    // so PostgREST cannot embed them. Fetch separately and merge in JS.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
-      .from("profiles")
-      .select("id, email, full_name, account_status, created_at, user_roles(role)")
-      .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
 
-    return (data ?? []).map((row: any) => ({
+    const { data: profiles, error: profilesErr } = await supabaseAdmin
+      .from("profiles")
+      .select("id, email, full_name, account_status, created_at")
+      .order("created_at", { ascending: false });
+    if (profilesErr) throw new Error(profilesErr.message);
+
+    const ids = (profiles ?? []).map((p: any) => p.id as string);
+    let rolesByUser = new Map<string, ("owner" | "admin")[]>();
+    if (ids.length > 0) {
+      const { data: roles, error: rolesErr } = await supabaseAdmin
+        .from("user_roles")
+        .select("user_id, role")
+        .in("user_id", ids);
+      if (rolesErr) throw new Error(rolesErr.message);
+      for (const r of roles ?? []) {
+        const uid = (r as any).user_id as string;
+        const role = (r as any).role as "owner" | "admin";
+        const arr = rolesByUser.get(uid) ?? [];
+        arr.push(role);
+        rolesByUser.set(uid, arr);
+      }
+    }
+
+    return (profiles ?? []).map((row: any) => ({
       id: row.id as string,
       email: row.email as string,
       fullName: (row.full_name as string | null) ?? null,
       accountStatus: row.account_status as "active" | "suspended",
       createdAt: row.created_at as string,
-      roles: (row.user_roles ?? []).map((r: any) => r.role as "owner" | "admin"),
+      roles: rolesByUser.get(row.id as string) ?? [],
     }));
   });
