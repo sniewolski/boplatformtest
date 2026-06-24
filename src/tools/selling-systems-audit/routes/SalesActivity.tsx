@@ -12,8 +12,34 @@ import {
   type ActivityTrackingAnswers,
   type ActivityVolumeAnswers,
 } from "../data/useActivityReview";
-import { ACTIVITY_STEPS } from "../config";
+import {
+  ACTIVITY_STEPS,
+  ACTIVITY_METRICS,
+  TRACKING_METHOD,
+  CALLS_BAND,
+  EMAILS_BAND,
+  MEETINGS_BAND,
+  ACTIVITY_TREND,
+  ACTIVITY_CONFIDENCE,
+  ACTIVITY_CONSISTENCY,
+  STRONGEST_METRIC,
+  GOALS_SET,
+  DATA_TRUST,
+} from "../config";
 import { ProgressBar, StepNav, StepHeader } from "../components/StepShell";
+import {
+  Chips,
+  Segmented,
+  MaturitySpectrum,
+  OptionalText,
+  Question,
+} from "../components/IntakeFields";
+import {
+  labelOf,
+  chipsLabels,
+  ReadRow,
+  ReadGroup,
+} from "../components/ReadBack";
 
 const AUTOSAVE_MS = 700;
 
