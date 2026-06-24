@@ -5,6 +5,7 @@ import { ContentReview } from "./ContentReview";
 import { PipelineHealth } from "./PipelineHealth";
 import { SalesActivity } from "./SalesActivity";
 import { SalesProcess } from "./SalesProcess";
+import { Messaging } from "./Messaging";
 import { SectionLocked } from "./SectionLocked";
 import { AUDIT_SECTIONS } from "../config";
 
@@ -21,6 +22,7 @@ export function SellingSystemsAuditApp({ splat }: ToolComponentProps) {
   if (segment === "pipeline") return <PipelineHealth />;
   if (segment === "process") return <SalesProcess />;
   if (segment === "activity") return <SalesActivity />;
+  if (segment === "messaging") return <Messaging />;
   if (segment === "content") return <ContentReview />;
 
   const locked = AUDIT_SECTIONS.find(

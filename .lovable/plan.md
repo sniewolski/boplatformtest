@@ -1,43 +1,47 @@
-# Sales Process — Build Plan
+# Messaging & Positioning — Build Plan
 
-New owner-intake section inside `selling-systems-audit`, mirroring Pipeline Health's patterns exactly. One new piece: the stage builder (Step 2). Everything else reuses existing primitives, shell, read-back, persistence, and data-layer shapes.
+New owner-intake section inside `selling-systems-audit`, mirroring the Sales Activity section's machinery (config-driven steps, two-blob jsonb + RLS, shared IntakeFields/StepShell/ReadBack, no analysis shown to owner).
 
-I'll execute one phase at a time and stop after each for your confirmation. Phase order is fixed by correctness: data → shell → stage builder → dependent fields (Step 4 Q20 derives from Step 2's stages).
+Distinct from prior sections: text-heavy by design — the owner's actual words (value props, differentiation, proof) are the diagnostic payload and stay as open text.
 
-## Phase 0 — Overview + route (no data)
-- `config.ts` `AUDIT_SECTIONS`: insert `{ key: "process", label: "Sales Process", description: "How your sales process is defined…", status: "available" }` between `pipeline` and `content`. Order becomes: conversion, pipeline, process, content(locked). Count derives from `.length` → 4.
-- `routes/App.tsx`: add `if (segment === "process") return <SalesProcess />;`.
-- New `routes/SalesProcess.tsx` placeholder: h2 + one `text-ink-muted` line.
-- Overview still only counts Conversion + Pipeline `submitted_at` (Process table doesn't exist yet).
+## Phases (one at a time, stop after each)
 
-**Acceptance:** 4 sections in order, Process clickable to placeholder, Content locked, "X of 4", Conversion + Pipeline intact, no console errors.
+### Phase 0 — Overview + route stub
+- Add `{ key: "messaging", label: "Messaging & Positioning", description: …, status: "available" }` to `AUDIT_SECTIONS` in `config.ts`, ordered: conversion, pipeline, process, activity, **messaging**, content(locked).
+- Branch in `routes/App.tsx`: `if (segment === "messaging") return <Messaging />;`
+- New `routes/Messaging.tsx` — placeholder (heading + muted line).
+- Verify: overview shows 6 sections in correct order, Messaging clickable to placeholder, "X of 6" math correct.
 
-## Phase 1 — Data layer
-- Migration creates `selling_systems_audit_process` (owner_id PK → auth.users, draft_answers jsonb, submitted_answers jsonb, has_unsubmitted_changes bool, submitted_at, updated_at) with: grants to authenticated + service_role, RLS enabled, 4 owner policies scoped to `auth.uid() = owner_id`, 1 admin read-all using `public.has_role`, BEFORE UPDATE trigger using `public.touch_updated_at()`.
-- `data/useProcessReview.ts`: `useProcessIntake`, `useSaveDraft`, `useSubmitIntake` — copy shape from `usePipelineReview.ts`, `from(TABLE as never)` cast, 5m/30m cache.
-- `config.ts`: `PROCESS_STEPS`, all option sets (`DOCUMENTATION_LEVELS`, `PROCESS_CONSISTENCY`, `REPLICABILITY`, `ADHERENCE`, `QUALITY_ASSESSMENT`, `SCRIPT_MOMENTS`, `EXPERIENCE_CONSISTENCY`, `CRM_OPTIONS`, `UPDATE_FREQUENCY`, `DOC_TEMPLATES`, `ENABLEMENT`), `ProcessAnswers` + `SalesStage` types.
-- Wire Process `submitted_at` into Overview's `completed` count.
+### Phase 1 — Data layer
+- Migration: `selling_systems_audit_messaging` table (mirror activity table): owner_id PK → auth.users CASCADE, draft_answers jsonb, submitted_answers jsonb, has_unsubmitted_changes bool, submitted_at, updated_at. Grants to authenticated + service_role. RLS on. 4 owner policies scoped to `auth.uid() = owner_id` (SELECT/INSERT/UPDATE/DELETE) + 1 admin read-all via `has_role`. BEFORE UPDATE trigger → `touch_updated_at`.
+- `config.ts`: add `MESSAGING_STEPS` (6 steps including review) + all option sets (ICP_WRITTEN, ICP_BASIS, YES_SOMEWHAT_NO, RECOGNITION, MESSAGE_LEVEL, CAN_TELL, COMPETE_BASIS, EVIDENCE_TYPES, PROOF_SPECIFICITY, PROOF_TARGETING, CONSISTENCY_LEVELS, MATCH_LEVELS) + `MessagingAnswers` type nested by step.
+- `data/useMessagingReview.ts`: mirror `useActivityReview.ts` — `useMessagingIntake` / `useSaveDraft` / `useSubmitIntake`, same cache/cast/dirty-flag.
+- Wire `AuditOverview` to subscribe to `useMessagingIntake` and bump `completed` when `submitted_at` set.
 
-**Acceptance:** table + policies present, owner-isolated + admin read-all, hooks compile and round-trip, overview counts Process submissions, no type errors.
+### Phase 2 — Stepped shell
+- Replace placeholder `routes/Messaging.tsx` with full shell mirroring `SalesActivity.tsx`:
+  - Hydration guard, 700ms debounced autosave, refs for last-saved/latest/dirty/hasSubmitted, commit-point flushes (blurCapture, step nav, visibilitychange, unmount).
+  - 6 empty steps using `ProgressBar` / `StepHeader` / `StepNav`.
+  - `ReviewStep` with Submit logic + `ReceivedState` + edit-after-submit.
+- Verify end-to-end persistence with no fields.
 
-## Phase 2 — Stepped shell
-- Replace placeholder with real `SalesProcess` route: hydration guard (userId + !isLoading + per-key `if (d.x)`), refs (`latestDraftRef`/`dirtyRef`/`hasSubmittedRef`/`saveMutateRef`), `flushSave` (700ms debounce + commit-point flushes on blur capture, step nav, visibilitychange, unmount), Submit, ReceivedState, edit-after-submit note. Five empty steps mounted with shared ProgressBar/StepNav/StepHeader. Copy Pipeline's structure verbatim.
+### Phase 3 — Question UIs + read-back
+- Add `TextField` to `IntakeFields.tsx` (single-line, matching existing input styling) if no equivalent primitive exists.
+- Add `ReadText({ label, value })` to `ReadBack.tsx` — label on its own line, full-width wrapped prose beneath, "—" if blank.
+- Step 1 (icp): structured group inside one `Question` — Industry/CompanySize/Role as short single-line fields in a tidy row (sized to content), Situation/Mindset as `OptionalText` 2-row full-width beneath. Then Q2 `MaturitySpectrum` (ICP_WRITTEN), Q3 `Segmented` (ICP_BASIS).
+- Step 2 (problem): Q6 `OptionalText`; Q7/Q8/Q9 `Segmented`.
+- Step 3 (value): structured value-prop group (Outcome `OptionalText` full-width + For whom/Timeframe short fields side-by-side); Q12 `OptionalText`; differentiation group (open + "Can prospects tell?" Segmented); Q14 Segmented; Q15 `OptionalText`.
+- Step 4 (proof): Q16 `Chips` with "other" reveal → `evidenceOther` text; Q17/Q18 `Segmented`; Q19 `OptionalText`.
+- Step 5 (consistency): Q21/Q22 `Segmented`.
+- Step 6 (review): `ReadGroup` per step in order — single-selects via `labelOf`, chips via `chipsLabels`, open text via `ReadText`, short structured sub-fields via `ReadRow`, blanks "—". Then Submit block.
 
-**Acceptance:** end-to-end persistence with zero fields. Refresh/navigate persists. Submit → Received. Edit after submit → note + Submit return.
+## Dependencies (fixed)
+Phase 0 → Phase 1 (migration must exist before any query) → Phase 2 (shell needs hooks) → Phase 3 (fields need shell).
 
-## Phase 3 — Stage builder
-- New `components/StageBuilder.tsx`: repeatable row list (name input on top line, purpose + exit criteria below), each row has stable `id` from `crypto.randomUUID()`. Pre-filled 6 rows (Lead, Qualified, Discovery, Proposal, Negotiation, Closed). Range 3–10 enforced. Move-up/move-down per row (no drag lib). Hairline dividers — not nested cards. Soft validation: blank name → muted "Name this stage" hint with reserved inline space (no layout shift). Mount in Step 2 with a short intro line.
+## Reuse — do not rebuild
+`IntakeFields` (Segmented, MaturitySpectrum, Chips, OptionalText, Question), `StepShell` (ProgressBar, StepNav, StepHeader), `ReadBack` (labelOf, chipsLabels, ReadRow, ReadGroup). Only additions: `TextField` (if needed) and `ReadText`.
 
-**Acceptance:** pre-fill works; add caps at 10; remove floors at 3; reorder works; rows round-trip through draft + submit + reload; blank-name hint shows without layout shift.
+## Constraints (pinned)
+No analysis/scores shown to owner. Design tokens only — `bg-ink`, `text-ink-muted`, `border-border`. Segmented controls hug content, left-aligned. Text inputs may be full-width within content column. No new colours, no diagnostic colour. Don't convert specified text fields into bands. No cross-tool imports.
 
-## Phase 4 — Remaining UIs + read-back
-- Step 1: Q1 MaturitySpectrum; Q2/Q3 Segmented.
-- Step 3: Q11 YesNoToggle → indented Adherence Segmented when Yes; Q12 MaturitySpectrum; Q13 Chips (+ Other); Q14 Segmented.
-- Step 4: Q16 single-choice (+ Other text); Q17 Segmented gated on crm set and ≠ "none"; Q18/Q19 Chips (+ Other); Q20 derived Chips from `stages.items` (id→name), fallback muted note when empty, stale ids silently ignored.
-- Read-back: extend `ReadBack.tsx` with `ReadStages` (name + purpose + exit, blanks "—"). Step 5 mirrors all four steps in order; Q20 resolves ids → names dropping stale. Submit block copied from Pipeline's review.
-
-**Acceptance:** every field round-trips; Q11/Q17 gating correct; Q20 lives off Step 2's stages with empty + stale-id handling; read-back covers all steps; passes slop test.
-
----
-
-Starting Phase 0 on your go-ahead.
+Confirm to proceed with **Phase 0**.
