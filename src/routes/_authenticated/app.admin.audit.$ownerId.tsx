@@ -12,6 +12,7 @@ import { ProcessAdminReadBack } from "@/tools/selling-systems-audit/admin/Proces
 import { ActivityAdminReadBack } from "@/tools/selling-systems-audit/admin/ActivityAdminReadBack";
 import { MessagingAdminReadBack } from "@/tools/selling-systems-audit/admin/MessagingAdminReadBack";
 import { AlignmentAdminReadBack } from "@/tools/selling-systems-audit/admin/AlignmentAdminReadBack";
+import { ContentAdminTab } from "@/tools/selling-systems-audit/admin/ContentAdminTab";
 
 const SECTION_TABS = [
   { key: "conversion", label: "Conversion" },
@@ -130,11 +131,7 @@ function OwnerAuditReview() {
             renderReadBack={(answers) => <AlignmentAdminReadBack answers={answers} />}
           />
         )}
-        {tab === "content" && (
-          <p className="text-ink-muted text-sm">
-            Content tab — lands in the next phase.
-          </p>
-        )}
+        {tab === "content" && <ContentAdminTab ownerId={ownerId} />}
       </section>
     </div>
   );
