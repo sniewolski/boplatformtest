@@ -460,4 +460,115 @@ export type SalesStage = {
   exitCriteria?: string;
 };
 
+// ═══════════════════════════════════════════════════════════════════════
+// Sales Activity Metrics (Section 4) — stepped intake, owner answers only.
+// Same shape rules as prior sections: jsonb blob keyed by config keys;
+// reword labels here without touching components or migrations.
+// ═══════════════════════════════════════════════════════════════════════
+
+export const ACTIVITY_STEPS = [
+  { key: "tracking",   label: "What you track",        short: "Tracking" },
+  { key: "volume",     label: "Activity volume",       short: "Volume" },
+  { key: "quality",    label: "Quality & confidence",  short: "Quality" },
+  { key: "review",     label: "Review & submit",       short: "Review" },
+] as const;
+export type ActivityStepKey = (typeof ACTIVITY_STEPS)[number]["key"];
+
+export const ACTIVITY_METRICS = [
+  { key: "calls",         label: "Calls made" },
+  { key: "emails",        label: "Emails sent" },
+  { key: "meetings",      label: "Meetings booked" },
+  { key: "meetings_held", label: "Meetings held" },
+  { key: "proposals",     label: "Proposals sent" },
+  { key: "demos",         label: "Demos delivered" },
+  { key: "follow_ups",    label: "Follow-ups completed" },
+  { key: "new_leads",     label: "New leads added" },
+  { key: "none",          label: "Nothing tracked" },
+] as const;
+export type ActivityMetricKey = (typeof ACTIVITY_METRICS)[number]["key"];
+
+export const TRACKING_METHOD = [
+  { key: "nothing",     label: "Not tracked" },
+  { key: "memory",      label: "From memory" },
+  { key: "spreadsheet", label: "Spreadsheet" },
+  { key: "crm_manual",  label: "CRM (manual)" },
+  { key: "crm_auto",    label: "CRM (automatic)" },
+] as const;
+export type TrackingMethodKey = (typeof TRACKING_METHOD)[number]["key"];
+
+export const CALLS_BAND = [
+  { key: "0",       label: "0" },
+  { key: "1_10",    label: "1–10" },
+  { key: "11_25",   label: "11–25" },
+  { key: "26_50",   label: "26–50" },
+  { key: "gt50",    label: "50+" },
+] as const;
+export type CallsBandKey = (typeof CALLS_BAND)[number]["key"];
+
+export const EMAILS_BAND = [
+  { key: "0",        label: "0" },
+  { key: "1_20",     label: "1–20" },
+  { key: "21_50",    label: "21–50" },
+  { key: "51_100",   label: "51–100" },
+  { key: "gt100",    label: "100+" },
+] as const;
+export type EmailsBandKey = (typeof EMAILS_BAND)[number]["key"];
+
+export const MEETINGS_BAND = [
+  { key: "0",     label: "0" },
+  { key: "1_2",   label: "1–2" },
+  { key: "3_5",   label: "3–5" },
+  { key: "6_10",  label: "6–10" },
+  { key: "gt10",  label: "10+" },
+] as const;
+export type MeetingsBandKey = (typeof MEETINGS_BAND)[number]["key"];
+
+export const ACTIVITY_TREND = [
+  { key: "grown",  label: "Grown" },
+  { key: "flat",   label: "Flat" },
+  { key: "shrunk", label: "Shrunk" },
+] as const;
+export type ActivityTrendKey = (typeof ACTIVITY_TREND)[number]["key"];
+
+export const ACTIVITY_CONFIDENCE = [
+  { key: "low",    label: "Low" },
+  { key: "medium", label: "Medium" },
+  { key: "high",   label: "High" },
+] as const;
+export type ActivityConfidenceKey = (typeof ACTIVITY_CONFIDENCE)[number]["key"];
+
+export const ACTIVITY_CONSISTENCY = [
+  { key: "low",    label: "Varies a lot" },
+  { key: "medium", label: "Mostly consistent" },
+  { key: "high",   label: "Highly consistent" },
+] as const;
+export type ActivityConsistencyKey = (typeof ACTIVITY_CONSISTENCY)[number]["key"];
+
+export const STRONGEST_METRIC = [
+  { key: "calls",     label: "Calls" },
+  { key: "emails",    label: "Emails" },
+  { key: "meetings",  label: "Meetings booked" },
+  { key: "proposals", label: "Proposals" },
+  { key: "follow_ups",label: "Follow-ups" },
+  { key: "none",      label: "None stand out" },
+  { key: "other",     label: "Other" },
+] as const;
+export type StrongestMetricKey = (typeof STRONGEST_METRIC)[number]["key"];
+
+export const GOALS_SET = [
+  { key: "no",      label: "No" },
+  { key: "informal",label: "Informal" },
+  { key: "yes",     label: "Yes" },
+] as const;
+export type GoalsSetKey = (typeof GOALS_SET)[number]["key"];
+
+export const DATA_TRUST = [
+  { key: "none",     label: "Don't trust it" },
+  { key: "some",     label: "Trust some" },
+  { key: "most",     label: "Trust most" },
+  { key: "all",      label: "Trust it fully" },
+] as const;
+export type DataTrustKey = (typeof DATA_TRUST)[number]["key"];
+
+
 
