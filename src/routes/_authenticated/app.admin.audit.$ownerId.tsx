@@ -64,7 +64,7 @@ function OwnerAuditReview() {
       <nav
         role="tablist"
         aria-label="Audit sections"
-        className="flex gap-1 border-b border-border overflow-x-auto"
+        className="flex gap-1 border-b border-border overflow-x-auto no-scrollbar"
       >
         {SECTION_TABS.map((t) => {
           const active = tab === t.key;
