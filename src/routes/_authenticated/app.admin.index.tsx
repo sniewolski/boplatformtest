@@ -55,20 +55,6 @@ function AdminHome() {
         </p>
       </header>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xl">Review queues</h2>
-        <ul className="flex flex-col divide-y divide-border border border-border rounded-xl">
-          <li>
-            <a
-              href="/app/admin/content"
-              className="flex items-center justify-between px-5 py-4 hover:bg-[var(--surface-raised)] transition-colors"
-            >
-              <span className="text-ink text-sm">Sales Content Review</span>
-              <span className="text-ink-muted text-xs">Owner-submitted assets →</span>
-            </a>
-          </li>
-        </ul>
-      </section>
 
 
 
