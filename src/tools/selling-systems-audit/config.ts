@@ -16,37 +16,7 @@ export const STAGES = [
 
 export type StageKey = (typeof STAGES)[number]["key"];
 
-export const INDUSTRIES = [
-  { key: "trades", label: "Trades (plumber, electrician, builder)" },
-  { key: "home_services", label: "Home services (cleaning, landscaping, HVAC)" },
-  { key: "clinic_practice", label: "Clinic / practice (dental, aesthetics, physio)" },
-  { key: "agency", label: "Agency (marketing, creative, digital)" },
-  { key: "consultant_coach", label: "Consultant / coach" },
-  { key: "financial_services", label: "Financial services" },
-  { key: "lifestyle", label: "Lifestyle" },
-  { key: "health_fitness", label: "Health & fitness" },
-  { key: "business_services", label: "Business services" },
-  { key: "other", label: "Other service business" },
-] as const;
-
-export type IndustryKey = (typeof INDUSTRIES)[number]["key"];
-
-/**
- * PLACEHOLDER targets — [Lead→Qualified, Qualified→Opportunity, Opportunity→Won]
- * as decimals. Replace with researched figures later. Do not present as authoritative.
- */
-export const KPI_TARGETS: Record<IndustryKey, [number, number, number]> = {
-  trades: [0.6, 0.55, 0.5],
-  home_services: [0.55, 0.5, 0.45],
-  clinic_practice: [0.5, 0.45, 0.4],
-  agency: [0.4, 0.35, 0.3],
-  consultant_coach: [0.45, 0.4, 0.35],
-  financial_services: [0.35, 0.3, 0.28],
-  lifestyle: [0.45, 0.4, 0.35],
-  health_fitness: [0.45, 0.5, 0.45],
-  business_services: [0.45, 0.4, 0.35],
-  other: [0.45, 0.4, 0.35],
-};
+// Industry is owner-typed free text (string | null) — no enum, no benchmarks.
 
 export const PERIODS = [
   { key: "month", label: "per month", annualMultiplier: 12 },

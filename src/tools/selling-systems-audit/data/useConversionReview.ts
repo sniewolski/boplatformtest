@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { IndustryKey, PeriodKey } from "../config";
+import type { PeriodKey } from "../config";
 import type { StageVolumes } from "../lib/types";
 
 const TABLE = "selling_systems_audit_conversion";
@@ -22,7 +22,7 @@ const TABLE = "selling_systems_audit_conversion";
  */
 
 export type FoundationAnswers = {
-  industry: IndustryKey | null;
+  industry: string | null;
   period: PeriodKey;
   avgDealValue: number | null;
   volumes: Partial<StageVolumes>;

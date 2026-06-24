@@ -15,7 +15,6 @@ import { validateInputs } from "../lib/validation";
 import { InputPanel } from "../components/InputPanel";
 import {
   INTAKE_STEPS,
-  INDUSTRIES,
   PERIODS,
   STAGES,
   LEAD_SOURCES,
@@ -34,7 +33,7 @@ import type {
   ConversionInputs,
   StageVolumes,
 } from "../lib/types";
-import type { IndustryKey, PeriodKey } from "../config";
+import type { PeriodKey } from "../config";
 import {
   Chips,
   Allocator,
@@ -122,7 +121,7 @@ type SummaryAnswers = {
 
 type AllAnswers = {
   foundation?: {
-    industry: IndustryKey | null;
+    industry: string | null;
     period: PeriodKey;
     avgDealValue: number | null;
     volumes: Partial<StageVolumes>;
@@ -841,7 +840,7 @@ function ReviewStep({
 
       <div className="flex flex-col gap-8">
         <ReadGroup title="Foundation">
-          <ReadRow label="Industry" value={labelOf(INDUSTRIES, foundation.industry)} />
+          <ReadRow label="Industry" value={textOrDash(foundation.industry)} />
           <ReadRow label="Period" value={labelOf(PERIODS, foundation.period)} />
           <ReadRow
             label="Average deal value"
