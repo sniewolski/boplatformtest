@@ -75,6 +75,15 @@ export function AppShell({
 
           {isAdmin && (
             <>
+              <div className="h-px bg-border mx-6" />
+              <div className="px-6 py-6">
+                <span
+                  className="text-ink-muted font-semibold text-base"
+                  style={{ letterSpacing: "-0.02em" }}
+                >
+                  Admin
+                </span>
+              </div>
               <Link
                 to="/app/admin"
                 className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-ink hover:bg-background transition-colors"
