@@ -1,45 +1,43 @@
-# Pipeline Health — Build Plan
+# Sales Process — Build Plan
 
-A new owner-intake section inside `selling-systems-audit`, mirroring Sales Conversion Rates Review patterns exactly (stepped flow, two-blob jsonb persistence, RLS, no analysis shown to owner). All primitives, currency, and design tokens already exist — nothing new gets invented.
+New owner-intake section inside `selling-systems-audit`, mirroring Pipeline Health's patterns exactly. One new piece: the stage builder (Step 2). Everything else reuses existing primitives, shell, read-back, persistence, and data-layer shapes.
 
-I'll execute one phase at a time and stop for your confirmation after each. The phase order below is fixed by correctness (data → shell extraction → consumer) — sequencing within is the smallest safe path.
+I'll execute one phase at a time and stop after each for your confirmation. Phase order is fixed by correctness: data → shell → stage builder → dependent fields (Step 4 Q20 derives from Step 2's stages).
 
-## Phase 0 — Overview scope change (no data)
-- `config.ts` `AUDIT_SECTIONS`: 3 entries in order — `conversion` (available), `pipeline` (available, new description from spec), `content` (locked). Remove `infrastructure` and `marketing`.
-- `routes/App.tsx`: add `if (segment === "pipeline") return <PipelineHealth />`.
-- `routes/AuditOverview.tsx`: header copy → "A multi-part diagnostic of your selling system." + supporting line; "X of N" derives from `AUDIT_SECTIONS.length` (becomes 3); `completed` still only counts Conversion `submitted_at` (Pipeline table doesn't exist yet — do NOT query it).
-- New `routes/PipelineHealth.tsx` placeholder: h2 + one `text-ink-muted` line.
+## Phase 0 — Overview + route (no data)
+- `config.ts` `AUDIT_SECTIONS`: insert `{ key: "process", label: "Sales Process", description: "How your sales process is defined…", status: "available" }` between `pipeline` and `content`. Order becomes: conversion, pipeline, process, content(locked). Count derives from `.length` → 4.
+- `routes/App.tsx`: add `if (segment === "process") return <SalesProcess />;`.
+- New `routes/SalesProcess.tsx` placeholder: h2 + one `text-ink-muted` line.
+- Overview still only counts Conversion + Pipeline `submitted_at` (Process table doesn't exist yet).
 
-**Acceptance:** 3 sections in order, Pipeline clickable to placeholder, Content locked, header updated, "X of 3", Conversion intact, no console errors.
+**Acceptance:** 4 sections in order, Process clickable to placeholder, Content locked, "X of 4", Conversion + Pipeline intact, no console errors.
 
 ## Phase 1 — Data layer
-- Migration creates `selling_systems_audit_pipeline` (owner_id PK → auth.users, draft_answers jsonb, submitted_answers jsonb, has_unsubmitted_changes bool, submitted_at, updated_at) with: grants to authenticated + service_role, RLS enabled, 4 owner policies scoped to `auth.uid() = owner_id`, 1 admin-read-all using `public.has_role`, BEFORE UPDATE trigger using `public.touch_updated_at()`.
-- `data/usePipelineReview.ts`: `usePipelineIntake`, `useSaveDraft`, `useSubmitIntake` — copy shape from `useConversionReview.ts`, `from(TABLE as never)` cast, 5m/30m cache.
-- `config.ts`: `PIPELINE_STEPS`, all option sets (`TREND_OPTIONS`, `AGE_BANDS`, `PROPORTION_BANDS`, `STAGES_CANONICAL`, `DURATION_BANDS`, `FORECAST_METHODS`, `FORECAST_HORIZONS`, `REVIEW_CADENCES`, `TEAM_REVIEW_METHODS`, `REVIEW_DATA_POINTS`), `PipelineAnswers` type.
-- Wire Pipeline `submitted_at` into Overview's `completed` count.
+- Migration creates `selling_systems_audit_process` (owner_id PK → auth.users, draft_answers jsonb, submitted_answers jsonb, has_unsubmitted_changes bool, submitted_at, updated_at) with: grants to authenticated + service_role, RLS enabled, 4 owner policies scoped to `auth.uid() = owner_id`, 1 admin read-all using `public.has_role`, BEFORE UPDATE trigger using `public.touch_updated_at()`.
+- `data/useProcessReview.ts`: `useProcessIntake`, `useSaveDraft`, `useSubmitIntake` — copy shape from `usePipelineReview.ts`, `from(TABLE as never)` cast, 5m/30m cache.
+- `config.ts`: `PROCESS_STEPS`, all option sets (`DOCUMENTATION_LEVELS`, `PROCESS_CONSISTENCY`, `REPLICABILITY`, `ADHERENCE`, `QUALITY_ASSESSMENT`, `SCRIPT_MOMENTS`, `EXPERIENCE_CONSISTENCY`, `CRM_OPTIONS`, `UPDATE_FREQUENCY`, `DOC_TEMPLATES`, `ENABLEMENT`), `ProcessAnswers` + `SalesStage` types.
+- Wire Process `submitted_at` into Overview's `completed` count.
 
-**Acceptance:** table + policies present, owner-isolated + admin read-all, hooks compile and round-trip, overview counts Pipeline submissions.
+**Acceptance:** table + policies present, owner-isolated + admin read-all, hooks compile and round-trip, overview counts Process submissions, no type errors.
 
-## Phase 2 — Shell extraction (with guardrail)
-- Extract `ProgressBar`, `StepNav`, `StepHeader` from `ConversionReview.tsx` into `components/`, parameterised. `ProgressBar` takes a `steps` prop.
-- Repoint `ConversionReview` at the extracted components.
-- **Verify Conversion unchanged immediately** (step nav, jump, Saving/Saved, autosave, hydration) before anything new consumes them.
+## Phase 2 — Stepped shell
+- Replace placeholder with real `SalesProcess` route: hydration guard (userId + !isLoading + per-key `if (d.x)`), refs (`latestDraftRef`/`dirtyRef`/`hasSubmittedRef`/`saveMutateRef`), `flushSave` (700ms debounce + commit-point flushes on blur capture, step nav, visibilitychange, unmount), Submit, ReceivedState, edit-after-submit note. Five empty steps mounted with shared ProgressBar/StepNav/StepHeader. Copy Pipeline's structure verbatim.
 
-**Acceptance:** Conversion behaves identically; extracted components accept arbitrary `steps`.
+**Acceptance:** end-to-end persistence with zero fields. Refresh/navigate persists. Submit → Received. Edit after submit → note + Submit return.
 
-## Phase 3 — Stepped shell for Pipeline
-- Replace placeholder with the real `PipelineHealth` route: hydration guard (userId + !isLoading + per-key `if (d.x)`), refs (`latestDraftRef`/`dirtyRef`/`hasSubmittedRef`/`saveMutateRef`), `flushSave` (700ms debounce + commit-point flushes on blur capture, step nav, visibilitychange, unmount), Submit, ReceivedState, edit-after-submit note. Four empty steps mounted with extracted ProgressBar/StepNav/StepHeader.
+## Phase 3 — Stage builder
+- New `components/StageBuilder.tsx`: repeatable row list (name input on top line, purpose + exit criteria below), each row has stable `id` from `crypto.randomUUID()`. Pre-filled 6 rows (Lead, Qualified, Discovery, Proposal, Negotiation, Closed). Range 3–10 enforced. Move-up/move-down per row (no drag lib). Hairline dividers — not nested cards. Soft validation: blank name → muted "Name this stage" hint with reserved inline space (no layout shift). Mount in Step 2 with a short intro line.
 
-**Acceptance:** end-to-end persistence works with zero fields. Refresh/navigate persists draft. Submit → Received. Edit after submit → note + Submit return.
+**Acceptance:** pre-fill works; add caps at 10; remove floors at 3; reorder works; rows round-trip through draft + submit + reload; blank-name hint shows without layout shift.
 
-## Phase 4 — Question UIs
-- Step 1: A1 currency, A2b currency, coverage mirror (both-inputs + target>0 gate, neutral, no colour), A3 integer, A4 trend segmented. Money gated on `!!currency` via `needsCurrency` pattern.
-- Step 2: B1 age band, B2 proportion, B3 proportion with cycle-length echo from `useConversionIntake`, B4 grouped stage+duration with "Other" text reveal.
-- Step 3: C1 MaturitySpectrum, C2 horizon, C3 cadence, C4 YesNo gate → indented group (cadence + Chips/Other), C5 gated on cadence ≠ never (Chips + OptionalText).
-- Step 4: read-back grouped by step (labels resolved via config, "—" for blanks). No analysis.
+## Phase 4 — Remaining UIs + read-back
+- Step 1: Q1 MaturitySpectrum; Q2/Q3 Segmented.
+- Step 3: Q11 YesNoToggle → indented Adherence Segmented when Yes; Q12 MaturitySpectrum; Q13 Chips (+ Other); Q14 Segmented.
+- Step 4: Q16 single-choice (+ Other text); Q17 Segmented gated on crm set and ≠ "none"; Q18/Q19 Chips (+ Other); Q20 derived Chips from `stages.items` (id→name), fallback muted note when empty, stale ids silently ignored.
+- Read-back: extend `ReadBack.tsx` with `ReadStages` (name + purpose + exit, blanks "—"). Step 5 mirrors all four steps in order; Q20 resolves ids → names dropping stale. Submit block copied from Pipeline's review.
 
-**Acceptance:** every field round-trips draft + submit; coverage mirror behaves; gating correct; B3 echoes cycle length; passes slop test.
+**Acceptance:** every field round-trips; Q11/Q17 gating correct; Q20 lives off Step 2's stages with empty + stale-id handling; read-back covers all steps; passes slop test.
 
 ---
 
-Starting with Phase 0 on your go-ahead.
+Starting Phase 0 on your go-ahead.

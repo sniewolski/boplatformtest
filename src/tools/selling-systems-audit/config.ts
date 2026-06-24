@@ -106,6 +106,13 @@ export const AUDIT_SECTIONS = [
     status: "available" as const,
   },
   {
+    key: "process",
+    label: "Sales Process",
+    description:
+      "How your sales process is defined, where each stage starts and ends, how consistently it's followed, and the tools supporting it.",
+    status: "available" as const,
+  },
+  {
     key: "content",
     label: "Sales Content Review",
     description: "Audit of the messages, scripts and assets your sales motion runs on.",
