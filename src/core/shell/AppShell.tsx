@@ -1,6 +1,6 @@
 import { type ReactNode } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
-import { LayoutDashboard, Shield, LogOut } from "lucide-react";
+import { LayoutDashboard, Shield, ClipboardList, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toolRegistry } from "@/tools/registry";
