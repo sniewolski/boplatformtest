@@ -687,6 +687,102 @@ export const MATCH_LEVELS = [
 ] as const;
 export type MatchKey = (typeof MATCH_LEVELS)[number]["key"];
 
+/* ============================================================
+ * Marketing & Sales Alignment
+ * ============================================================ */
+
+export const ALIGNMENT_STEPS = [
+  { key: "leadQuality",  label: "Lead quality & handoff",     short: "Lead quality" },
+  { key: "consistency",  label: "Message consistency",        short: "Consistency" },
+  { key: "feedback",     label: "Feedback loops",             short: "Feedback" },
+  { key: "enablement",   label: "Content & enablement",       short: "Enablement" },
+  { key: "attribution",  label: "Attribution & measurement",  short: "Attribution" },
+  { key: "review",       label: "Review & submit",            short: "Review" },
+] as const;
+
+export const ICP_ALIGNMENT = [
+  { key: "aligned",   label: "Tightly aligned" },
+  { key: "drift",     label: "Some drift" },
+  { key: "different", label: "Significantly different" },
+] as const;
+export type IcpAlignmentKey = (typeof ICP_ALIGNMENT)[number]["key"];
+
+export const LEAD_MATCH = [
+  { key: "nearlyAll", label: "Nearly all" },
+  { key: "most",      label: "Most" },
+  { key: "half",      label: "About half" },
+  { key: "few",       label: "Few" },
+] as const;
+export type LeadMatchKey = (typeof LEAD_MATCH)[number]["key"];
+
+export const EXPECTATION_GAP = [
+  { key: "yes",     label: "Yes, it's happened" },
+  { key: "no",      label: "No" },
+  { key: "notSure", label: "Not sure" },
+] as const;
+export type ExpectationGapKey = (typeof EXPECTATION_GAP)[number]["key"];
+
+export const PAIN_MATCH = [
+  { key: "same",      label: "Yes, the same" },
+  { key: "roughly",   label: "Roughly" },
+  { key: "different", label: "No, different" },
+] as const;
+export type PainMatchKey = (typeof PAIN_MATCH)[number]["key"];
+
+export const INSIGHT_FLOWBACK = [
+  { key: "never",      label: "Never" },
+  { key: "adhoc",      label: "Ad hoc" },
+  { key: "sometimes",  label: "Sometimes" },
+  { key: "systematic", label: "Systematically" },
+] as const;
+export type InsightFlowbackKey = (typeof INSIGHT_FLOWBACK)[number]["key"];
+
+export const ALIGN_CADENCE = [
+  { key: "never",     label: "Never" },
+  { key: "adhoc",     label: "Ad hoc" },
+  { key: "quarterly", label: "Quarterly" },
+  { key: "monthly",   label: "Monthly" },
+  { key: "weekly",    label: "Weekly+" },
+] as const;
+export type AlignCadenceKey = (typeof ALIGN_CADENCE)[number]["key"];
+
+export const FUNNEL_STAGES = [
+  { key: "awareness",     label: "Awareness" },
+  { key: "consideration", label: "Consideration" },
+  { key: "decision",      label: "Decision" },
+] as const;
+export type FunnelStageKey = (typeof FUNNEL_STAGES)[number]["key"];
+
+export const OBJECTION_CONTENT = [
+  { key: "ready", label: "Yes, ready" },
+  { key: "some",  label: "Some" },
+  { key: "no",    label: "No" },
+] as const;
+export type ObjectionContentKey = (typeof OBJECTION_CONTENT)[number]["key"];
+
+export const DEAL_TRACING = [
+  { key: "cant",      label: "Can't trace it" },
+  { key: "sometimes", label: "Sometimes" },
+  { key: "usually",   label: "Usually" },
+  { key: "always",    label: "Always & consistently" },
+] as const;
+export type DealTracingKey = (typeof DEAL_TRACING)[number]["key"];
+
+export const CPA_MEASUREMENT = [
+  { key: "drivesBudget",   label: "Measured & drives budget" },
+  { key: "measuredUnused", label: "Measured, not used" },
+  { key: "notMeasured",    label: "Not measured" },
+] as const;
+export type CpaKey = (typeof CPA_MEASUREMENT)[number]["key"];
+
+export const SHARED_GOALS = [
+  { key: "shared",   label: "Shared revenue goals" },
+  { key: "partly",   label: "Partly connected" },
+  { key: "separate", label: "Separate & disconnected" },
+] as const;
+export type SharedGoalsKey = (typeof SHARED_GOALS)[number]["key"];
+
+
 
 
 

@@ -7,6 +7,7 @@ import { usePipelineIntake } from "../data/usePipelineReview";
 import { useProcessIntake } from "../data/useProcessReview";
 import { useActivityIntake } from "../data/useActivityReview";
 import { useMessagingIntake } from "../data/useMessagingReview";
+import { useAlignmentIntake } from "../data/useAlignmentReview";
 
 export function AuditOverview() {
   const { session } = useSession();
@@ -16,6 +17,7 @@ export function AuditOverview() {
   const { data: processIntake } = useProcessIntake(userId);
   const { data: activityIntake } = useActivityIntake(userId);
   const { data: messagingIntake } = useMessagingIntake(userId);
+  const { data: alignmentIntake } = useAlignmentIntake(userId);
 
   const conversionSubmitted = !!intake?.submitted_at;
   const conversionHasDraft = !!intake?.draft_answers;
@@ -23,6 +25,7 @@ export function AuditOverview() {
   const processSubmitted = !!processIntake?.submitted_at;
   const activitySubmitted = !!activityIntake?.submitted_at;
   const messagingSubmitted = !!messagingIntake?.submitted_at;
+  const alignmentSubmitted = !!alignmentIntake?.submitted_at;
 
   let conversionStatus: string;
   if (conversionSubmitted) {
@@ -40,7 +43,8 @@ export function AuditOverview() {
     (pipelineSubmitted ? 1 : 0) +
     (processSubmitted ? 1 : 0) +
     (activitySubmitted ? 1 : 0) +
-    (messagingSubmitted ? 1 : 0);
+    (messagingSubmitted ? 1 : 0) +
+    (alignmentSubmitted ? 1 : 0);
   const total = AUDIT_SECTIONS.length;
 
   return (
