@@ -4,16 +4,19 @@ import { useSession } from "@/core/auth/useSession";
 import { AUDIT_SECTIONS } from "../config";
 import { useConversionIntake } from "../data/useConversionReview";
 import { usePipelineIntake } from "../data/usePipelineReview";
+import { useProcessIntake } from "../data/useProcessReview";
 
 export function AuditOverview() {
   const { session } = useSession();
   const userId = session?.user.id;
   const { data: intake } = useConversionIntake(userId);
   const { data: pipelineIntake } = usePipelineIntake(userId);
+  const { data: processIntake } = useProcessIntake(userId);
 
   const conversionSubmitted = !!intake?.submitted_at;
   const conversionHasDraft = !!intake?.draft_answers;
   const pipelineSubmitted = !!pipelineIntake?.submitted_at;
+  const processSubmitted = !!processIntake?.submitted_at;
 
   let conversionStatus: string;
   if (conversionSubmitted) {
@@ -26,7 +29,10 @@ export function AuditOverview() {
     conversionStatus = "Not started";
   }
 
-  const completed = (conversionSubmitted ? 1 : 0) + (pipelineSubmitted ? 1 : 0);
+  const completed =
+    (conversionSubmitted ? 1 : 0) +
+    (pipelineSubmitted ? 1 : 0) +
+    (processSubmitted ? 1 : 0);
   const total = AUDIT_SECTIONS.length;
 
   return (
