@@ -15,12 +15,14 @@ export function AuditOverview() {
   const { data: pipelineIntake } = usePipelineIntake(userId);
   const { data: processIntake } = useProcessIntake(userId);
   const { data: activityIntake } = useActivityIntake(userId);
+  const { data: messagingIntake } = useMessagingIntake(userId);
 
   const conversionSubmitted = !!intake?.submitted_at;
   const conversionHasDraft = !!intake?.draft_answers;
   const pipelineSubmitted = !!pipelineIntake?.submitted_at;
   const processSubmitted = !!processIntake?.submitted_at;
   const activitySubmitted = !!activityIntake?.submitted_at;
+  const messagingSubmitted = !!messagingIntake?.submitted_at;
 
   let conversionStatus: string;
   if (conversionSubmitted) {
