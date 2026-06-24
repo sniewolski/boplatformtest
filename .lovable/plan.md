@@ -1,70 +1,45 @@
+# Pipeline Health — Build Plan
 
-# Build plan — Skeleton platform
+A new owner-intake section inside `selling-systems-audit`, mirroring Sales Conversion Rates Review patterns exactly (stepped flow, two-blob jsonb persistence, RLS, no analysis shown to owner). All primitives, currency, and design tokens already exist — nothing new gets invented.
 
-This will be built in three phases. **Phase 1 ships first, then I stop and wait for your sign-off before Phase 2.** Phase 2 and 3 are outlined here so you can see the shape, but no code for them lands until you approve Phase 1.
+I'll execute one phase at a time and stop for your confirmation after each. The phase order below is fixed by correctness (data → shell extraction → consumer) — sequencing within is the smallest safe path.
 
-Heads-up on stack: the project template is **TanStack Start** (React + TS + Vite + Tailwind v4 + shadcn), not plain Vite + React Router. I'll honour every design and architectural constraint you set; the only adaptation is routing primitives (file-based routes under `src/routes/`, `<Link>` from `@tanstack/react-router`) and Tailwind v4's CSS-first config (tokens in `src/styles.css` under `@theme inline`, no `tailwind.config.ts`). The token names, values, mapping behaviour, and "override neutrals, don't augment" rule are unchanged. Backend will be Lovable Cloud (managed Supabase — Auth, Postgres + RLS, Edge Functions); I'll enable it at the start of Phase 2.
+## Phase 0 — Overview scope change (no data)
+- `config.ts` `AUDIT_SECTIONS`: 3 entries in order — `conversion` (available), `pipeline` (available, new description from spec), `content` (locked). Remove `infrastructure` and `marketing`.
+- `routes/App.tsx`: add `if (segment === "pipeline") return <PipelineHealth />`.
+- `routes/AuditOverview.tsx`: header copy → "A multi-part diagnostic of your selling system." + supporting line; "X of N" derives from `AUDIT_SECTIONS.length` (becomes 3); `completed` still only counts Conversion `submitted_at` (Pipeline table doesn't exist yet — do NOT query it).
+- New `routes/PipelineHealth.tsx` placeholder: h2 + one `text-ink-muted` line.
 
----
+**Acceptance:** 3 sections in order, Pipeline clickable to placeholder, Content locked, header updated, "X of 3", Conversion intact, no console errors.
 
-## Phase 1 — Foundation + design system (ship, then STOP)
+## Phase 1 — Data layer
+- Migration creates `selling_systems_audit_pipeline` (owner_id PK → auth.users, draft_answers jsonb, submitted_answers jsonb, has_unsubmitted_changes bool, submitted_at, updated_at) with: grants to authenticated + service_role, RLS enabled, 4 owner policies scoped to `auth.uid() = owner_id`, 1 admin-read-all using `public.has_role`, BEFORE UPDATE trigger using `public.touch_updated_at()`.
+- `data/usePipelineReview.ts`: `usePipelineIntake`, `useSaveDraft`, `useSubmitIntake` — copy shape from `useConversionReview.ts`, `from(TABLE as never)` cast, 5m/30m cache.
+- `config.ts`: `PIPELINE_STEPS`, all option sets (`TREND_OPTIONS`, `AGE_BANDS`, `PROPORTION_BANDS`, `STAGES_CANONICAL`, `DURATION_BANDS`, `FORECAST_METHODS`, `FORECAST_HORIZONS`, `REVIEW_CADENCES`, `TEAM_REVIEW_METHODS`, `REVIEW_DATA_POINTS`), `PipelineAnswers` type.
+- Wire Pipeline `submitted_at` into Overview's `completed` count.
 
-Goal: prove the tokens render. No app, no auth, no routing logic beyond the single placeholder screen.
+**Acceptance:** table + policies present, owner-isolated + admin read-all, hooks compile and round-trip, overview counts Pipeline submissions.
 
-1. **Install Geist** via `@fontsource-variable/geist` (self-hosted, no remote `@import`). Wire weights 400 / 500 / 600 in `src/styles.css`.
-2. **Rewrite `src/styles.css`** — replace the current shadcn zinc/slate palette wholesale:
-   - Declare the OKLCH tokens exactly as specified (`--white`, `--surface-raised`, `--border`, `--border-strong`, `--ink-muted`, `--ink`, `--black`, `--red`, `--red-pressed`, `--red-tint`, `--ring`) in `:root`.
-   - Map shadcn variables onto these tokens (`--background → --white`, `--foreground → --ink`, `--primary → --red`, etc.) so re-skinning any component = changing one token.
-   - `--radius: 0.75rem` (12px), with the existing `--radius-sm/md/lg/xl` derivations capped so cards/inputs land 12–16px.
-   - Register tokens under `@theme inline` so utilities like `bg-white`, `text-ink`, `bg-red`, `border-border` resolve to the ramp (Tailwind v4 equivalent of extending `theme.colors`). The default neutral palette is overridden, not augmented — `zinc`/`slate`/`gray` will not appear in this project.
-   - Add `--ease-out: cubic-bezier(0.23, 1, 0.32, 1)` and a base `@layer base` rule applying `text-wrap: balance` to h1–h3, `text-wrap: pretty` to `p`, body font Geist 400 / 1.6, body color `--ink`, background `--white`.
-   - Define a semantic z-index scale as CSS custom properties (dropdown / sticky / modal-backdrop / modal / toast / tooltip).
-   - Add a `prefers-reduced-motion` block that disables transitions/animations.
-3. **Re-skin the shadcn Button** so its `default` variant uses `--red` / `--red-pressed`, with `active:scale-[0.97]` and a 120ms transform transition using `--ease-out`. Focus ring uses `--ring`. Radius capped at 12px. (Other shadcn primitives keep their existing structure — they already read the variables I'm remapping, so they re-skin automatically.)
-4. **Replace `src/routes/index.tsx`** with the single placeholder screen:
-   - Centered wordmark (Geist 600, `--ink`, letter-spacing `-0.02em`, size from the H1 clamp).
-   - One line of body text (`--ink`) and one line of muted text (`--ink-muted`) — verify the muted line is still ≥4.5:1 on white.
-   - One primary red Button with the scale-press feedback.
-   - Surface is `--white`. No cards, no eyebrows, no gradients, no decoration.
-   - Update `head()` title + description to something non-generic (e.g. "Platform — sign in").
-5. **Verify with Playwright**: load `/`, screenshot at 1280×1800, confirm: chroma-0 background, ink text, red button, Geist loaded (computed `font-family` check), button radius 12px, press scales to 0.97.
+## Phase 2 — Shell extraction (with guardrail)
+- Extract `ProgressBar`, `StepNav`, `StepHeader` from `ConversionReview.tsx` into `components/`, parameterised. `ProgressBar` takes a `steps` prop.
+- Repoint `ConversionReview` at the extracted components.
+- **Verify Conversion unchanged immediately** (step nav, jump, Saving/Saved, autosave, hydration) before anything new consumes them.
 
-After Phase 1 lands I stop and wait. Nothing else gets built until you confirm the screen looks right.
+**Acceptance:** Conversion behaves identically; extracted components accept arbitrary `steps`.
 
----
+## Phase 3 — Stepped shell for Pipeline
+- Replace placeholder with the real `PipelineHealth` route: hydration guard (userId + !isLoading + per-key `if (d.x)`), refs (`latestDraftRef`/`dirtyRef`/`hasSubmittedRef`/`saveMutateRef`), `flushSave` (700ms debounce + commit-point flushes on blur capture, step nav, visibilitychange, unmount), Submit, ReceivedState, edit-after-submit note. Four empty steps mounted with extracted ProgressBar/StepNav/StepHeader.
 
-## Phase 2 — App shell + auth + roles + access gating (after your sign-off)
+**Acceptance:** end-to-end persistence works with zero fields. Refresh/navigate persists draft. Submit → Received. Edit after submit → note + Submit return.
 
-- Enable Lovable Cloud.
-- Migrations: `app_role` enum, `user_roles` (PK `(user_id, role)`, RLS: self-read only, writes service-role only, GRANTs), `has_role(uuid, app_role)` SECURITY DEFINER with `set search_path = ''`, `profiles` (`account_status` check `active|suspended`, GRANTs, self-read/self-update RLS plus admin-all via `has_role`).
-- Edge Function `admin-provision-owner` (service role): `createUser({ email_confirm: true })` → insert profile (active) → insert `user_roles` row (`owner`). Caller must be admin (verified server-side via `has_role`). `notify()` stub lives here as a named seam.
-- Client auth: email OTP only — `signInWithOtp({ email, options: { shouldCreateUser: false } })` then `verifyOtp`. Generic "if your email is registered, a code is on the way" message.
-- Routing zones under `src/routes/`:
-  - Public: `index.tsx` (entry → login CTA), `login.tsx`, `r.$token.tsx` + `r.$token.$.tsx` (respondent shell, real flow in Phase 3).
-  - Authed: `_authenticated.tsx` (layout running `RequireAuth` + `RequireActiveAccount`, redirects unauth → `/login`, suspended → calm paused state), `_authenticated.app.index.tsx` (near-empty owner dashboard, "no tools yet" — not a card grid), `_authenticated.app.tools.$key.$.tsx` (delegates to registry), `_authenticated.app.admin._layout.tsx` (adds `RequireRole role="admin"`), `_authenticated.app.admin.index.tsx` (provision + suspend/reinstate UI).
-- Composable guards live in `src/core/auth/` and `src/core/roles/`, each doing one thing.
-- Role-aware, data-driven nav in `src/core/shell/` reading from the (still empty) tool registry; admin nav only shows for admins. Sidebar `--surface-raised`, content `--white`. No nested cards.
+## Phase 4 — Question UIs
+- Step 1: A1 currency, A2b currency, coverage mirror (both-inputs + target>0 gate, neutral, no colour), A3 integer, A4 trend segmented. Money gated on `!!currency` via `needsCurrency` pattern.
+- Step 2: B1 age band, B2 proportion, B3 proportion with cycle-length echo from `useConversionIntake`, B4 grouped stage+duration with "Other" text reveal.
+- Step 3: C1 MaturitySpectrum, C2 horizon, C3 cadence, C4 YesNo gate → indented group (cadence + Chips/Other), C5 gated on cadence ≠ never (Chips + OptionalText).
+- Step 4: read-back grouped by step (labels resolved via config, "—" for blanks). No analysis.
 
-## Phase 3 — Data model + tool-mount pattern + respondent infra
-
-- `src/tools/registry.ts` exports an empty `toolRegistry: ToolManifest[]`. Manifest type matches your spec (key, name, description, icon, appRoutes, optional publicRoutes, navEntry, dashboardWidget). Shell builds nav + dashboard widgets + tool routes from this array.
-- ESLint `no-restricted-imports` rule blocks `src/tools/*` from importing siblings and blocks `src/core/*` from importing `src/tools/*`.
-- Migration: `respondent_sessions` exactly as specified (token unique, owner_id FK, tool_key, status check, nullable `expires_at` + `consent` seams) with the canonical four-policy RLS set scoped to `owner_id = auth.uid() OR has_role(auth.uid(),'admin')` and GRANTs. No anon access — respondents never touch this table from the client.
-- Edge Function helpers under `supabase/functions/_shared/respondent.ts`: `validateToken`, `captureRespondent`, `markCompleted` (service role). Three thin Edge Functions wrap them for the respondent client.
-- Owner-side: small helper to create a session (insert row with high-entropy token, `tool_key`, `owner_id = auth.uid()`).
-- Public `/r/:token` page: calls `validateToken`, shows name/email capture form if missing, posts to `captureRespondent`, then renders a neutral "thanks, no tool to run yet" placeholder. No tool flow built.
-
-## Out of scope (named seams, no code)
-
-Email send (`notify()` stub only), GDPR/consent/retention (columns exist, unused), token hashing / rate-limiting / expiry enforcement (lives in `_shared/respondent.ts` later), any actual tool, per-tool entitlements, payments, Supabase Storage.
+**Acceptance:** every field round-trips draft + submit; coverage mirror behaves; gating correct; B3 echoes cycle length; passes slop test.
 
 ---
 
-## Technical notes
-
-- **TanStack Start adaptation:** routes are files under `src/routes/`, not `<BrowserRouter>`. `_authenticated.tsx` is the standard layout-gate convention; the existing template already wires `attachSupabaseAuth` so server functions can use `requireSupabaseAuth` once Cloud is enabled. The `ToolManifest.appRoutes` shape will use TanStack route objects (a thin shim) rather than `react-router-dom`'s `RouteObject` — the contract (one array, one line to register a tool) is identical.
-- **Tailwind v4:** no `tailwind.config.ts`. Tokens + `@theme inline` mapping live entirely in `src/styles.css`. Custom variants via `@custom-variant`. This is the supported v4 path and gives the same "change one token, re-skin everything" behaviour.
-- **Fonts:** `@fontsource-variable/geist` only — no `@import` of a Google Fonts URL (Lightning CSS would fail the build).
-- **Verification:** after Phase 1 I'll drive Playwright headless to screenshot `/` and confirm computed styles (font-family contains Geist, button background matches `--red`, border-radius 12px) before handing back to you.
-
-I'll start Phase 1 as soon as you approve this plan.
+Starting with Phase 0 on your go-ahead.
