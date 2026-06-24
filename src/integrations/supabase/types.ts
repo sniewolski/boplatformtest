@@ -247,6 +247,33 @@ export type Database = {
         }
         Relationships: []
       }
+      selling_systems_audit_messaging: {
+        Row: {
+          draft_answers: Json | null
+          has_unsubmitted_changes: boolean
+          owner_id: string
+          submitted_answers: Json | null
+          submitted_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          draft_answers?: Json | null
+          has_unsubmitted_changes?: boolean
+          owner_id: string
+          submitted_answers?: Json | null
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          draft_answers?: Json | null
+          has_unsubmitted_changes?: boolean
+          owner_id?: string
+          submitted_answers?: Json | null
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       selling_systems_audit_pipeline: {
         Row: {
           draft_answers: Json | null
