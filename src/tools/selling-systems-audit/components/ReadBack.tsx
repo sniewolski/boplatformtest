@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { formatCurrency, type CurrencyCode } from "@/lib/format-currency";
+import type { SalesStage } from "../config";
 
 /**
  * Shared read-back primitives for the audit's "Review & submit" steps.
@@ -110,5 +111,43 @@ export function ReadMapRows<T extends KeyedOption>({
         />
       ))}
     </>
+  );
+}
+
+/**
+ * Renders one row per defined sales stage with its purpose + exit criteria.
+ * Empty stage list → single "—" line. Blank fields render as "—".
+ */
+export function ReadStages({ items }: { items: SalesStage[] | undefined }) {
+  const rows = items ?? [];
+  if (rows.length === 0) {
+    return <ReadRow label="Stages" value="—" />;
+  }
+  return (
+    <div className="flex flex-col">
+      {rows.map((s, i) => (
+        <div
+          key={s.id}
+          className="flex flex-col gap-1 py-3 border-b border-border last:border-b-0"
+        >
+          <div className="flex items-baseline gap-2">
+            <span className="text-ink-muted text-xs tabular-nums">{i + 1}.</span>
+            <span className="text-ink text-sm font-medium">
+              {s.name.trim() || "—"}
+            </span>
+          </div>
+          <div className="pl-5 flex flex-col gap-0.5">
+            <span className="text-ink-muted text-xs">
+              Purpose:{" "}
+              <span className="text-ink">{s.purpose?.trim() || "—"}</span>
+            </span>
+            <span className="text-ink-muted text-xs">
+              Exit:{" "}
+              <span className="text-ink">{s.exitCriteria?.trim() || "—"}</span>
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
