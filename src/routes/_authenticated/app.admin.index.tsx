@@ -13,9 +13,11 @@ export const Route = createFileRoute("/_authenticated/app/admin/")({
 
 function AdminHome() {
   const queryClient = useQueryClient();
+  const { user } = Route.useRouteContext();
   const list = useServerFn(listOwners);
   const provision = useServerFn(provisionOwner);
   const setStatus = useServerFn(setAccountStatus);
+  const setAdmin = useServerFn(setAdminRole);
 
   const owners = useQuery({
     queryKey: ["admin", "owners"],
