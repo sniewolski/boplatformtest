@@ -18,6 +18,7 @@ export function SellingSystemsAuditApp({ splat }: ToolComponentProps) {
   if (!segment) return <AuditOverview />;
   if (segment === "conversion") return <ConversionReview />;
   if (segment === "pipeline") return <PipelineHealth />;
+  if (segment === "process") return <SalesProcess />;
   if (segment === "content") return <ContentReview />;
 
   const locked = AUDIT_SECTIONS.find(
