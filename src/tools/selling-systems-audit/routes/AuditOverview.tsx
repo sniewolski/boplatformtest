@@ -33,8 +33,10 @@ export function AuditOverview() {
           Selling Systems Audit
         </h1>
         <p className="text-ink-muted text-base max-w-prose">
-          A four-part diagnostic of how your business converts attention into revenue —
-          where the money is leaking, and what it would take to fix it.
+          A multi-part diagnostic of your selling system.
+        </p>
+        <p className="text-ink-muted text-sm max-w-prose">
+          Work through each section at your own pace — your coach reviews what you submit before your call.
         </p>
         <p className="text-ink-muted text-sm tabular-nums">
           {completed} of {total} reviews complete
