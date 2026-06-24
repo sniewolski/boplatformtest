@@ -6,6 +6,12 @@ import { listOwners } from "@/lib/admin.functions";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ConversionAdminTab } from "@/tools/selling-systems-audit/admin/ConversionAdminTab";
+import { SectionAdminTab } from "@/tools/selling-systems-audit/admin/SectionAdminTab";
+import { PipelineAdminReadBack } from "@/tools/selling-systems-audit/admin/PipelineAdminReadBack";
+import { ProcessAdminReadBack } from "@/tools/selling-systems-audit/admin/ProcessAdminReadBack";
+import { ActivityAdminReadBack } from "@/tools/selling-systems-audit/admin/ActivityAdminReadBack";
+import { MessagingAdminReadBack } from "@/tools/selling-systems-audit/admin/MessagingAdminReadBack";
+import { AlignmentAdminReadBack } from "@/tools/selling-systems-audit/admin/AlignmentAdminReadBack";
 
 const SECTION_TABS = [
   { key: "conversion", label: "Conversion" },
