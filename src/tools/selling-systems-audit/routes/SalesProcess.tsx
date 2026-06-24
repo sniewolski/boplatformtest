@@ -13,6 +13,7 @@ import {
   type ProcessStagesAnswers,
   type ProcessToolsAnswers,
 } from "../data/useProcessReview";
+import type { SalesStage } from "../config";
 import {
   PROCESS_STEPS,
   DOCUMENTATION_LEVELS,
