@@ -48,20 +48,26 @@ function AdminHome() {
     },
   });
 
+  const adminMut = useMutation({
+    mutationFn: (vars: { userId: string; grant: boolean }) =>
+      setAdmin({ data: vars }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "owners"] });
+    },
+    onError: (err: Error) => setFeedback(err.message),
+  });
+
   return (
     <div className="app-content py-16 flex flex-col gap-12">
       <header className="flex flex-col gap-2">
         <h1 className="text-3xl">Admin</h1>
         <p className="text-ink-muted text-sm">
-          Provision owners and manage account status.
+          Add users and manage account access.
         </p>
       </header>
 
-
-
-
       <section className="flex flex-col gap-4">
-        <h2 className="text-xl">Provision owner</h2>
+        <h2 className="text-xl">Add user</h2>
         <form
           className="flex flex-col gap-4 max-w-md"
           onSubmit={(e) => {
@@ -93,13 +99,16 @@ function AdminHome() {
           </div>
           {feedback && <p className="text-sm text-ink-muted">{feedback}</p>}
           <Button type="submit" disabled={provisionMut.isPending || !email}>
-            {provisionMut.isPending ? "Provisioning…" : "Provision owner"}
+            {provisionMut.isPending ? "Adding…" : "Add user"}
           </Button>
         </form>
       </section>
 
       <section className="flex flex-col gap-4">
         <h2 className="text-xl">Accounts</h2>
+        <p className="text-ink-muted text-sm">
+          Grant admin to let someone else review submitted content.
+        </p>
         {owners.isLoading && (
           <p className="text-ink-muted text-sm">Loading…</p>
         )}
@@ -115,6 +124,8 @@ function AdminHome() {
           <ul className="flex flex-col divide-y divide-border border border-border rounded-xl">
             {owners.data.map((row) => {
               const suspended = row.accountStatus === "suspended";
+              const isAdmin = row.roles.includes("admin");
+              const isSelf = row.id === user.id;
               return (
                 <li
                   key={row.id}
@@ -129,25 +140,42 @@ function AdminHome() {
                       </span>
                     </span>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={statusMut.isPending}
-                    onClick={() =>
-                      statusMut.mutate({
-                        userId: row.id,
-                        status: suspended ? "active" : "suspended",
-                      })
-                    }
-                  >
-                    {suspended ? "Reinstate" : "Suspend"}
-                  </Button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={adminMut.isPending || isSelf}
+                      title={isSelf ? "You can't change your own admin role." : undefined}
+                      onClick={() => {
+                        setFeedback(null);
+                        if (isAdmin && !confirm(`Revoke admin from ${row.email}?`)) return;
+                        adminMut.mutate({ userId: row.id, grant: !isAdmin });
+                      }}
+                    >
+                      {isAdmin ? "Revoke admin" : "Make admin"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={statusMut.isPending || isSelf}
+                      title={isSelf ? "You can't suspend your own account." : undefined}
+                      onClick={() =>
+                        statusMut.mutate({
+                          userId: row.id,
+                          status: suspended ? "active" : "suspended",
+                        })
+                      }
+                    >
+                      {suspended ? "Reinstate" : "Suspend"}
+                    </Button>
+                  </div>
                 </li>
               );
             })}
           </ul>
         )}
       </section>
+
     </div>
   );
 }
