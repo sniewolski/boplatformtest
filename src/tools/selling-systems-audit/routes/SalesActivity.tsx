@@ -200,28 +200,13 @@ export function SalesActivity() {
 
           <div className="flex flex-col gap-8" onBlurCapture={flushSave}>
             {step.key === "tracking" && (
-              <section className="flex flex-col gap-8">
-                <StepHeader
-                  title="What you track"
-                  subtitle="The activity numbers you actually capture today, and how."
-                />
-              </section>
+              <TrackingStep value={tracking} onChange={setTracking} />
             )}
             {step.key === "volume" && (
-              <section className="flex flex-col gap-8">
-                <StepHeader
-                  title="Activity volume"
-                  subtitle="A rough read on how much outbound and meeting activity happens in a typical week."
-                />
-              </section>
+              <VolumeStep value={volume} onChange={setVolume} />
             )}
             {step.key === "quality" && (
-              <section className="flex flex-col gap-8">
-                <StepHeader
-                  title="Quality & confidence"
-                  subtitle="How consistent the activity is, what stands out, and how much you trust the numbers."
-                />
-              </section>
+              <QualityStep value={quality} onChange={setQuality} />
             )}
             {step.key === "review" && (
               <ReviewStep
