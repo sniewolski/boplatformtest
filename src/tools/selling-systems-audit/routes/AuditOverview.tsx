@@ -5,6 +5,7 @@ import { AUDIT_SECTIONS } from "../config";
 import { useConversionIntake } from "../data/useConversionReview";
 import { usePipelineIntake } from "../data/usePipelineReview";
 import { useProcessIntake } from "../data/useProcessReview";
+import { useActivityIntake } from "../data/useActivityReview";
 
 export function AuditOverview() {
   const { session } = useSession();
