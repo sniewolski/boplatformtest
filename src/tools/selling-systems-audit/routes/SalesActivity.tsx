@@ -269,7 +269,188 @@ function ReceivedState({ onEdit }: { onEdit: () => void }) {
   );
 }
 
+// ───────── Step 1: What you track ─────────
+
+function TrackingStep({
+  value,
+  onChange,
+}: {
+  value: ActivityTrackingAnswers;
+  onChange: (next: ActivityTrackingAnswers) => void;
+}) {
+  return (
+    <section className="flex flex-col gap-8">
+      <StepHeader
+        title="What you track"
+        subtitle="The activity numbers you actually capture today, and how."
+      />
+      <Question
+        label="Which sales activities do you measure?"
+        hint="Pick all that apply."
+      >
+        <Chips
+          options={ACTIVITY_METRICS}
+          value={(value.metrics ?? []) as string[]}
+          onChange={(next) =>
+            onChange({
+              ...value,
+              metrics: next as ActivityTrackingAnswers["metrics"],
+            })
+          }
+        />
+      </Question>
+      <Question label="How is that activity captured?">
+        <MaturitySpectrum
+          steps={TRACKING_METHOD}
+          value={value.trackingMethod ?? null}
+          onChange={(k) => onChange({ ...value, trackingMethod: k })}
+        />
+      </Question>
+    </section>
+  );
+}
+
+// ───────── Step 2: Activity volume ─────────
+
+function VolumeStep({
+  value,
+  onChange,
+}: {
+  value: ActivityVolumeAnswers;
+  onChange: (next: ActivityVolumeAnswers) => void;
+}) {
+  return (
+    <section className="flex flex-col gap-8">
+      <StepHeader
+        title="Activity volume"
+        subtitle="A rough read on how much outbound and meeting activity happens in a typical week."
+      />
+      <Question label="Calls made in a typical week">
+        <Segmented
+          options={CALLS_BAND}
+          value={value.callsBand ?? null}
+          onChange={(k) => onChange({ ...value, callsBand: k })}
+        />
+      </Question>
+      <Question label="Emails sent in a typical week">
+        <Segmented
+          options={EMAILS_BAND}
+          value={value.emailsBand ?? null}
+          onChange={(k) => onChange({ ...value, emailsBand: k })}
+        />
+      </Question>
+      <Question label="Meetings held in a typical week">
+        <Segmented
+          options={MEETINGS_BAND}
+          value={value.meetingsBand ?? null}
+          onChange={(k) => onChange({ ...value, meetingsBand: k })}
+        />
+      </Question>
+      <Question label="Compared to last quarter, activity has…">
+        <MaturitySpectrum
+          steps={ACTIVITY_TREND}
+          value={value.trend ?? null}
+          onChange={(k) => onChange({ ...value, trend: k })}
+        />
+      </Question>
+    </section>
+  );
+}
+
+// ───────── Step 3: Quality & confidence ─────────
+
+function QualityStep({
+  value,
+  onChange,
+}: {
+  value: ActivityQualityAnswers;
+  onChange: (next: ActivityQualityAnswers) => void;
+}) {
+  const isOther = value.strongestMetric === "other";
+  const goalsYes = value.goalsSet === "yes";
+  return (
+    <section className="flex flex-col gap-8">
+      <StepHeader
+        title="Quality & confidence"
+        subtitle="How consistent the activity is, what stands out, and how much you trust the numbers."
+      />
+      <Question label="How confident are you the activity is good quality?">
+        <Segmented
+          options={ACTIVITY_CONFIDENCE}
+          value={value.confidence ?? null}
+          onChange={(k) => onChange({ ...value, confidence: k })}
+        />
+      </Question>
+      <Question label="How consistent is activity week to week?">
+        <Segmented
+          options={ACTIVITY_CONSISTENCY}
+          value={value.consistency ?? null}
+          onChange={(k) => onChange({ ...value, consistency: k })}
+        />
+      </Question>
+      <Question label="Which metric is the strongest signal of progress?">
+        <Segmented
+          options={STRONGEST_METRIC}
+          value={value.strongestMetric ?? null}
+          onChange={(k) =>
+            onChange({
+              ...value,
+              strongestMetric: k,
+              ...(k === "other" ? {} : { strongestMetricOther: "" }),
+            })
+          }
+        />
+        {isOther && (
+          <div className="pt-3">
+            <OptionalText
+              value={value.strongestMetricOther ?? ""}
+              onChange={(v) => onChange({ ...value, strongestMetricOther: v })}
+              placeholder="Which metric?"
+              rows={2}
+            />
+          </div>
+        )}
+      </Question>
+      <Question label="Do you set activity goals?">
+        <Segmented
+          options={GOALS_SET}
+          value={value.goalsSet ?? null}
+          onChange={(k) =>
+            onChange({
+              ...value,
+              goalsSet: k,
+              ...(k === "yes" ? {} : { goalsWhy: "" }),
+            })
+          }
+        />
+        <div className="pt-3 min-h-[88px]">
+          {goalsYes && (
+            <OptionalText
+              value={value.goalsWhy ?? ""}
+              onChange={(v) => onChange({ ...value, goalsWhy: v })}
+              placeholder="Why those goals?"
+              rows={2}
+            />
+          )}
+        </div>
+      </Question>
+      <Question label="How much do you trust the activity data?">
+        <MaturitySpectrum
+          steps={DATA_TRUST}
+          value={value.dataTrust ?? null}
+          onChange={(k) => onChange({ ...value, dataTrust: k })}
+        />
+      </Question>
+    </section>
+  );
+}
+
+// ───────── Step 4: Review & submit ─────────
+
 function ReviewStep({
+  tracking,
+  volume,
+  quality,
   hasSubmitted,
   hasUnsubmittedChanges,
   submitting,
@@ -277,6 +458,9 @@ function ReviewStep({
   error,
   submitLabel,
 }: {
+  tracking: ActivityTrackingAnswers;
+  volume: ActivityVolumeAnswers;
+  quality: ActivityQualityAnswers;
   hasSubmitted: boolean;
   hasUnsubmittedChanges: boolean;
   submitting: boolean;
@@ -284,6 +468,11 @@ function ReviewStep({
   error: string | null;
   submitLabel: string;
 }) {
+  const strongest =
+    quality.strongestMetric === "other"
+      ? (quality.strongestMetricOther?.trim() || "—")
+      : labelOf(STRONGEST_METRIC, quality.strongestMetric);
+
   return (
     <section className="flex flex-col gap-8">
       <StepHeader
@@ -291,9 +480,38 @@ function ReviewStep({
         subtitle="A quick read-back of your answers. Edit anything by stepping back."
       />
 
-      <p className="text-ink-muted text-sm">
-        Read-back fills in next pass.
-      </p>
+      <ReadGroup title="What you track">
+        <ReadRow
+          label="Metrics tracked"
+          value={chipsLabels(
+            ACTIVITY_METRICS,
+            tracking.metrics as string[] | undefined,
+            undefined,
+          )}
+        />
+        <ReadRow
+          label="How it's captured"
+          value={labelOf(TRACKING_METHOD, tracking.trackingMethod)}
+        />
+      </ReadGroup>
+
+      <ReadGroup title="Activity volume">
+        <ReadRow label="Calls / week" value={labelOf(CALLS_BAND, volume.callsBand)} />
+        <ReadRow label="Emails / week" value={labelOf(EMAILS_BAND, volume.emailsBand)} />
+        <ReadRow label="Meetings / week" value={labelOf(MEETINGS_BAND, volume.meetingsBand)} />
+        <ReadRow label="Trend vs last quarter" value={labelOf(ACTIVITY_TREND, volume.trend)} />
+      </ReadGroup>
+
+      <ReadGroup title="Quality & confidence">
+        <ReadRow label="Confidence" value={labelOf(ACTIVITY_CONFIDENCE, quality.confidence)} />
+        <ReadRow label="Consistency" value={labelOf(ACTIVITY_CONSISTENCY, quality.consistency)} />
+        <ReadRow label="Strongest signal" value={strongest} />
+        <ReadRow label="Activity goals" value={labelOf(GOALS_SET, quality.goalsSet)} />
+        {quality.goalsSet === "yes" && (
+          <ReadRow label="Why those goals" value={quality.goalsWhy?.trim() || "—"} />
+        )}
+        <ReadRow label="Trust in data" value={labelOf(DATA_TRUST, quality.dataTrust)} />
+      </ReadGroup>
 
       {hasSubmitted && hasUnsubmittedChanges && (
         <p className="text-ink-muted text-sm">
@@ -315,3 +533,4 @@ function ReviewStep({
     </section>
   );
 }
+
