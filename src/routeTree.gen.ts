@@ -21,10 +21,8 @@ import { Route as AuthenticatedAppAdminIndexRouteImport } from './routes/_authen
 import { Route as ApiPublicRValidateRouteImport } from './routes/api/public/r/validate'
 import { Route as ApiPublicRCompleteRouteImport } from './routes/api/public/r/complete'
 import { Route as ApiPublicRCaptureRouteImport } from './routes/api/public/r/capture'
-import { Route as AuthenticatedAppAdminContentRouteImport } from './routes/_authenticated/app.admin.content'
 import { Route as AuthenticatedAppAdminAuditIndexRouteImport } from './routes/_authenticated/app.admin.audit.index'
 import { Route as AuthenticatedAppToolsKeySplatRouteImport } from './routes/_authenticated/app.tools.$key.$'
-import { Route as AuthenticatedAppAdminContentAssetIdRouteImport } from './routes/_authenticated/app.admin.content.$assetId'
 import { Route as AuthenticatedAppAdminAuditOwnerIdRouteImport } from './routes/_authenticated/app.admin.audit.$ownerId'
 
 const LoginRoute = LoginRouteImport.update({
@@ -87,12 +85,6 @@ const ApiPublicRCaptureRoute = ApiPublicRCaptureRouteImport.update({
   path: '/api/public/r/capture',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedAppAdminContentRoute =
-  AuthenticatedAppAdminContentRouteImport.update({
-    id: '/content',
-    path: '/content',
-    getParentRoute: () => AuthenticatedAppAdminRoute,
-  } as any)
 const AuthenticatedAppAdminAuditIndexRoute =
   AuthenticatedAppAdminAuditIndexRouteImport.update({
     id: '/audit/',
@@ -104,12 +96,6 @@ const AuthenticatedAppToolsKeySplatRoute =
     id: '/app/tools/$key/$',
     path: '/app/tools/$key/$',
     getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAppAdminContentAssetIdRoute =
-  AuthenticatedAppAdminContentAssetIdRouteImport.update({
-    id: '/$assetId',
-    path: '/$assetId',
-    getParentRoute: () => AuthenticatedAppAdminContentRoute,
   } as any)
 const AuthenticatedAppAdminAuditOwnerIdRoute =
   AuthenticatedAppAdminAuditOwnerIdRouteImport.update({
@@ -126,13 +112,11 @@ export interface FileRoutesByFullPath {
   '/r/$token/$': typeof RTokenSplatRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/r/$token/': typeof RTokenIndexRoute
-  '/app/admin/content': typeof AuthenticatedAppAdminContentRouteWithChildren
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
   '/api/public/r/validate': typeof ApiPublicRValidateRoute
   '/app/admin/': typeof AuthenticatedAppAdminIndexRoute
   '/app/admin/audit/$ownerId': typeof AuthenticatedAppAdminAuditOwnerIdRoute
-  '/app/admin/content/$assetId': typeof AuthenticatedAppAdminContentAssetIdRoute
   '/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
   '/app/admin/audit/': typeof AuthenticatedAppAdminAuditIndexRoute
 }
@@ -142,13 +126,11 @@ export interface FileRoutesByTo {
   '/r/$token/$': typeof RTokenSplatRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/r/$token': typeof RTokenIndexRoute
-  '/app/admin/content': typeof AuthenticatedAppAdminContentRouteWithChildren
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
   '/api/public/r/validate': typeof ApiPublicRValidateRoute
   '/app/admin': typeof AuthenticatedAppAdminIndexRoute
   '/app/admin/audit/$ownerId': typeof AuthenticatedAppAdminAuditOwnerIdRoute
-  '/app/admin/content/$assetId': typeof AuthenticatedAppAdminContentAssetIdRoute
   '/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
   '/app/admin/audit': typeof AuthenticatedAppAdminAuditIndexRoute
 }
@@ -162,13 +144,11 @@ export interface FileRoutesById {
   '/r/$token/$': typeof RTokenSplatRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/r/$token/': typeof RTokenIndexRoute
-  '/_authenticated/app/admin/content': typeof AuthenticatedAppAdminContentRouteWithChildren
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
   '/api/public/r/validate': typeof ApiPublicRValidateRoute
   '/_authenticated/app/admin/': typeof AuthenticatedAppAdminIndexRoute
   '/_authenticated/app/admin/audit/$ownerId': typeof AuthenticatedAppAdminAuditOwnerIdRoute
-  '/_authenticated/app/admin/content/$assetId': typeof AuthenticatedAppAdminContentAssetIdRoute
   '/_authenticated/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
   '/_authenticated/app/admin/audit/': typeof AuthenticatedAppAdminAuditIndexRoute
 }
@@ -182,13 +162,11 @@ export interface FileRouteTypes {
     | '/r/$token/$'
     | '/app/'
     | '/r/$token/'
-    | '/app/admin/content'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
     | '/api/public/r/validate'
     | '/app/admin/'
     | '/app/admin/audit/$ownerId'
-    | '/app/admin/content/$assetId'
     | '/app/tools/$key/$'
     | '/app/admin/audit/'
   fileRoutesByTo: FileRoutesByTo
@@ -198,13 +176,11 @@ export interface FileRouteTypes {
     | '/r/$token/$'
     | '/app'
     | '/r/$token'
-    | '/app/admin/content'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
     | '/api/public/r/validate'
     | '/app/admin'
     | '/app/admin/audit/$ownerId'
-    | '/app/admin/content/$assetId'
     | '/app/tools/$key/$'
     | '/app/admin/audit'
   id:
@@ -217,13 +193,11 @@ export interface FileRouteTypes {
     | '/r/$token/$'
     | '/_authenticated/app/'
     | '/r/$token/'
-    | '/_authenticated/app/admin/content'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
     | '/api/public/r/validate'
     | '/_authenticated/app/admin/'
     | '/_authenticated/app/admin/audit/$ownerId'
-    | '/_authenticated/app/admin/content/$assetId'
     | '/_authenticated/app/tools/$key/$'
     | '/_authenticated/app/admin/audit/'
   fileRoutesById: FileRoutesById
@@ -324,13 +298,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicRCaptureRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/app/admin/content': {
-      id: '/_authenticated/app/admin/content'
-      path: '/content'
-      fullPath: '/app/admin/content'
-      preLoaderRoute: typeof AuthenticatedAppAdminContentRouteImport
-      parentRoute: typeof AuthenticatedAppAdminRoute
-    }
     '/_authenticated/app/admin/audit/': {
       id: '/_authenticated/app/admin/audit/'
       path: '/audit'
@@ -345,13 +312,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppToolsKeySplatRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/app/admin/content/$assetId': {
-      id: '/_authenticated/app/admin/content/$assetId'
-      path: '/$assetId'
-      fullPath: '/app/admin/content/$assetId'
-      preLoaderRoute: typeof AuthenticatedAppAdminContentAssetIdRouteImport
-      parentRoute: typeof AuthenticatedAppAdminContentRoute
-    }
     '/_authenticated/app/admin/audit/$ownerId': {
       id: '/_authenticated/app/admin/audit/$ownerId'
       path: '/audit/$ownerId'
@@ -362,31 +322,13 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthenticatedAppAdminContentRouteChildren {
-  AuthenticatedAppAdminContentAssetIdRoute: typeof AuthenticatedAppAdminContentAssetIdRoute
-}
-
-const AuthenticatedAppAdminContentRouteChildren: AuthenticatedAppAdminContentRouteChildren =
-  {
-    AuthenticatedAppAdminContentAssetIdRoute:
-      AuthenticatedAppAdminContentAssetIdRoute,
-  }
-
-const AuthenticatedAppAdminContentRouteWithChildren =
-  AuthenticatedAppAdminContentRoute._addFileChildren(
-    AuthenticatedAppAdminContentRouteChildren,
-  )
-
 interface AuthenticatedAppAdminRouteChildren {
-  AuthenticatedAppAdminContentRoute: typeof AuthenticatedAppAdminContentRouteWithChildren
   AuthenticatedAppAdminIndexRoute: typeof AuthenticatedAppAdminIndexRoute
   AuthenticatedAppAdminAuditOwnerIdRoute: typeof AuthenticatedAppAdminAuditOwnerIdRoute
   AuthenticatedAppAdminAuditIndexRoute: typeof AuthenticatedAppAdminAuditIndexRoute
 }
 
 const AuthenticatedAppAdminRouteChildren: AuthenticatedAppAdminRouteChildren = {
-  AuthenticatedAppAdminContentRoute:
-    AuthenticatedAppAdminContentRouteWithChildren,
   AuthenticatedAppAdminIndexRoute: AuthenticatedAppAdminIndexRoute,
   AuthenticatedAppAdminAuditOwnerIdRoute:
     AuthenticatedAppAdminAuditOwnerIdRoute,
