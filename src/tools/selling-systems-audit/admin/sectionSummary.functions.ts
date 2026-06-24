@@ -17,7 +17,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
  * Single source of truth for the model id used by audit section summaries.
  * Keep it here — if it ever needs to change, change it once.
  */
-export const AUDIT_SUMMARY_MODEL = "gemini-2.5-flash" as const;
+export const AUDIT_SUMMARY_MODEL = "gemini-3.5-flash" as const;
 
 const SECTION_KEYS = [
   "conversion",
