@@ -15,6 +15,7 @@ import {
 } from "../data/useProcessReview";
 import { PROCESS_STEPS } from "../config";
 import { ProgressBar, StepNav, StepHeader } from "../components/StepShell";
+import { StageBuilder, ensureDefaultStages } from "../components/StageBuilder";
 
 const AUTOSAVE_MS = 700;
 
@@ -189,11 +190,12 @@ export function SalesProcess() {
               <section className="flex flex-col gap-8">
                 <StepHeader
                   title="Stages"
-                  subtitle="The stages a deal moves through, from first contact to close."
+                  subtitle="The stages a deal moves through, from first contact to close. We've pre-filled six common ones — rename, reorder, add or remove to match how you actually sell."
                 />
-                <p className="text-ink-muted text-sm">
-                  Stage builder coming next.
-                </p>
+                <StageBuilder
+                  value={ensureDefaultStages(stages.items)}
+                  onChange={(items) => setStages({ items })}
+                />
               </section>
             )}
             {step.key === "adherence" && (
