@@ -578,5 +578,107 @@ export const DATA_TRUST = [
 ] as const;
 export type DataTrustKey = (typeof DATA_TRUST)[number]["key"];
 
+// ---------------------------------------------------------------------------
+// Messaging & Positioning
+// ---------------------------------------------------------------------------
+
+export const MESSAGING_STEPS = [
+  { key: "icp",         label: "Ideal customer clarity", short: "ICP" },
+  { key: "problem",     label: "Problem & pain clarity", short: "Problem" },
+  { key: "value",       label: "Value proposition",      short: "Value" },
+  { key: "proof",       label: "Proof & credibility",    short: "Proof" },
+  { key: "consistency", label: "Message consistency",    short: "Consistency" },
+  { key: "review",      label: "Review & submit",        short: "Review" },
+] as const;
+export type MessagingStepKey = (typeof MESSAGING_STEPS)[number]["key"];
+
+export const ICP_WRITTEN = [
+  { key: "none",       label: "Nothing written" },
+  { key: "inHead",     label: "Held loosely in my head" },
+  { key: "notes",      label: "Some written notes" },
+  { key: "documented", label: "Documented ICP / persona" },
+] as const;
+export type IcpWrittenKey = (typeof ICP_WRITTEN)[number]["key"];
+
+export const ICP_BASIS = [
+  { key: "data",       label: "From data on best clients" },
+  { key: "mix",        label: "Mix of data and assumption" },
+  { key: "assumption", label: "Mostly an assumption" },
+] as const;
+export type IcpBasisKey = (typeof ICP_BASIS)[number]["key"];
+
+export const YES_SOMEWHAT_NO = [
+  { key: "yes",      label: "Yes" },
+  { key: "somewhat", label: "Somewhat" },
+  { key: "no",       label: "No" },
+] as const;
+export type YesSomewhatNoKey = (typeof YES_SOMEWHAT_NO)[number]["key"];
+
+export const RECOGNITION = [
+  { key: "immediately", label: "Yes, immediately" },
+  { key: "sometimes",   label: "Sometimes" },
+  { key: "rarely",      label: "Rarely" },
+] as const;
+export type RecognitionKey = (typeof RECOGNITION)[number]["key"];
+
+export const MESSAGE_LEVEL = [
+  { key: "symptom", label: "The surface symptom they feel" },
+  { key: "both",    label: "Both" },
+  { key: "root",    label: "The deeper root cause" },
+] as const;
+export type MessageLevelKey = (typeof MESSAGE_LEVEL)[number]["key"];
+
+export const CAN_TELL = [
+  { key: "yes",      label: "Yes, clearly" },
+  { key: "somewhat", label: "Somewhat" },
+  { key: "no",       label: "Not really" },
+] as const;
+export type CanTellKey = (typeof CAN_TELL)[number]["key"];
+
+export const COMPETE_BASIS = [
+  { key: "price",     label: "Mostly on price" },
+  { key: "mixed",     label: "A mix" },
+  { key: "advantage", label: "A clear unique advantage" },
+] as const;
+export type CompeteBasisKey = (typeof COMPETE_BASIS)[number]["key"];
+
+export const EVIDENCE_TYPES = [
+  { key: "caseStudies",  label: "Case studies" },
+  { key: "testimonials", label: "Testimonials" },
+  { key: "data",         label: "Data / metrics" },
+  { key: "results",      label: "Documented client results" },
+  { key: "other",        label: "Other" },
+] as const;
+export type EvidenceKey = (typeof EVIDENCE_TYPES)[number]["key"];
+
+export const PROOF_SPECIFICITY = [
+  { key: "specific", label: "Specific & outcome-focused" },
+  { key: "mixed",    label: "A mix" },
+  { key: "vague",    label: "General & vague" },
+] as const;
+export type ProofSpecificityKey = (typeof PROOF_SPECIFICITY)[number]["key"];
+
+export const PROOF_TARGETING = [
+  { key: "targeted", label: "Targeted to their situation" },
+  { key: "somewhat", label: "Somewhat" },
+  { key: "generic",  label: "Generic" },
+] as const;
+export type ProofTargetingKey = (typeof PROOF_TARGETING)[number]["key"];
+
+export const CONSISTENCY_LEVELS = [
+  { key: "consistent", label: "Consistent everywhere" },
+  { key: "mostly",     label: "Mostly consistent" },
+  { key: "varies",     label: "Varies across channels" },
+] as const;
+export type ConsistencyKey = (typeof CONSISTENCY_LEVELS)[number]["key"];
+
+export const MATCH_LEVELS = [
+  { key: "matches", label: "Yes, closely" },
+  { key: "roughly", label: "Roughly" },
+  { key: "differs", label: "Often differs" },
+] as const;
+export type MatchKey = (typeof MATCH_LEVELS)[number]["key"];
+
+
 
 
