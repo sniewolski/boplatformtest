@@ -206,13 +206,7 @@ export function SalesProcess() {
 
           <div className="flex flex-col gap-8" onBlurCapture={flushSave}>
             {step.key === "definition" && (
-              <section className="flex flex-col gap-8">
-                <StepHeader
-                  title="Process definition"
-                  subtitle="How clearly your sales process is captured and shared."
-                />
-                <p className="text-ink-muted text-sm">Questions coming next.</p>
-              </section>
+              <DefinitionStep value={definition} onChange={setDefinition} />
             )}
             {step.key === "stages" && (
               <section className="flex flex-col gap-8">
@@ -227,51 +221,32 @@ export function SalesProcess() {
               </section>
             )}
             {step.key === "adherence" && (
-              <section className="flex flex-col gap-8">
-                <StepHeader
-                  title="Adherence & quality"
-                  subtitle="How consistently the process is followed, and how that experience holds together for the buyer."
-                />
-                <p className="text-ink-muted text-sm">Questions coming next.</p>
-              </section>
+              <AdherenceStep value={adherence} onChange={setAdherence} />
             )}
             {step.key === "tools" && (
-              <section className="flex flex-col gap-8">
-                <StepHeader
-                  title="Tools & enablement"
-                  subtitle="The CRM, templates, and training that support the process."
-                />
-                <p className="text-ink-muted text-sm">Questions coming next.</p>
-              </section>
+              <ToolsStep
+                value={tools}
+                onChange={setTools}
+                stages={stages.items}
+              />
             )}
             {step.key === "review" && (
-              <section className="flex flex-col gap-6">
-                <StepHeader
-                  title="Review & submit"
-                  subtitle="Read-back of every answer arrives in the next pass. Submit works now."
-                />
-                {hasSubmitted && hasUnsubmittedChanges && (
-                  <p className="text-ink-muted text-sm">
-                    You've changed your answers since last submission.
-                  </p>
-                )}
-                {submitError && (
-                  <p className="text-sm text-destructive" role="alert">
-                    {submitError}
-                  </p>
-                )}
-                <Button
-                  onClick={handleSubmit}
-                  disabled={
-                    submit.isPending || (hasSubmitted && !hasUnsubmittedChanges)
-                  }
-                  className="w-fit active:scale-[0.97] transition-transform"
-                >
-                  {submit.isPending ? "Submitting…" : submitLabel}
-                </Button>
-              </section>
+              <ReviewStep
+                definition={definition}
+                stages={stages}
+                adherence={adherence}
+                tools={tools}
+                hasSubmitted={hasSubmitted}
+                hasUnsubmittedChanges={hasUnsubmittedChanges}
+                submitting={submit.isPending}
+                onSubmit={handleSubmit}
+                error={submitError}
+                submitLabel={submitLabel}
+              />
             )}
           </div>
+
+
 
           <StepNav
             currentIdx={stepIdx}
