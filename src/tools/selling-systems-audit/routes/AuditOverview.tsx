@@ -6,6 +6,7 @@ import { useConversionIntake } from "../data/useConversionReview";
 import { usePipelineIntake } from "../data/usePipelineReview";
 import { useProcessIntake } from "../data/useProcessReview";
 import { useActivityIntake } from "../data/useActivityReview";
+import { useMessagingIntake } from "../data/useMessagingReview";
 
 export function AuditOverview() {
   const { session } = useSession();
