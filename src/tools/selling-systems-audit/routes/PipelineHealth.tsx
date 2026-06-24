@@ -625,8 +625,7 @@ function SummaryStep({
   onSubmit: () => void;
   error: string | null;
 }) {
-  const money = (v: number | null | undefined) =>
-    v == null ? "—" : currency ? formatCurrency(v, currency) : String(v);
+  const money = (v: number | null | undefined) => moneyText(v, currency);
 
   const label = hasSubmitted
     ? hasUnsubmittedChanges
