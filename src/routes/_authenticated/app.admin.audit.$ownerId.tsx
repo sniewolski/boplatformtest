@@ -6,6 +6,12 @@ import { listOwners } from "@/lib/admin.functions";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ConversionAdminTab } from "@/tools/selling-systems-audit/admin/ConversionAdminTab";
+import { SectionAdminTab } from "@/tools/selling-systems-audit/admin/SectionAdminTab";
+import { PipelineAdminReadBack } from "@/tools/selling-systems-audit/admin/PipelineAdminReadBack";
+import { ProcessAdminReadBack } from "@/tools/selling-systems-audit/admin/ProcessAdminReadBack";
+import { ActivityAdminReadBack } from "@/tools/selling-systems-audit/admin/ActivityAdminReadBack";
+import { MessagingAdminReadBack } from "@/tools/selling-systems-audit/admin/MessagingAdminReadBack";
+import { AlignmentAdminReadBack } from "@/tools/selling-systems-audit/admin/AlignmentAdminReadBack";
 
 const SECTION_TABS = [
   { key: "conversion", label: "Conversion" },
@@ -81,12 +87,52 @@ function OwnerAuditReview() {
       </nav>
 
       <section className="min-h-[40vh]">
-        {tab === "conversion" ? (
-          <ConversionAdminTab ownerId={ownerId} />
-        ) : (
+        {tab === "conversion" && <ConversionAdminTab ownerId={ownerId} />}
+        {tab === "pipeline" && (
+          <SectionAdminTab
+            ownerId={ownerId}
+            sectionKey="pipeline"
+            sectionLabel="Pipeline"
+            renderReadBack={(answers, currency) => (
+              <PipelineAdminReadBack answers={answers} currency={currency} />
+            )}
+          />
+        )}
+        {tab === "process" && (
+          <SectionAdminTab
+            ownerId={ownerId}
+            sectionKey="process"
+            sectionLabel="Process"
+            renderReadBack={(answers) => <ProcessAdminReadBack answers={answers} />}
+          />
+        )}
+        {tab === "activity" && (
+          <SectionAdminTab
+            ownerId={ownerId}
+            sectionKey="activity"
+            sectionLabel="Activity"
+            renderReadBack={(answers) => <ActivityAdminReadBack answers={answers} />}
+          />
+        )}
+        {tab === "messaging" && (
+          <SectionAdminTab
+            ownerId={ownerId}
+            sectionKey="messaging"
+            sectionLabel="Messaging"
+            renderReadBack={(answers) => <MessagingAdminReadBack answers={answers} />}
+          />
+        )}
+        {tab === "alignment" && (
+          <SectionAdminTab
+            ownerId={ownerId}
+            sectionKey="alignment"
+            sectionLabel="Alignment"
+            renderReadBack={(answers) => <AlignmentAdminReadBack answers={answers} />}
+          />
+        )}
+        {tab === "content" && (
           <p className="text-ink-muted text-sm">
-            {SECTION_TABS.find((t) => t.key === tab)?.label} tab — content lands
-            in the next phase.
+            Content tab — lands in the next phase.
           </p>
         )}
       </section>
