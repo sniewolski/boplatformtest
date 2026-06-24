@@ -218,3 +218,109 @@ export const CLOSE_TREND_OPTIONS = [
   { key: "declined", label: "Declined" },
 ] as const;
 
+// ═══════════════════════════════════════════════════════════════════════
+// Pipeline Health (Section 2) — stepped intake, owner answers only.
+// Same shape rules as Conversion: jsonb blob keyed by config keys; reword
+// labels here without touching components or migrations.
+// ═══════════════════════════════════════════════════════════════════════
+
+export const PIPELINE_STEPS = [
+  { key: "volume",      label: "Volume & coverage",        short: "Volume" },
+  { key: "velocity",    label: "Velocity & stalling",      short: "Velocity" },
+  { key: "forecasting", label: "Forecasting & visibility", short: "Forecasting" },
+  { key: "summary",     label: "Review & submit",          short: "Review" },
+] as const;
+
+export type PipelineStepKey = (typeof PIPELINE_STEPS)[number]["key"];
+
+export const TREND_OPTIONS = [
+  { key: "grown",  label: "Grown" },
+  { key: "flat",   label: "Flat" },
+  { key: "shrunk", label: "Shrunk" },
+] as const;
+export type TrendKey = (typeof TREND_OPTIONS)[number]["key"];
+
+export const AGE_BANDS = [
+  { key: "lt1",    label: "<1 month" },
+  { key: "m1to3",  label: "1–3 months" },
+  { key: "m3to6",  label: "3–6 months" },
+  { key: "m6to12", label: "6–12 months" },
+  { key: "gt12",   label: "12 months+" },
+] as const;
+export type AgeBandKey = (typeof AGE_BANDS)[number]["key"];
+
+export const PROPORTION_BANDS = [
+  { key: "none",    label: "None" },
+  { key: "few",     label: "A few" },
+  { key: "quarter", label: "~25%" },
+  { key: "half",    label: "~50%" },
+  { key: "most",    label: "Most" },
+] as const;
+export type ProportionKey = (typeof PROPORTION_BANDS)[number]["key"];
+
+export const STAGES_CANONICAL = [
+  { key: "lead",        label: "Lead" },
+  { key: "qualified",   label: "Qualified" },
+  { key: "discovery",   label: "Discovery" },
+  { key: "proposal",    label: "Proposal" },
+  { key: "negotiation", label: "Negotiation" },
+  { key: "other",       label: "Other" },
+] as const;
+export type StageCanonicalKey = (typeof STAGES_CANONICAL)[number]["key"];
+
+export const DURATION_BANDS = [
+  { key: "lt2w",   label: "<2 weeks" },
+  { key: "w2to4",  label: "2–4 weeks" },
+  { key: "m1to3",  label: "1–3 months" },
+  { key: "gt3m",   label: "3 months+" },
+] as const;
+export type DurationBandKey = (typeof DURATION_BANDS)[number]["key"];
+
+// Maturity order — render in this order in MaturitySpectrum.
+export const FORECAST_METHODS = [
+  { key: "none",  label: "Don't forecast" },
+  { key: "gut",   label: "Gut feel" },
+  { key: "stage", label: "Stage-weighted" },
+  { key: "model", label: "Formal model" },
+] as const;
+export type ForecastMethodKey = (typeof FORECAST_METHODS)[number]["key"];
+
+export const FORECAST_HORIZONS = [
+  { key: "cant",    label: "Can't" },
+  { key: "d30",     label: "30 days" },
+  { key: "d60",     label: "60 days" },
+  { key: "d90",     label: "90 days" },
+  { key: "d90plus", label: "90 days+" },
+] as const;
+export type HorizonKey = (typeof FORECAST_HORIZONS)[number]["key"];
+
+export const REVIEW_CADENCES = [
+  { key: "never",       label: "Never" },
+  { key: "adhoc",       label: "Ad hoc" },
+  { key: "monthly",     label: "Monthly" },
+  { key: "fortnightly", label: "Fortnightly" },
+  { key: "weekly",      label: "Weekly+" },
+] as const;
+export type CadenceKey = (typeof REVIEW_CADENCES)[number]["key"];
+
+export const TEAM_REVIEW_METHODS = [
+  { key: "oneToOne",   label: "1:1 pipeline review" },
+  { key: "crm",        label: "CRM walkthrough" },
+  { key: "dealByDeal", label: "Deal-by-deal" },
+  { key: "numbers",    label: "Numbers check-in" },
+  { key: "other",      label: "Other" },
+] as const;
+export type TeamMethodKey = (typeof TEAM_REVIEW_METHODS)[number]["key"];
+
+export const REVIEW_DATA_POINTS = [
+  { key: "stage",        label: "Deal stage" },
+  { key: "value",        label: "Deal value" },
+  { key: "closeDate",    label: "Expected close date" },
+  { key: "daysInStage",  label: "Days in stage" },
+  { key: "probability",  label: "Win probability" },
+  { key: "nextAction",   label: "Next action" },
+  { key: "coverage",     label: "Coverage vs target" },
+  { key: "other",        label: "Other" },
+] as const;
+export type ReviewDataKey = (typeof REVIEW_DATA_POINTS)[number]["key"];
+
