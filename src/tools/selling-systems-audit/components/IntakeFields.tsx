@@ -376,6 +376,39 @@ export function OptionalText({
   );
 }
 
+// ───────── Single-line text field (matches existing input styling) ─────────
+
+export function TextField({
+  value,
+  onChange,
+  placeholder,
+  width = "md",
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  /** "sm" ~ 12rem, "md" ~ 18rem, "lg" ~ 24rem, "full" 100%. */
+  width?: "sm" | "md" | "lg" | "full";
+}) {
+  const widthClass =
+    width === "full"
+      ? "w-full"
+      : width === "lg"
+        ? "w-full max-w-sm"
+        : width === "sm"
+          ? "w-48"
+          : "w-72";
+  return (
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className={`${widthClass} h-10 px-3 rounded-xl border border-border bg-background text-ink text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background`}
+    />
+  );
+}
+
 // ───────── Question wrapper ─────────
 
 export function Question({
