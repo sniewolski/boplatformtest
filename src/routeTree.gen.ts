@@ -22,6 +22,7 @@ import { Route as ApiPublicRValidateRouteImport } from './routes/api/public/r/va
 import { Route as ApiPublicRCompleteRouteImport } from './routes/api/public/r/complete'
 import { Route as ApiPublicRCaptureRouteImport } from './routes/api/public/r/capture'
 import { Route as AuthenticatedAppAdminContentRouteImport } from './routes/_authenticated/app.admin.content'
+import { Route as AuthenticatedAppAdminAuditIndexRouteImport } from './routes/_authenticated/app.admin.audit.index'
 import { Route as AuthenticatedAppToolsKeySplatRouteImport } from './routes/_authenticated/app.tools.$key.$'
 import { Route as AuthenticatedAppAdminContentAssetIdRouteImport } from './routes/_authenticated/app.admin.content.$assetId'
 
@@ -91,6 +92,12 @@ const AuthenticatedAppAdminContentRoute =
     path: '/content',
     getParentRoute: () => AuthenticatedAppAdminRoute,
   } as any)
+const AuthenticatedAppAdminAuditIndexRoute =
+  AuthenticatedAppAdminAuditIndexRouteImport.update({
+    id: '/audit/',
+    path: '/audit/',
+    getParentRoute: () => AuthenticatedAppAdminRoute,
+  } as any)
 const AuthenticatedAppToolsKeySplatRoute =
   AuthenticatedAppToolsKeySplatRouteImport.update({
     id: '/app/tools/$key/$',
@@ -119,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/app/admin/': typeof AuthenticatedAppAdminIndexRoute
   '/app/admin/content/$assetId': typeof AuthenticatedAppAdminContentAssetIdRoute
   '/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
+  '/app/admin/audit/': typeof AuthenticatedAppAdminAuditIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -133,6 +141,7 @@ export interface FileRoutesByTo {
   '/app/admin': typeof AuthenticatedAppAdminIndexRoute
   '/app/admin/content/$assetId': typeof AuthenticatedAppAdminContentAssetIdRoute
   '/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
+  '/app/admin/audit': typeof AuthenticatedAppAdminAuditIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -151,6 +160,7 @@ export interface FileRoutesById {
   '/_authenticated/app/admin/': typeof AuthenticatedAppAdminIndexRoute
   '/_authenticated/app/admin/content/$assetId': typeof AuthenticatedAppAdminContentAssetIdRoute
   '/_authenticated/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
+  '/_authenticated/app/admin/audit/': typeof AuthenticatedAppAdminAuditIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -169,6 +179,7 @@ export interface FileRouteTypes {
     | '/app/admin/'
     | '/app/admin/content/$assetId'
     | '/app/tools/$key/$'
+    | '/app/admin/audit/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -183,6 +194,7 @@ export interface FileRouteTypes {
     | '/app/admin'
     | '/app/admin/content/$assetId'
     | '/app/tools/$key/$'
+    | '/app/admin/audit'
   id:
     | '__root__'
     | '/'
@@ -200,6 +212,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/admin/'
     | '/_authenticated/app/admin/content/$assetId'
     | '/_authenticated/app/tools/$key/$'
+    | '/_authenticated/app/admin/audit/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -305,6 +318,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAdminContentRouteImport
       parentRoute: typeof AuthenticatedAppAdminRoute
     }
+    '/_authenticated/app/admin/audit/': {
+      id: '/_authenticated/app/admin/audit/'
+      path: '/audit'
+      fullPath: '/app/admin/audit/'
+      preLoaderRoute: typeof AuthenticatedAppAdminAuditIndexRouteImport
+      parentRoute: typeof AuthenticatedAppAdminRoute
+    }
     '/_authenticated/app/tools/$key/$': {
       id: '/_authenticated/app/tools/$key/$'
       path: '/app/tools/$key/$'
@@ -340,12 +360,14 @@ const AuthenticatedAppAdminContentRouteWithChildren =
 interface AuthenticatedAppAdminRouteChildren {
   AuthenticatedAppAdminContentRoute: typeof AuthenticatedAppAdminContentRouteWithChildren
   AuthenticatedAppAdminIndexRoute: typeof AuthenticatedAppAdminIndexRoute
+  AuthenticatedAppAdminAuditIndexRoute: typeof AuthenticatedAppAdminAuditIndexRoute
 }
 
 const AuthenticatedAppAdminRouteChildren: AuthenticatedAppAdminRouteChildren = {
   AuthenticatedAppAdminContentRoute:
     AuthenticatedAppAdminContentRouteWithChildren,
   AuthenticatedAppAdminIndexRoute: AuthenticatedAppAdminIndexRoute,
+  AuthenticatedAppAdminAuditIndexRoute: AuthenticatedAppAdminAuditIndexRoute,
 }
 
 const AuthenticatedAppAdminRouteWithChildren =
