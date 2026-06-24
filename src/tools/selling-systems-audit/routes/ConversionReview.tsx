@@ -15,6 +15,9 @@ import { validateInputs } from "../lib/validation";
 import { InputPanel } from "../components/InputPanel";
 import {
   INTAKE_STEPS,
+  INDUSTRIES,
+  PERIODS,
+  STAGES,
   LEAD_SOURCES,
   SOURCE_QUALITY_LEVELS,
   QUALIFICATION_CRITERIA,
