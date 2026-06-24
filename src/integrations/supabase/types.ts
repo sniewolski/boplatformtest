@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_section_notes: {
+        Row: {
+          body: string
+          owner_id: string
+          section_key: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          owner_id: string
+          section_key: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          owner_id?: string
+          section_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      audit_section_summaries: {
+        Row: {
+          owner_id: string
+          section_key: string
+          summary_text: string
+          updated_at: string
+        }
+        Insert: {
+          owner_id: string
+          section_key: string
+          summary_text: string
+          updated_at?: string
+        }
+        Update: {
+          owner_id?: string
+          section_key?: string
+          summary_text?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       content_review_assets: {
         Row: {
           body_text: string | null
