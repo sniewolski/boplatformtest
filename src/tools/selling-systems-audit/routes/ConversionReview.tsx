@@ -700,39 +700,20 @@ function ClosingStep({
   );
 }
 
-// ───────── Step: Summary / Submit ─────────
+// ───────── Step: Targets & trend ─────────
 
-function SummaryStep({
+function TargetsStep({
   value,
   onChange,
-  hasSubmitted,
-  hasUnsubmittedChanges,
-  submitting,
-  onSubmit,
-  error,
-  funnelImpossibility,
 }: {
   value: SummaryAnswers;
   onChange: (next: SummaryAnswers) => void;
-  hasSubmitted: boolean;
-  hasUnsubmittedChanges: boolean;
-  submitting: boolean;
-  onSubmit: () => void;
-  error: string | null;
-  funnelImpossibility: string | null;
 }) {
-  const label = hasSubmitted
-    ? hasUnsubmittedChanges
-      ? "Re-submit changes"
-      : "Already submitted"
-    : "Submit intake";
-  const blocked = !!funnelImpossibility;
-
   return (
     <section className="flex flex-col gap-8">
       <StepHeader
-        title="Review & submit"
-        subtitle="A couple of last questions, then send it through. You can come back any time and update your answers."
+        title="Targets & trend"
+        subtitle="A couple of last questions, then you'll review everything before sending it through. You can come back any time and update your answers."
       />
       <Question label="Do you have defined KPI targets for your funnel?">
         <YesNoToggle
@@ -800,6 +781,210 @@ function SummaryStep({
           />
         </div>
       </Question>
+    </section>
+  );
+}
+
+// ───────── Step: Review & submit ─────────
+
+function ReviewStep({
+  foundation,
+  leadGen,
+  prospecting,
+  discovery,
+  proposal,
+  closing,
+  summary,
+  currency,
+  hasSubmitted,
+  hasUnsubmittedChanges,
+  submitting,
+  onSubmit,
+  error,
+  funnelImpossibility,
+}: {
+  foundation: ConversionInputs;
+  leadGen: LeadGenAnswers;
+  prospecting: ProspectingAnswers;
+  discovery: DiscoveryAnswers;
+  proposal: ProposalAnswers;
+  closing: ClosingAnswers;
+  summary: SummaryAnswers;
+  currency: import("@/lib/format-currency").CurrencyCode | null;
+  hasSubmitted: boolean;
+  hasUnsubmittedChanges: boolean;
+  submitting: boolean;
+  onSubmit: () => void;
+  error: string | null;
+  funnelImpossibility: string | null;
+}) {
+  const label = hasSubmitted
+    ? hasUnsubmittedChanges
+      ? "Re-submit changes"
+      : "Already submitted"
+    : "Submit intake";
+  const blocked = !!funnelImpossibility;
+
+  const intOrDash = (n: number | undefined | null) =>
+    n == null ? "—" : String(n);
+  const textOrDash = (s: string | undefined | null) =>
+    s && s.trim() ? s.trim() : "—";
+
+  const sources = leadGen.sources ?? [];
+
+  return (
+    <section className="flex flex-col gap-8">
+      <StepHeader
+        title="Review & submit"
+        subtitle="A quick read-back of what you entered. Use the steps above to edit anything, then submit."
+      />
+
+      <div className="flex flex-col gap-8">
+        <ReadGroup title="Foundation">
+          <ReadRow label="Industry" value={labelOf(INDUSTRIES, foundation.industry)} />
+          <ReadRow label="Period" value={labelOf(PERIODS, foundation.period)} />
+          <ReadRow
+            label="Average deal value"
+            value={money(foundation.avgDealValue, currency)}
+          />
+          {STAGES.map((s) => (
+            <ReadRow
+              key={s.key}
+              label={`${s.label} (volume)`}
+              value={intOrDash(foundation.volumes?.[s.key])}
+            />
+          ))}
+        </ReadGroup>
+
+        <ReadGroup title="Lead generation">
+          <ReadRow
+            label="Sources"
+            value={chipsLabels(LEAD_SOURCES, leadGen.sources, leadGen.sourceOther)}
+          />
+          <ReadMapRows
+            sources={sources}
+            sourceOptions={LEAD_SOURCES}
+            map={leadGen.allocation}
+            renderValue={(raw) =>
+              typeof raw === "number" ? pct(raw) : "—"
+            }
+            emptyLabel="Allocation"
+          />
+          <ReadMapRows
+            sources={sources}
+            sourceOptions={LEAD_SOURCES}
+            map={leadGen.sourceQuality}
+            renderValue={(raw) =>
+              typeof raw === "string"
+                ? labelOf(SOURCE_QUALITY_LEVELS, raw)
+                : "—"
+            }
+            emptyLabel="Source quality"
+          />
+          <ReadRow label="Quality notes" value={textOrDash(leadGen.qualityNotes)} />
+        </ReadGroup>
+
+        <ReadGroup title="Prospecting">
+          <ReadRow
+            label="Qualification criteria"
+            value={chipsLabels(
+              QUALIFICATION_CRITERIA,
+              prospecting.criteria,
+              prospecting.criteriaOther,
+            )}
+          />
+          <ReadRow
+            label="Non-qualify patterns"
+            value={chipsLabels(
+              NON_QUALIFY_PATTERNS,
+              prospecting.nonQualifyPatterns,
+              prospecting.nonQualifyOther,
+            )}
+          />
+        </ReadGroup>
+
+        <ReadGroup title="Discovery">
+          <ReadRow
+            label="Discovery → Proposal rate"
+            value={pct(discovery.discoveryToProposalRate)}
+          />
+          <ReadRow
+            label="Call length band"
+            value={labelOf(DISCOVERY_LENGTH_BANDS, discovery.callLengthBand)}
+          />
+          <ReadRow
+            label="Varies by deal size"
+            value={boolText(discovery.variesByDealSize)}
+          />
+          <ReadRow
+            label="Stall reasons"
+            value={chipsLabels(
+              DISCOVERY_STALL_REASONS,
+              discovery.stallReasons,
+              discovery.stallReasonsOther,
+            )}
+          />
+          <ReadRow
+            label="Structure level"
+            value={labelOf(DISCOVERY_STRUCTURE_LEVELS, discovery.structureLevel)}
+          />
+          <ReadRow
+            label="Confidence"
+            value={labelOf(RATING_LEVELS, discovery.confidence)}
+          />
+        </ReadGroup>
+
+        <ReadGroup title="Proposal">
+          <ReadRow
+            label="Proposal → Close rate"
+            value={pct(proposal.proposalToCloseRate)}
+          />
+          <ReadRow label="Ghosted rate" value={pct(proposal.ghostedRate)} />
+        </ReadGroup>
+
+        <ReadGroup title="Closing">
+          <ReadRow
+            label="Sales cycle"
+            value={numberWithUnit(
+              closing.cycleLength,
+              closing.cycleUnit,
+              CYCLE_LENGTH_UNITS,
+            )}
+          />
+          <ReadRow
+            label="Touchpoints"
+            value={labelOf(TOUCHPOINT_BANDS, closing.touchpointsBand)}
+          />
+        </ReadGroup>
+
+        <ReadGroup title="Targets & trend">
+          <ReadRow
+            label="Has defined targets"
+            value={boolText(summary.hasDefinedTargets)}
+          />
+          {summary.hasDefinedTargets === true && (
+            <>
+              <ReadRow
+                label="Leads → Qualified target"
+                value={pct(summary.ownTargets?.leadsToQualified)}
+              />
+              <ReadRow
+                label="Qualified → Opportunities target"
+                value={pct(summary.ownTargets?.qualifiedToOpportunities)}
+              />
+              <ReadRow
+                label="Opportunities → Won target"
+                value={pct(summary.ownTargets?.opportunitiesToWon)}
+              />
+            </>
+          )}
+          <ReadRow
+            label="Close-rate trend"
+            value={labelOf(CLOSE_TREND_OPTIONS, summary.closeRateTrend)}
+          />
+          <ReadRow label="Trend note" value={textOrDash(summary.closeRateTrendNote)} />
+        </ReadGroup>
+      </div>
 
       <div className="flex flex-col gap-3 pt-2">
         {blocked && (
@@ -823,6 +1008,8 @@ function SummaryStep({
     </section>
   );
 }
+
+
 
 function OwnTargetField({
   label,
