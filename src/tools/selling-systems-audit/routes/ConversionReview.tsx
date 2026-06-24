@@ -44,6 +44,7 @@ import {
   OptionalText,
   Question,
 } from "../components/IntakeFields";
+import { ProgressBar, StepNav, StepHeader } from "../components/StepShell";
 
 const DEFAULT_FOUNDATION: ConversionInputs = {
   industry: null,
