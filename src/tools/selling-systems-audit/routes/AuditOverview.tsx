@@ -13,11 +13,13 @@ export function AuditOverview() {
   const { data: intake } = useConversionIntake(userId);
   const { data: pipelineIntake } = usePipelineIntake(userId);
   const { data: processIntake } = useProcessIntake(userId);
+  const { data: activityIntake } = useActivityIntake(userId);
 
   const conversionSubmitted = !!intake?.submitted_at;
   const conversionHasDraft = !!intake?.draft_answers;
   const pipelineSubmitted = !!pipelineIntake?.submitted_at;
   const processSubmitted = !!processIntake?.submitted_at;
+  const activitySubmitted = !!activityIntake?.submitted_at;
 
   let conversionStatus: string;
   if (conversionSubmitted) {
@@ -33,7 +35,8 @@ export function AuditOverview() {
   const completed =
     (conversionSubmitted ? 1 : 0) +
     (pipelineSubmitted ? 1 : 0) +
-    (processSubmitted ? 1 : 0);
+    (processSubmitted ? 1 : 0) +
+    (activitySubmitted ? 1 : 0);
   const total = AUDIT_SECTIONS.length;
 
   return (
