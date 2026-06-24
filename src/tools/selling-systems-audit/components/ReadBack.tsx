@@ -64,6 +64,23 @@ export function ReadRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+/**
+ * Open-text mirror — label on its own line, value below as full-width
+ * wrapped prose (or "—" if blank). Use for any open-text answer where the
+ * verbatim wording is the point and right-aligned ReadRow would squeeze it.
+ */
+export function ReadText({ label, value }: { label: string; value: string | null | undefined }) {
+  const v = (value ?? "").trim();
+  return (
+    <div className="flex flex-col gap-1.5 py-3 border-b border-border last:border-b-0">
+      <span className="text-ink-muted text-sm">{label}</span>
+      <p className="text-ink text-sm whitespace-pre-wrap max-w-prose">
+        {v || "—"}
+      </p>
+    </div>
+  );
+}
+
 export function ReadGroup({
   title,
   children,
