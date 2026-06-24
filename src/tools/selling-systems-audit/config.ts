@@ -127,11 +127,19 @@ export const AUDIT_SECTIONS = [
     status: "available" as const,
   },
   {
+    key: "alignment",
+    label: "Marketing & Sales Alignment",
+    description:
+      "Whether marketing and sales agree on a good lead, present a coherent message, share intelligence both ways, and measure against connected goals.",
+    status: "available" as const,
+  },
+  {
     key: "content",
     label: "Sales Content Review",
     description: "Audit of the messages, scripts and assets your sales motion runs on.",
     status: "locked" as const,
   },
+
 
 ] as const;
 
