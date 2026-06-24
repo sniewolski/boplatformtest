@@ -39,7 +39,8 @@ export function AuditOverview() {
     (conversionSubmitted ? 1 : 0) +
     (pipelineSubmitted ? 1 : 0) +
     (processSubmitted ? 1 : 0) +
-    (activitySubmitted ? 1 : 0);
+    (activitySubmitted ? 1 : 0) +
+    (messagingSubmitted ? 1 : 0);
   const total = AUDIT_SECTIONS.length;
 
   return (
