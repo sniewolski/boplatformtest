@@ -48,6 +48,17 @@ import {
   Question,
 } from "../components/IntakeFields";
 import { ProgressBar, StepNav, StepHeader } from "../components/StepShell";
+import {
+  labelOf,
+  chipsLabels,
+  pct,
+  money,
+  numberWithUnit,
+  boolText,
+  ReadRow,
+  ReadGroup,
+  ReadMapRows,
+} from "../components/ReadBack";
 
 const DEFAULT_FOUNDATION: ConversionInputs = {
   industry: null,
