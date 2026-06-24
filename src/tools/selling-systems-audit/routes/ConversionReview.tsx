@@ -364,10 +364,19 @@ export function ConversionReview() {
             {step.key === "closing" && (
               <ClosingStep value={closing} onChange={setClosing} />
             )}
-            {step.key === "summary" && (
-              <SummaryStep
-                value={summary}
-                onChange={setSummary}
+            {step.key === "targets" && (
+              <TargetsStep value={summary} onChange={setSummary} />
+            )}
+            {step.key === "review" && (
+              <ReviewStep
+                foundation={foundation}
+                leadGen={leadGen}
+                prospecting={prospecting}
+                discovery={discovery}
+                proposal={proposal}
+                closing={closing}
+                summary={summary}
+                currency={currency}
                 hasSubmitted={!!intake?.submitted_at}
                 hasUnsubmittedChanges={!!intake?.has_unsubmitted_changes}
                 submitting={submit.isPending}
