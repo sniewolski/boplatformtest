@@ -343,17 +343,14 @@ function ConsistencyStep({
               }
             }}
           />
-          {/* Reserved height — reveal slot below the segmented control. */}
-          <div className="min-h-[6.5rem]">
-            {showGap && (
-              <OptionalText
-                value={value.expectationGapDetail ?? ""}
-                onChange={(v) => onChange({ ...value, expectationGapDetail: v })}
-                placeholder="What was the gap?"
-                rows={3}
-              />
-            )}
-          </div>
+          {showGap && (
+            <OptionalText
+              value={value.expectationGapDetail ?? ""}
+              onChange={(v) => onChange({ ...value, expectationGapDetail: v })}
+              placeholder="What was the gap?"
+              rows={3}
+            />
+          )}
         </div>
       </Question>
       <Question label="Do the pains marketing leads with match what sales opens discovery with?">
