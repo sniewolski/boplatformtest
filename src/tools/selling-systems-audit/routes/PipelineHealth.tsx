@@ -5,11 +5,7 @@ import { useSession } from "@/core/auth/useSession";
 import { Button } from "@/components/ui/button";
 import { useCurrency } from "@/core/settings/useCurrency";
 import { CurrencySelect } from "@/core/settings/CurrencySelect";
-import {
-  currencySymbol,
-  formatCurrency,
-  type CurrencyCode,
-} from "@/lib/format-currency";
+import { currencySymbol, type CurrencyCode } from "@/lib/format-currency";
 import {
   usePipelineIntake,
   useSaveDraft,
