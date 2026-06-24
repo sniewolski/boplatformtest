@@ -89,7 +89,7 @@ export const LESSONS: Record<LessonKey, Lesson> = {
   },
 };
 
-/** Sections of the audit. Only "conversion" is built; the others are visible-but-locked. */
+/** Sections of the audit. Order is the order shown in the overview. */
 export const AUDIT_SECTIONS = [
   {
     key: "conversion",
@@ -99,21 +99,16 @@ export const AUDIT_SECTIONS = [
     status: "available" as const,
   },
   {
-    key: "content",
-    label: "Sales Content Review",
-    description: "Audit of the messages, scripts and assets your sales motion runs on.",
+    key: "pipeline",
+    label: "Pipeline Health",
+    description:
+      "A structured read on whether your pipeline can hit target — volume, coverage, deal velocity, and how you forecast.",
     status: "available" as const,
   },
   {
-    key: "infrastructure",
-    label: "Sales Infrastructure Review",
-    description: "The systems and tools your team uses to move deals from first touch to won.",
-    status: "locked" as const,
-  },
-  {
-    key: "marketing",
-    label: "Marketing Review",
-    description: "How leads reach you in the first place, and what that costs.",
+    key: "content",
+    label: "Sales Content Review",
+    description: "Audit of the messages, scripts and assets your sales motion runs on.",
     status: "locked" as const,
   },
 ] as const;
