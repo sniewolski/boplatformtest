@@ -113,6 +113,13 @@ export const AUDIT_SECTIONS = [
     status: "available" as const,
   },
   {
+    key: "activity",
+    label: "Sales Activity Metrics",
+    description:
+      "What sales activity you measure, how healthy the numbers look, and how confidently you read them.",
+    status: "available" as const,
+  },
+  {
     key: "content",
     label: "Sales Content Review",
     description: "Audit of the messages, scripts and assets your sales motion runs on.",
