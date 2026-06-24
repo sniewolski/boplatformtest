@@ -3,6 +3,7 @@ import { AuditOverview } from "./AuditOverview";
 import { ConversionReview } from "./ConversionReview";
 import { ContentReview } from "./ContentReview";
 import { PipelineHealth } from "./PipelineHealth";
+import { SalesProcess } from "./SalesProcess";
 import { SectionLocked } from "./SectionLocked";
 import { AUDIT_SECTIONS } from "../config";
 
