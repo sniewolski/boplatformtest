@@ -29,54 +29,6 @@ async function assertAdmin(supabase: any, userId: string) {
   if (!data) throw new Error("Forbidden");
 }
 
-export const listReviewAssets = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z
-      .object({
-        status: z.enum(["all", "pending", "reviewed"]).default("pending"),
-      })
-      .parse(input ?? {}),
-  )
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    let q = supabaseAdmin
-      .from("content_review_assets")
-      .select(
-        "id, owner_id, category, title, input_type, review_status, created_at, updated_at",
-      )
-      .order("created_at", { ascending: false });
-
-    if (data.status !== "all") q = q.eq("review_status", data.status);
-
-    const { data: assets, error } = await q;
-    if (error) throw new Error(error.message);
-
-    // Hydrate owner emails in a single round-trip.
-    const ownerIds = Array.from(new Set((assets ?? []).map((a) => a.owner_id)));
-    let owners: Record<string, { email: string; fullName: string | null }> = {};
-    if (ownerIds.length) {
-      const { data: profiles, error: pErr } = await supabaseAdmin
-        .from("profiles")
-        .select("id, email, full_name")
-        .in("id", ownerIds);
-      if (pErr) throw new Error(pErr.message);
-      owners = Object.fromEntries(
-        (profiles ?? []).map((p) => [
-          p.id,
-          { email: p.email as string, fullName: (p.full_name as string | null) ?? null },
-        ]),
-      );
-    }
-
-    return (assets ?? []).map((a) => ({
-      ...a,
-      owner_email: owners[a.owner_id]?.email ?? "—",
-      owner_name: owners[a.owner_id]?.fullName ?? null,
-    }));
-  });
 
 export const getReviewAsset = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
