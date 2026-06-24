@@ -13,9 +13,37 @@ import {
   type ProcessStagesAnswers,
   type ProcessToolsAnswers,
 } from "../data/useProcessReview";
-import { PROCESS_STEPS } from "../config";
+import {
+  PROCESS_STEPS,
+  DOCUMENTATION_LEVELS,
+  PROCESS_CONSISTENCY,
+  REPLICABILITY,
+  ADHERENCE,
+  QUALITY_ASSESSMENT,
+  SCRIPT_MOMENTS,
+  EXPERIENCE_CONSISTENCY,
+  CRM_OPTIONS,
+  UPDATE_FREQUENCY,
+  DOC_TEMPLATES,
+  ENABLEMENT,
+} from "../config";
 import { ProgressBar, StepNav, StepHeader } from "../components/StepShell";
 import { StageBuilder, ensureDefaultStages } from "../components/StageBuilder";
+import {
+  Chips,
+  Segmented,
+  MaturitySpectrum,
+  YesNoToggle,
+  Question,
+} from "../components/IntakeFields";
+import {
+  labelOf,
+  chipsLabels,
+  boolText,
+  ReadRow,
+  ReadGroup,
+  ReadStages,
+} from "../components/ReadBack";
 
 const AUTOSAVE_MS = 700;
 
