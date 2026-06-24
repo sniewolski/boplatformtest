@@ -74,14 +74,25 @@ export function AppShell({
           ))}
 
           {isAdmin && (
-            <Link
-              to="/app/admin"
-              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-ink hover:bg-background transition-colors"
-              activeProps={{ className: "bg-background font-medium" }}
-            >
-              <Shield className="size-4" />
-              Admin
-            </Link>
+            <>
+              <Link
+                to="/app/admin"
+                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-ink hover:bg-background transition-colors"
+                activeProps={{ className: "bg-background font-medium" }}
+                activeOptions={{ exact: true }}
+              >
+                <Shield className="size-4" />
+                Admin
+              </Link>
+              <Link
+                to="/app/admin/audit"
+                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-ink hover:bg-background transition-colors"
+                activeProps={{ className: "bg-background font-medium" }}
+              >
+                <ClipboardList className="size-4" />
+                Audit review
+              </Link>
+            </>
           )}
         </nav>
 
