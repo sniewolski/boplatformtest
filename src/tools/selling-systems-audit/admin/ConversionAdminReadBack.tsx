@@ -11,7 +11,6 @@ import {
   ReadMapRows,
 } from "../components/ReadBack";
 import {
-  INDUSTRIES,
   PERIODS,
   STAGES,
   LEAD_SOURCES,
@@ -92,7 +91,7 @@ export function ConversionAdminReadBack({
   return (
     <div className="flex flex-col gap-6">
       <ReadGroup title="Foundation">
-        <ReadRow label="Industry" value={labelOf(INDUSTRIES, asStr(foundation.industry))} />
+        <ReadRow label="Industry" value={textOrDash(asStr(foundation.industry))} />
         <ReadRow label="Period" value={labelOf(PERIODS, asStr(foundation.period))} />
         <ReadRow
           label="Average deal value"
