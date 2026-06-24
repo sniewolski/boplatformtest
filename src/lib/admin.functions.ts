@@ -106,6 +106,45 @@ export const setAccountStatus = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const setAdminRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        userId: z.string().uuid(),
+        grant: z.boolean(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+
+    if (!data.grant && data.userId === context.userId) {
+      throw new Error("You can't revoke your own admin role.");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    if (data.grant) {
+      const { error } = await supabaseAdmin
+        .from("user_roles")
+        .insert({ user_id: data.userId, role: "admin" });
+      // Ignore unique-violation: role already granted.
+      if (error && !/duplicate key|unique/i.test(error.message)) {
+        throw new Error(error.message);
+      }
+    } else {
+      const { error } = await supabaseAdmin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", data.userId)
+        .eq("role", "admin");
+      if (error) throw new Error(error.message);
+    }
+
+    return { ok: true };
+  });
+
 export const listOwners = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
