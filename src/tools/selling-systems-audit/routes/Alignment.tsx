@@ -14,8 +14,36 @@ import {
   type AlignmentFeedbackAnswers,
   type AlignmentLeadQualityAnswers,
 } from "../data/useAlignmentReview";
-import { ALIGNMENT_STEPS } from "../config";
+import {
+  ALIGN_CADENCE,
+  ALIGNMENT_STEPS,
+  CPA_MEASUREMENT,
+  DEAL_TRACING,
+  EXPECTATION_GAP,
+  FUNNEL_STAGES,
+  ICP_ALIGNMENT,
+  INSIGHT_FLOWBACK,
+  LEAD_MATCH,
+  OBJECTION_CONTENT,
+  PAIN_MATCH,
+  SHARED_GOALS,
+} from "../config";
 import { ProgressBar, StepNav, StepHeader } from "../components/StepShell";
+import {
+  Chips,
+  MaturitySpectrum,
+  OptionalText,
+  Question,
+  Segmented,
+  YesNoToggle,
+} from "../components/IntakeFields";
+import {
+  chipsLabels,
+  labelOf,
+  ReadGroup,
+  ReadRow,
+  ReadText,
+} from "../components/ReadBack";
 
 const AUTOSAVE_MS = 700;
 
@@ -139,15 +167,6 @@ export function Alignment() {
       ? "Resubmit"
       : "Submitted";
 
-  // Keep setters referenced until Phase 3 wires the field UIs.
-  if (false) {
-    setLeadQuality({});
-    setConsistency({});
-    setFeedback({});
-    setEnablement({});
-    setAttribution({});
-  }
-
   return (
     <div className="app-content py-12 flex flex-col gap-10">
       <Link
@@ -183,22 +202,27 @@ export function Alignment() {
 
           <div className="flex flex-col gap-8" onBlurCapture={flushSave}>
             {step.key === "leadQuality" && (
-              <PlaceholderStep title="Lead quality & handoff" />
+              <LeadQualityStep value={leadQuality} onChange={setLeadQuality} />
             )}
             {step.key === "consistency" && (
-              <PlaceholderStep title="Message consistency" />
+              <ConsistencyStep value={consistency} onChange={setConsistency} />
             )}
             {step.key === "feedback" && (
-              <PlaceholderStep title="Feedback loops" />
+              <FeedbackStep value={feedback} onChange={setFeedback} />
             )}
             {step.key === "enablement" && (
-              <PlaceholderStep title="Content & enablement" />
+              <EnablementStep value={enablement} onChange={setEnablement} />
             )}
             {step.key === "attribution" && (
-              <PlaceholderStep title="Attribution & measurement" />
+              <AttributionStep value={attribution} onChange={setAttribution} />
             )}
             {step.key === "review" && (
               <ReviewStep
+                leadQuality={leadQuality}
+                consistency={consistency}
+                feedback={feedback}
+                enablement={enablement}
+                attribution={attribution}
                 hasSubmitted={hasSubmitted}
                 hasUnsubmittedChanges={hasUnsubmittedChanges}
                 submitting={submit.isPending}
@@ -225,14 +249,6 @@ export function Alignment() {
         </>
       )}
     </div>
-  );
-}
-
-function PlaceholderStep({ title }: { title: string }) {
-  return (
-    <section className="flex flex-col gap-6">
-      <StepHeader title={title} subtitle="Questions for this step arrive next." />
-    </section>
   );
 }
 
@@ -263,7 +279,221 @@ function ReceivedState({ onEdit }: { onEdit: () => void }) {
   );
 }
 
+// ───────── Step 1: Lead quality & handoff ─────────
+
+function LeadQualityStep({
+  value,
+  onChange,
+}: {
+  value: AlignmentLeadQualityAnswers;
+  onChange: (next: AlignmentLeadQualityAnswers) => void;
+}) {
+  return (
+    <section className="flex flex-col gap-8">
+      <StepHeader
+        title="Lead quality & handoff"
+        subtitle="Whether marketing and sales mean the same thing by a good lead — and how often the ones that arrive actually fit."
+      />
+      <Question label="Do marketing and sales share the same picture of the ideal customer?">
+        <Segmented
+          options={ICP_ALIGNMENT}
+          value={value.icpAlignment ?? null}
+          onChange={(k) => onChange({ ...value, icpAlignment: k })}
+        />
+      </Question>
+      <Question label="How consistently do the leads marketing generates match a profile you can close?">
+        <Segmented
+          options={LEAD_MATCH}
+          value={value.leadMatch ?? null}
+          onChange={(k) => onChange({ ...value, leadMatch: k })}
+        />
+      </Question>
+    </section>
+  );
+}
+
+// ───────── Step 2: Message consistency ─────────
+
+function ConsistencyStep({
+  value,
+  onChange,
+}: {
+  value: AlignmentConsistencyAnswers;
+  onChange: (next: AlignmentConsistencyAnswers) => void;
+}) {
+  const showGap = value.expectationGap === "yes";
+  return (
+    <section className="flex flex-col gap-8">
+      <StepHeader
+        title="Message consistency"
+        subtitle="Whether what marketing says and what sales says line up — and what prospects actually hear."
+      />
+      <Question label="Has a prospect ever turned up expecting something different from what marketing implied?">
+        <div className="flex flex-col gap-4">
+          <Segmented
+            options={EXPECTATION_GAP}
+            value={value.expectationGap ?? null}
+            onChange={(k) => {
+              if (k === "yes") {
+                onChange({ ...value, expectationGap: k });
+              } else {
+                // Switching away from "yes" — drop the stale detail so it
+                // doesn't ride into the submitted snapshot.
+                onChange({ ...value, expectationGap: k, expectationGapDetail: "" });
+              }
+            }}
+          />
+          {/* Reserved height — reveal slot below the segmented control. */}
+          <div className="min-h-[6.5rem]">
+            {showGap && (
+              <OptionalText
+                value={value.expectationGapDetail ?? ""}
+                onChange={(v) => onChange({ ...value, expectationGapDetail: v })}
+                placeholder="What was the gap?"
+                rows={3}
+              />
+            )}
+          </div>
+        </div>
+      </Question>
+      <Question label="Do the pains marketing leads with match what sales opens discovery with?">
+        <Segmented
+          options={PAIN_MATCH}
+          value={value.painPointMatch ?? null}
+          onChange={(k) => onChange({ ...value, painPointMatch: k })}
+        />
+      </Question>
+    </section>
+  );
+}
+
+// ───────── Step 3: Feedback loops ─────────
+
+function FeedbackStep({
+  value,
+  onChange,
+}: {
+  value: AlignmentFeedbackAnswers;
+  onChange: (next: AlignmentFeedbackAnswers) => void;
+}) {
+  const cadenceLabel =
+    value.separateTeams === true
+      ? "How often do sales & marketing review together?"
+      : "How often do you review both functions together?";
+  return (
+    <section className="flex flex-col gap-8">
+      <StepHeader
+        title="Feedback loops"
+        subtitle="Whether what sales learns gets back to marketing, and how often both sides actually compare notes."
+      />
+      <Question label="Does sales feed insight back to marketing — what's landing, what's not, who's buying?">
+        <MaturitySpectrum
+          steps={INSIGHT_FLOWBACK}
+          value={value.insightFlowback ?? null}
+          onChange={(k) => onChange({ ...value, insightFlowback: k })}
+        />
+      </Question>
+      <Question label="Do separate people run sales vs marketing?">
+        <YesNoToggle
+          value={value.separateTeams ?? null}
+          onChange={(b) => onChange({ ...value, separateTeams: b })}
+        />
+      </Question>
+      <Question label={cadenceLabel}>
+        <Segmented
+          options={ALIGN_CADENCE}
+          value={value.reviewCadence ?? null}
+          onChange={(k) => onChange({ ...value, reviewCadence: k })}
+        />
+      </Question>
+    </section>
+  );
+}
+
+// ───────── Step 4: Content & enablement ─────────
+
+function EnablementStep({
+  value,
+  onChange,
+}: {
+  value: AlignmentEnablementAnswers;
+  onChange: (next: AlignmentEnablementAnswers) => void;
+}) {
+  return (
+    <section className="flex flex-col gap-8">
+      <StepHeader
+        title="Content & enablement"
+        subtitle="Whether sales has the content it needs at each stage of the buyer's decision."
+      />
+      <Question
+        label="Which funnel stages do you have content for?"
+        hint="Select the stages you have content for — leave blank if none."
+      >
+        <Chips
+          options={FUNNEL_STAGES}
+          value={value.stageContent ?? []}
+          onChange={(next) => onChange({ ...value, stageContent: next })}
+        />
+      </Question>
+      <Question label="Is there content ready for the objections that come up most often?">
+        <Segmented
+          options={OBJECTION_CONTENT}
+          value={value.objectionContent ?? null}
+          onChange={(k) => onChange({ ...value, objectionContent: k })}
+        />
+      </Question>
+    </section>
+  );
+}
+
+// ───────── Step 5: Attribution & measurement ─────────
+
+function AttributionStep({
+  value,
+  onChange,
+}: {
+  value: AlignmentAttributionAnswers;
+  onChange: (next: AlignmentAttributionAnswers) => void;
+}) {
+  return (
+    <section className="flex flex-col gap-8">
+      <StepHeader
+        title="Attribution & measurement"
+        subtitle="Whether you can connect what marketing spends to what sales closes — and whether the goals on each side point the same way."
+      />
+      <Question label="Can you trace a closed deal back to the marketing source that started it?">
+        <MaturitySpectrum
+          steps={DEAL_TRACING}
+          value={value.dealTracing ?? null}
+          onChange={(k) => onChange({ ...value, dealTracing: k })}
+        />
+      </Question>
+      <Question label="Do you know cost per acquisition by channel — and does it inform where the budget goes?">
+        <Segmented
+          options={CPA_MEASUREMENT}
+          value={value.cpaByChannel ?? null}
+          onChange={(k) => onChange({ ...value, cpaByChannel: k })}
+        />
+      </Question>
+      <Question label="Do sales and marketing share revenue goals, or work to disconnected metrics?">
+        <Segmented
+          options={SHARED_GOALS}
+          value={value.sharedGoals ?? null}
+          onChange={(k) => onChange({ ...value, sharedGoals: k })}
+        />
+      </Question>
+    </section>
+  );
+}
+
+// ───────── Step 6: Review & submit ─────────
+
 function ReviewStep({
+  leadQuality,
+  consistency,
+  feedback,
+  enablement,
+  attribution,
   hasSubmitted,
   hasUnsubmittedChanges,
   submitting,
@@ -271,6 +501,11 @@ function ReviewStep({
   error,
   submitLabel,
 }: {
+  leadQuality: AlignmentLeadQualityAnswers;
+  consistency: AlignmentConsistencyAnswers;
+  feedback: AlignmentFeedbackAnswers;
+  enablement: AlignmentEnablementAnswers;
+  attribution: AlignmentAttributionAnswers;
   hasSubmitted: boolean;
   hasUnsubmittedChanges: boolean;
   submitting: boolean;
@@ -278,13 +513,56 @@ function ReviewStep({
   error: string | null;
   submitLabel: string;
 }) {
+  const separateTeams =
+    feedback.separateTeams == null ? "—" : feedback.separateTeams ? "Yes" : "No";
+
   return (
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Review & submit"
         subtitle="A quick read-back of your answers. Edit anything by stepping back."
       />
-      <p className="text-ink-muted text-sm">Read-back arrives in the next phase.</p>
+
+      <ReadGroup title="Lead quality & handoff">
+        <ReadRow label="ICP alignment" value={labelOf(ICP_ALIGNMENT, leadQuality.icpAlignment)} />
+        <ReadRow label="Leads match closeable profile" value={labelOf(LEAD_MATCH, leadQuality.leadMatch)} />
+      </ReadGroup>
+
+      <ReadGroup title="Message consistency">
+        <ReadRow label="Prospect expectation gap" value={labelOf(EXPECTATION_GAP, consistency.expectationGap)} />
+        {consistency.expectationGap === "yes" && (
+          <ReadText label="What was the gap?" value={consistency.expectationGapDetail} />
+        )}
+        <ReadRow label="Pains match discovery" value={labelOf(PAIN_MATCH, consistency.painPointMatch)} />
+      </ReadGroup>
+
+      <ReadGroup title="Feedback loops">
+        <ReadRow label="Sales insight back to marketing" value={labelOf(INSIGHT_FLOWBACK, feedback.insightFlowback)} />
+        <ReadRow label="Separate sales & marketing teams" value={separateTeams} />
+        <ReadRow
+          label={
+            feedback.separateTeams === true
+              ? "Sales & marketing review cadence"
+              : "Both-function review cadence"
+          }
+          value={labelOf(ALIGN_CADENCE, feedback.reviewCadence)}
+        />
+      </ReadGroup>
+
+      <ReadGroup title="Content & enablement">
+        <ReadRow
+          label="Funnel stages with content"
+          value={chipsLabels(FUNNEL_STAGES, enablement.stageContent as string[] | undefined, undefined)}
+        />
+        <ReadRow label="Objection-handling content" value={labelOf(OBJECTION_CONTENT, enablement.objectionContent)} />
+      </ReadGroup>
+
+      <ReadGroup title="Attribution & measurement">
+        <ReadRow label="Deal tracing to source" value={labelOf(DEAL_TRACING, attribution.dealTracing)} />
+        <ReadRow label="CPA by channel" value={labelOf(CPA_MEASUREMENT, attribution.cpaByChannel)} />
+        <ReadRow label="Shared goals" value={labelOf(SHARED_GOALS, attribution.sharedGoals)} />
+      </ReadGroup>
+
       {hasSubmitted && hasUnsubmittedChanges && (
         <p className="text-ink-muted text-sm">
           You've changed your answers since last submission.
