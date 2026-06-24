@@ -127,7 +127,8 @@ export const INTAKE_STEPS = [
   { key: "discovery", label: "Discovery", short: "Discovery" },
   { key: "proposal", label: "Proposal", short: "Proposal" },
   { key: "closing", label: "Closing", short: "Closing" },
-  { key: "summary", label: "Review & submit", short: "Submit" },
+  { key: "targets", label: "Targets & trend", short: "Targets" },
+  { key: "review", label: "Review & submit", short: "Review" },
 ] as const;
 
 export type IntakeStepKey = (typeof INTAKE_STEPS)[number]["key"];
