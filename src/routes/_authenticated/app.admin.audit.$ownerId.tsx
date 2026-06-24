@@ -81,10 +81,14 @@ function OwnerAuditReview() {
       </nav>
 
       <section className="min-h-[40vh]">
-        <p className="text-ink-muted text-sm">
-          {SECTION_TABS.find((t) => t.key === tab)?.label} tab — content lands in
-          the next phase.
-        </p>
+        {tab === "conversion" ? (
+          <ConversionAdminTab ownerId={ownerId} />
+        ) : (
+          <p className="text-ink-muted text-sm">
+            {SECTION_TABS.find((t) => t.key === tab)?.label} tab — content lands
+            in the next phase.
+          </p>
+        )}
       </section>
     </div>
   );
