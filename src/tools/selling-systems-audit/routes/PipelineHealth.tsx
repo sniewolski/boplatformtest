@@ -5,11 +5,7 @@ import { useSession } from "@/core/auth/useSession";
 import { Button } from "@/components/ui/button";
 import { useCurrency } from "@/core/settings/useCurrency";
 import { CurrencySelect } from "@/core/settings/CurrencySelect";
-import {
-  currencySymbol,
-  formatCurrency,
-  type CurrencyCode,
-} from "@/lib/format-currency";
+import { currencySymbol, type CurrencyCode } from "@/lib/format-currency";
 import {
   usePipelineIntake,
   useSaveDraft,
@@ -599,47 +595,14 @@ function ForecastingStep({
 
 // ───────── Step 4: Review & submit ─────────
 
-function labelOf<T extends { key: string; label: string }>(
-  options: readonly T[],
-  key: string | null | undefined,
-): string {
-  if (!key) return "—";
-  return options.find((o) => o.key === key)?.label ?? "—";
-}
+import {
+  labelOf,
+  chipsLabels,
+  money as moneyText,
+  ReadRow,
+  ReadGroup,
+} from "../components/ReadBack";
 
-function chipsLabels<T extends { key: string; label: string }>(
-  options: readonly T[],
-  keys: string[] | undefined,
-  other: string | undefined,
-): string {
-  const picked = (keys ?? []).map((k) => labelOf(options, k)).filter((l) => l !== "—");
-  if (other && other.trim()) picked.push(other.trim());
-  return picked.length ? picked.join(", ") : "—";
-}
-
-function ReadRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-start justify-between gap-6 py-2.5 border-b border-border last:border-b-0">
-      <span className="text-ink-muted text-sm">{label}</span>
-      <span className="text-ink text-sm text-right tabular-nums max-w-[60%]">{value}</span>
-    </div>
-  );
-}
-
-function ReadGroup({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-2">
-      <h3 className="text-sm font-medium text-ink">{title}</h3>
-      <div className="flex flex-col">{children}</div>
-    </div>
-  );
-}
 
 function SummaryStep({
   volume,
@@ -662,8 +625,7 @@ function SummaryStep({
   onSubmit: () => void;
   error: string | null;
 }) {
-  const money = (v: number | null | undefined) =>
-    v == null ? "—" : currency ? formatCurrency(v, currency) : String(v);
+  const money = (v: number | null | undefined) => moneyText(v, currency);
 
   const label = hasSubmitted
     ? hasUnsubmittedChanges
