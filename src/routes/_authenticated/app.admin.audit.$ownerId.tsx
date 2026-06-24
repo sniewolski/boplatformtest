@@ -131,11 +131,7 @@ function OwnerAuditReview() {
             renderReadBack={(answers) => <AlignmentAdminReadBack answers={answers} />}
           />
         )}
-        {tab === "content" && (
-          <p className="text-ink-muted text-sm">
-            Content tab — lands in the next phase.
-          </p>
-        )}
+        {tab === "content" && <ContentAdminTab ownerId={ownerId} />}
       </section>
     </div>
   );
