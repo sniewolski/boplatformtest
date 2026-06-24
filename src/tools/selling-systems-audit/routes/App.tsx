@@ -5,6 +5,7 @@ import { ContentReview } from "./ContentReview";
 import { PipelineHealth } from "./PipelineHealth";
 import { SalesActivity } from "./SalesActivity";
 import { SalesProcess } from "./SalesProcess";
+import { Messaging } from "./Messaging";
 import { SectionLocked } from "./SectionLocked";
 import { AUDIT_SECTIONS } from "../config";
 
