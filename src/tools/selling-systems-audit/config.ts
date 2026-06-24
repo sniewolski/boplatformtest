@@ -332,3 +332,125 @@ export const REVIEW_DATA_POINTS = [
 ] as const;
 export type ReviewDataKey = (typeof REVIEW_DATA_POINTS)[number]["key"];
 
+// ═══════════════════════════════════════════════════════════════════════
+// Sales Process (Section 3) — stepped intake, owner answers only.
+// Same shape rules as Conversion + Pipeline: jsonb blob keyed by config
+// keys; reword labels here without touching components or migrations.
+// ═══════════════════════════════════════════════════════════════════════
+
+export const PROCESS_STEPS = [
+  { key: "definition", label: "Process definition",    short: "Definition" },
+  { key: "stages",     label: "Stages",                short: "Stages" },
+  { key: "adherence",  label: "Adherence & quality",   short: "Adherence" },
+  { key: "tools",      label: "Tools & enablement",    short: "Tools" },
+  { key: "review",     label: "Review & submit",       short: "Review" },
+] as const;
+export type ProcessStepKey = (typeof PROCESS_STEPS)[number]["key"];
+
+// Maturity order — render in this order in MaturitySpectrum.
+export const DOCUMENTATION_LEVELS = [
+  { key: "none",       label: "Not documented" },
+  { key: "informal",   label: "Informal / in my head" },
+  { key: "partial",    label: "Partially documented" },
+  { key: "documented", label: "Fully documented" },
+] as const;
+export type DocumentationLevelKey = (typeof DOCUMENTATION_LEVELS)[number]["key"];
+
+export const PROCESS_CONSISTENCY = [
+  { key: "low",    label: "Varies a lot" },
+  { key: "medium", label: "Mostly consistent" },
+  { key: "high",   label: "Highly consistent" },
+] as const;
+export type ProcessConsistencyKey = (typeof PROCESS_CONSISTENCY)[number]["key"];
+
+export const REPLICABILITY = [
+  { key: "no",      label: "No" },
+  { key: "partial", label: "Partially" },
+  { key: "yes",     label: "Yes" },
+] as const;
+export type ReplicabilityKey = (typeof REPLICABILITY)[number]["key"];
+
+export const ADHERENCE = [
+  { key: "low",    label: "Low" },
+  { key: "medium", label: "Medium" },
+  { key: "high",   label: "High" },
+] as const;
+export type AdherenceKey = (typeof ADHERENCE)[number]["key"];
+
+export const QUALITY_ASSESSMENT = [
+  { key: "none",     label: "Don't assess" },
+  { key: "adhoc",    label: "Ad hoc" },
+  { key: "regular",  label: "Regular review" },
+  { key: "scored",   label: "Scored / rubric-based" },
+] as const;
+export type QualityAssessmentKey = (typeof QUALITY_ASSESSMENT)[number]["key"];
+
+export const SCRIPT_MOMENTS = [
+  { key: "openings",     label: "Openings" },
+  { key: "discovery",    label: "Discovery questions" },
+  { key: "objections",   label: "Objection handling" },
+  { key: "pricing",      label: "Pricing conversations" },
+  { key: "closing",      label: "Closing" },
+  { key: "followups",    label: "Follow-ups" },
+  { key: "other",        label: "Other" },
+] as const;
+export type ScriptMomentKey = (typeof SCRIPT_MOMENTS)[number]["key"];
+
+export const EXPERIENCE_CONSISTENCY = [
+  { key: "low",    label: "Varies a lot" },
+  { key: "medium", label: "Mostly consistent" },
+  { key: "high",   label: "Highly consistent" },
+] as const;
+export type ExperienceConsistencyKey = (typeof EXPERIENCE_CONSISTENCY)[number]["key"];
+
+export const CRM_OPTIONS = [
+  { key: "none",       label: "None" },
+  { key: "spreadsheet",label: "Spreadsheet" },
+  { key: "hubspot",    label: "HubSpot" },
+  { key: "pipedrive",  label: "Pipedrive" },
+  { key: "salesforce", label: "Salesforce" },
+  { key: "zoho",       label: "Zoho" },
+  { key: "monday",     label: "Monday" },
+  { key: "other",      label: "Other" },
+] as const;
+export type CrmKey = (typeof CRM_OPTIONS)[number]["key"];
+
+export const UPDATE_FREQUENCY = [
+  { key: "rarely",     label: "Rarely" },
+  { key: "weekly",     label: "Weekly" },
+  { key: "daily",      label: "Daily" },
+  { key: "realtime",   label: "After every interaction" },
+] as const;
+export type UpdateFrequencyKey = (typeof UPDATE_FREQUENCY)[number]["key"];
+
+export const DOC_TEMPLATES = [
+  { key: "proposals",   label: "Proposal templates" },
+  { key: "emails",      label: "Email templates" },
+  { key: "scripts",     label: "Call scripts" },
+  { key: "discovery",   label: "Discovery guides" },
+  { key: "objections",  label: "Objection responses" },
+  { key: "case_studies",label: "Case studies" },
+  { key: "other",       label: "Other" },
+] as const;
+export type DocTemplateKey = (typeof DOC_TEMPLATES)[number]["key"];
+
+export const ENABLEMENT = [
+  { key: "onboarding",  label: "Onboarding programme" },
+  { key: "training",    label: "Ongoing training" },
+  { key: "coaching",    label: "1:1 coaching" },
+  { key: "roleplay",    label: "Role-play / practice" },
+  { key: "playbooks",   label: "Playbooks" },
+  { key: "none",        label: "None" },
+  { key: "other",       label: "Other" },
+] as const;
+export type EnablementKey = (typeof ENABLEMENT)[number]["key"];
+
+/** One row of the owner's pipeline stage definition (Step 2). */
+export type SalesStage = {
+  id: string;
+  name: string;
+  purpose?: string;
+  exitCriteria?: string;
+};
+
+
