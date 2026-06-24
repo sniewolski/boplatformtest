@@ -321,7 +321,7 @@ export function ConversionReview() {
         />
       ) : (
         <>
-          <ProgressBar currentIdx={stepIdx} onJump={setStepIdx} />
+          <ProgressBar steps={INTAKE_STEPS} currentIdx={stepIdx} onJump={setStepIdx} />
 
           <div className="flex flex-col gap-8" onBlurCapture={flushSave}>
             {step.key === "foundation" && (
