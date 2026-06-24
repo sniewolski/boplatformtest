@@ -218,3 +218,13 @@
 @utility prose-measure {
   max-width: var(--prose-max);
 }
+
+/* Hide native scrollbar while preserving scroll behavior.
+   Apply to overflow-x/y-auto containers to remove browser scroll buttons. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
