@@ -72,7 +72,7 @@ function BookCallPage() {
       </header>
       <div className="flex-1 min-h-0 overflow-hidden rounded-lg border border-border bg-[var(--surface-raised)]">
         <iframe
-          src="https://meeting.salesman.com/book"
+          src="https://calendly.com/salesmanorg/1-1-selling-systems-audit-salescode-assessment-call?month=2026-06"
           title="Book a 1:1 call"
           className="w-full h-full"
           allow="fullscreen"
