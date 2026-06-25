@@ -1,19 +1,76 @@
+import { Link } from "@tanstack/react-router";
+import { ArrowRight } from "lucide-react";
+import { useSession } from "@/core/auth/useSession";
+import { Button } from "@/components/ui/button";
+import { useSalesCodeIntake } from "../data/useSalesCodeIntake";
+import { TOTAL_QUESTIONS, PRESENTATION_ORDER } from "../lib/questions";
+import type { AnswerMap } from "../lib/types";
+
 /**
- * SalesCode — owner overview (Phase 1 placeholder).
- *
- * Subsequent phases replace this with:
- *   - a "Start / Resume" entry into the ~150-question stepped form, and
- *   - the shared result renderer once a submission exists.
+ * SalesCode overview — entry point. Shows Start, Resume, or "review your
+ * result" depending on what the owner has done. The full result write-up
+ * renderer lands in the next phase; for now we display the type code.
  */
 export function SalesCodeOverview() {
+  const { session } = useSession();
+  const userId = session?.user.id;
+  const { data: intake, isLoading } = useSalesCodeIntake(userId);
+
+  const draft = (intake?.draft_answers ?? {}) as AnswerMap;
+  const draftCount = PRESENTATION_ORDER.reduce((n, id) => n + (draft[id] ? 1 : 0), 0);
+  const isSubmitted = !!intake?.submitted_at && !intake?.has_unsubmitted_changes;
+  const hasDraft = draftCount > 0 && !isSubmitted;
+
+  const ctaLabel = isSubmitted
+    ? "Review your result"
+    : hasDraft
+      ? `Resume (${draftCount}/${TOTAL_QUESTIONS})`
+      : "Start assessment";
+
   return (
-    <div className="max-w-2xl flex flex-col gap-3 py-8">
-      <h1 className="text-2xl text-ink">SalesCode</h1>
-      <p className="text-ink-muted">
-        A short self-assessment that returns your four-letter SalesCode type
-        and a trait profile across sales skills, inner game, and habits &
-        drive. The assessment itself ships in the next phase.
-      </p>
+    <div className="max-w-2xl flex flex-col gap-6 py-8">
+      <header className="flex flex-col gap-3">
+        <h1 className="text-2xl text-ink" style={{ letterSpacing: "-0.01em" }}>
+          SalesCode
+        </h1>
+        <p className="text-ink-muted">
+          A short self-assessment that returns your four-letter SalesCode
+          type and a trait profile across sales skills, inner game, and
+          habits &amp; drive. {TOTAL_QUESTIONS} statements; about 15
+          minutes; progress saves automatically.
+        </p>
+      </header>
+
+      {isSubmitted ? (
+        <div className="rounded-md border border-border bg-surface px-4 py-3 flex items-center justify-between gap-4">
+          <div className="flex flex-col">
+            <span className="text-xs text-ink-muted uppercase tracking-wide">Your type</span>
+            <span className="text-xl font-mono text-ink">{intake?.type_code ?? "—"}</span>
+          </div>
+          <span className="text-xs text-ink-muted">
+            Submitted{" "}
+            {intake?.submitted_at
+              ? new Date(intake.submitted_at).toLocaleDateString()
+              : ""}
+          </span>
+        </div>
+      ) : null}
+
+      <div>
+        <Button
+          asChild
+          disabled={isLoading}
+          className="active:scale-[0.97] transition-transform"
+        >
+          <Link
+            to="/app/tools/$key/$"
+            params={{ key: "salescode", _splat: "assessment" }}
+            className="inline-flex items-center gap-2"
+          >
+            {ctaLabel} <ArrowRight className="size-4" />
+          </Link>
+        </Button>
+      </div>
     </div>
   );
 }
