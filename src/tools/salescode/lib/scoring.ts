@@ -100,9 +100,8 @@ type ThresholdSpec = {
   /**
    * Which side is the strength. "above" means raw > threshold ⇒ strength.
    * "below" handles the people-pleaser case (raw < threshold ⇒ strength).
-   * "neutral" is used for introvert/extrovert style (no S/D semantics).
    */
-  strengthSide: "above" | "below" | "neutral";
+  strengthSide: "above" | "below";
   /**
    * Comparator. Most traits use `>`; goal-setting and personal accountability
    * use `≥`; people-pleaser uses `<`.
