@@ -114,21 +114,24 @@ function UnavailableMessage() {
 function SalesCodeRespondent({
   token,
   session,
+  payload,
+  result,
   onCompleted,
 }: {
   token: string;
-  session: PublicSession & { payload?: unknown; result?: unknown };
+  session: PublicSession;
+  payload: unknown;
+  result: unknown;
   onCompleted: () => void;
 }) {
   const initialAnswers = useMemo<AnswerMap>(() => {
-    const p = session.payload;
-    if (p && typeof p === "object") return p as AnswerMap;
+    if (payload && typeof payload === "object") return payload as AnswerMap;
     return {};
-  }, [session.payload]);
+  }, [payload]);
 
   const [completed, setCompleted] = useState<SalesCodeResult | null>(() => {
     if (session.status !== "completed") return null;
-    const r = session.result as { type?: string; traits?: unknown } | null;
+    const r = result as { type?: string; traits?: unknown } | null;
     if (r && r.type) return r as unknown as SalesCodeResult;
     return null;
   });
