@@ -61,56 +61,43 @@ export const LESSONS: Record<LessonKey, Lesson> = {
 
 /** Sections of the audit. Order is the order shown in the overview. */
 const section = <K extends string>(
-  s: { key: K; label: string; description: string; status: "available" | "locked" },
+  s: { key: K; label: string; status: "available" | "locked" },
 ) => s;
 
 export const AUDIT_SECTIONS = [
   section({
     key: "conversion",
     label: "Sales Conversion Rates Review",
-    description:
-      "Where your funnel leaks, ranked by money lost, against the standard high performers hit.",
     status: "available",
   }),
   section({
     key: "pipeline",
     label: "Pipeline Health",
-    description:
-      "A structured read on whether your pipeline can hit target — volume, coverage, deal velocity, and how you forecast.",
     status: "available",
   }),
   section({
     key: "process",
     label: "Sales Process",
-    description:
-      "How your sales process is defined, where each stage starts and ends, how consistently it's followed, and the tools supporting it.",
     status: "available",
   }),
   section({
     key: "activity",
     label: "Sales Activity Metrics",
-    description:
-      "What sales activity you measure, how healthy the numbers look, and how confidently you read them.",
     status: "available",
   }),
   section({
     key: "messaging",
     label: "Messaging & Positioning",
-    description:
-      "Who you sell to, the problem you solve in their words, your value proposition, the proof behind it, and how consistent the message is across touchpoints.",
     status: "available",
   }),
   section({
     key: "alignment",
     label: "Marketing & Sales Alignment",
-    description:
-      "Whether marketing and sales agree on a good lead, present a coherent message, share intelligence both ways, and measure against connected goals.",
     status: "available",
   }),
   section({
     key: "content",
     label: "Sales Content Review",
-    description: "Audit of the messages, scripts and assets your sales motion runs on.",
     status: "available",
   }),
 ] as const;

@@ -90,7 +90,6 @@ export function AuditOverview() {
                     <Lock className="size-3.5 text-ink-muted shrink-0" aria-hidden />
                   )}
                 </div>
-                <span className="text-ink-muted text-sm">{section.description}</span>
                 {isLocked && (
                   <span className="text-ink-muted text-xs mt-1">Available soon</span>
                 )}
