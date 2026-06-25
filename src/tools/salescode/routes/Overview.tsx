@@ -28,8 +28,18 @@ export function SalesCodeOverview() {
       : "Start assessment";
 
   return (
-    <div className="app-content py-8">
-      <div className="max-w-2xl mx-auto flex flex-col gap-6">
+    <div className="app-content py-12 flex flex-col gap-6">
+      <header className="flex flex-col gap-3 max-w-prose">
+        <h1 className="text-2xl text-ink" style={{ letterSpacing: "-0.01em" }}>
+          SalesCode
+        </h1>
+        <p className="text-ink-muted">
+          A short self-assessment that returns your four-letter SalesCode
+          type and a trait profile across sales skills, inner game, and
+          habits &amp; drive. {TOTAL_QUESTIONS} statements; about 15
+          minutes; progress saves automatically.
+        </p>
+      </header>
         <header className="flex flex-col gap-3">
           <h1 className="text-2xl text-ink" style={{ letterSpacing: "-0.01em" }}>
             SalesCode
