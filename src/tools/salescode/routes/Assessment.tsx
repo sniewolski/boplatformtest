@@ -49,6 +49,7 @@ const STEPS: ReadonlyArray<StepDef> = STEP_CHUNKS.map((_, i) => ({
 export function SalesCodeAssessment() {
   const { session } = useSession();
   const userId = session?.user.id;
+  const navigate = useNavigate({ from: "/app/tools/$key/$" });
   const { data: intake, isLoading } = useSalesCodeIntake(userId);
   const save = useSaveDraft(userId);
   const submit = useSubmitSalesCode(userId);
