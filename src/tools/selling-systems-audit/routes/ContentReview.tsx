@@ -58,10 +58,6 @@ export function ContentReview() {
           <h1 className="text-3xl" style={{ letterSpacing: "-0.02em" }}>
             Sales Content Review
           </h1>
-          <p className="text-ink-muted text-base max-w-prose">
-            Upload the messages, scripts and cadences your sales motion runs on,
-            organized by type. We'll go through them together on our call.
-          </p>
         </div>
         <Button onClick={() => openUpload()} className="active:scale-[0.97] transition-transform">
           <Plus className="size-4 mr-1.5" />
