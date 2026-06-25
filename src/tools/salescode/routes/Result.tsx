@@ -66,8 +66,7 @@ export function SalesCodeResultRoute() {
   }
 
   return (
-    <div className="app-content py-8">
-      <div className="max-w-3xl mx-auto flex flex-col gap-10">
+    <div className="app-content py-12 flex flex-col gap-10">
         <header className="flex flex-col gap-3">
           <span className="text-xs text-ink-muted uppercase tracking-wide">Your SalesCode</span>
           <h1 className="text-4xl font-mono text-ink" style={{ letterSpacing: "0.02em" }}>
