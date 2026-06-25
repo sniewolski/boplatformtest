@@ -158,7 +158,7 @@ export function SalesCodeAssessment() {
 
   if (isLoading || !hydrated) {
     return (
-      <div className="max-w-2xl py-8 text-ink-muted">Loading…</div>
+      <div className="app-content py-12 text-ink-muted">Loading…</div>
     );
   }
 
