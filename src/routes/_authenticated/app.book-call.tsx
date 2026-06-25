@@ -67,7 +67,7 @@ function BookCallPage() {
           Book a 1:1 call
         </h1>
         <p className="text-ink-muted text-sm max-w-prose">
-          Pick a time that works — your audit and assessment will be ready for review.
+          Pick a time that works for you
         </p>
       </header>
       <div className="flex-1 min-h-0 overflow-hidden rounded-lg border border-border bg-[var(--surface-raised)]">
