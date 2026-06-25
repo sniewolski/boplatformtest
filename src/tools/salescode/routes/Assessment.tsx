@@ -158,6 +158,10 @@ export function SalesCodeAssessment() {
     flushSave();
     try {
       await submit.mutateAsync({ draft: latestRef.current });
+      navigate({
+        to: "/app/tools/$key/$",
+        params: { key: "salescode", _splat: "result" },
+      });
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : "Submit failed.");
     }
