@@ -168,7 +168,7 @@ export function SalesCodeAssessment() {
   // result renderer arrives in the next phase.
   if (isSubmitted) {
     return (
-      <div className="max-w-2xl py-8 flex flex-col gap-4">
+      <div className="app-content py-12 flex flex-col gap-4">
         <Link
           to="/app/tools/$key/$"
           params={{ key: "salescode", _splat: "" }}
