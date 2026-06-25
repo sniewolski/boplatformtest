@@ -111,7 +111,9 @@ type ThresholdSpec = {
 };
 
 const THRESHOLD_TRAITS: ReadonlyArray<ThresholdSpec> = [
-  // Introvert / Extrovert — neutral style trait (separate from the type's I/E axis).
+  // Introvert / Extrovert — Extrovert sits on the "above" side of the threshold.
+  // Treated as a normal binary trait; the strength/growth framing comes from
+  // the per-trait copy entry, not from the scoring layer.
   {
     key: "introvert-extrovert",
     offset: 38,
@@ -123,7 +125,7 @@ const THRESHOLD_TRAITS: ReadonlyArray<ThresholdSpec> = [
     threshold: 3,
     aboveLabel: "Extrovert",
     belowLabel: "Introvert",
-    strengthSide: "neutral",
+    strengthSide: "above",
   },
   // Assertiveness
   {
