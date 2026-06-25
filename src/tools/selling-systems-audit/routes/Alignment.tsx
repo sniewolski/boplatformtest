@@ -182,11 +182,6 @@ export function Alignment() {
         <h1 className="text-3xl" style={{ letterSpacing: "-0.02em" }}>
           Marketing & Sales Alignment
         </h1>
-        <p className="text-ink-muted text-base max-w-prose">
-          Whether marketing and sales agree on a good lead, present a coherent
-          message, share intelligence both ways, and measure against connected
-          goals.
-        </p>
       </header>
 
       {isReceived ? (
