@@ -188,10 +188,6 @@ export function SalesProcess() {
         <h1 className="text-3xl" style={{ letterSpacing: "-0.02em" }}>
           Sales Process
         </h1>
-        <p className="text-ink-muted text-base max-w-prose">
-          How your sales process is defined, where each stage starts and ends,
-          how consistently it's followed, and the tools supporting it.
-        </p>
       </header>
 
       {isReceived ? (
