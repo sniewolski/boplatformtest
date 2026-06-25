@@ -62,7 +62,7 @@ export function SalesCodeResultView({
           ) : null}
 
           {profile.pullQuote ? (
-            <p className="text-xl font-medium text-ink italic leading-snug py-2">
+            <p className="text-xl font-serif text-ink italic leading-snug py-2">
               {profile.pullQuote}
             </p>
           ) : null}
@@ -133,7 +133,7 @@ export function SalesCodeResultView({
           ) : null}
 
           {profile.closingQuote ? (
-            <p className="text-xl font-medium text-ink italic leading-snug py-2">
+            <p className="text-xl font-serif text-ink italic leading-snug py-2">
               {profile.closingQuote}
             </p>
           ) : null}
