@@ -19,7 +19,7 @@ import type { AnswerMap, Likert } from "../lib/types";
 import { LikertRow } from "../components/LikertRow";
 
 const AUTOSAVE_MS = 700;
-const PER_STEP = 20;
+const PER_STEP = 8;
 
 /**
  * Build fixed-size step chunks from PRESENTATION_ORDER. Last step holds
