@@ -505,26 +505,6 @@ export const TYPE_PROFILES_RESPONDENT: Record<SalesCodeType, TypeProfile> = {
     {
       "lead": "Tough decisions",
       "body": "If you are caught between a rock and a hard place, you get stricken with paralysis as you imagine all the consequences of your actions.This is especially true if the potential consequences could lead to a change in someone else’s emotions."
-    },
-    {
-      "lead": "Weaknesses",
-      "body": ""
-    },
-    {
-      "lead": "Overly idealistic",
-      "body": "You can be caught off-guard if you encounter people that don’t agree with you. You assume everyone is as idealistic as yourself and so can be frustrated when people have other belief systems."
-    },
-    {
-      "lead": "People pleaser",
-      "body": "You can bury yourself in promises to others. You sometimes embrace other people’s problems and try and solve them as if they were your own. When you do this often enough, you can spread yourself too thin and be left unable to help anyone."
-    },
-    {
-      "lead": "Fluctuating self-esteem",
-      "body": "You define your self-esteem by whether you are able to live up to your ideals. You are always wondering what you could do better. If you fail to meet a goal to help someone, when you promised you would, your self-confidence will plummet down."
-    },
-    {
-      "lead": "Tough decisions",
-      "body": "If you are caught between a rock and a hard place, you get stricken with paralysis as you imagine all the consequences of your actions.This is especially true if the potential consequences could lead to a change in someone else’s emotions."
     }
   ],
   "businessAndSales": [
