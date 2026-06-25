@@ -24,7 +24,6 @@ export function LikertRow({
   value: Likert | undefined;
   onChange: (v: Likert) => void;
 }) {
-  const name = `q-${id}`;
   return (
     <fieldset className="flex flex-col gap-4 py-6 border-b border-border last:border-b-0">
       <legend className="text-ink text-[15px] leading-snug">{text}</legend>
@@ -36,40 +35,27 @@ export function LikertRow({
         {LIKERT_OPTIONS.map((opt) => {
           const checked = value === opt.value;
           return (
-            <label
+            <button
               key={opt.value}
-              onMouseDown={(e) => e.preventDefault()}
+              type="button"
+              role="radio"
+              aria-checked={checked}
+              aria-label={opt.label}
               onClick={() => onChange(opt.value)}
-              className={`flex flex-col items-center gap-1 cursor-pointer rounded-md border px-2 py-2 transition-colors text-xs ${
+              className={`flex flex-col items-center gap-1 cursor-pointer rounded-md border px-2 py-2 transition-colors text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-ink ${
                 checked
                   ? "border-ink bg-ink/5 text-ink ring-1 ring-ink"
                   : "border-border bg-surface text-ink-muted hover:border-ink/40 hover:text-ink"
               }`}
             >
-              <input
-                type="radio"
-                name={name}
-                value={opt.value}
-                checked={checked}
-                onChange={() => onChange(opt.value)}
-                tabIndex={-1}
-                aria-hidden="true"
-                style={{
-                  position: "absolute",
-                  width: 1,
-                  height: 1,
-                  opacity: 0,
-                  pointerEvents: "none",
-                }}
-              />
               <span aria-hidden className="font-medium tabular-nums">
                 {opt.value}
               </span>
-              <span className="hidden sm:inline text-[11px] leading-tight text-center">
+              <span aria-hidden className="hidden sm:inline text-[11px] leading-tight text-center">
                 {opt.label}
               </span>
-              <span className="sm:hidden text-[11px]">{opt.short}</span>
-            </label>
+              <span aria-hidden className="sm:hidden text-[11px]">{opt.short}</span>
+            </button>
           );
         })}
       </div>
