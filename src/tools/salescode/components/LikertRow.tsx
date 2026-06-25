@@ -31,7 +31,7 @@ export function LikertRow({
       <div
         role="radiogroup"
         aria-label={text}
-        className="grid grid-cols-5 gap-1.5"
+        className="grid grid-cols-5 gap-2"
       >
         {LIKERT_OPTIONS.map((opt) => {
           const checked = value === opt.value;
@@ -40,7 +40,7 @@ export function LikertRow({
               key={opt.value}
               className={`flex flex-col items-center gap-1 cursor-pointer rounded-md border px-2 py-2 transition-colors text-xs ${
                 checked
-                  ? "border-ink bg-ink text-bg"
+                  ? "border-ink bg-ink/5 text-ink ring-1 ring-ink"
                   : "border-border bg-surface text-ink-muted hover:border-ink/40 hover:text-ink"
               }`}
             >
