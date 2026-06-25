@@ -184,6 +184,7 @@ export function PipelineHealth() {
 
       {isReceived ? (
         <ReceivedState
+          sectionKey="pipeline"
           onEdit={() => {
             setEditingAfterSubmit(true);
             setStepIdx(0);
