@@ -63,17 +63,14 @@ function RespondentEntry() {
   });
 
   // If they already captured (e.g. returning later), forward to the tool.
-  if (
-    session &&
-    session.respondentName &&
-    session.respondentEmail &&
-    session.status !== "completed"
-  ) {
-    navigate({ to: "/r/$token/$", params: { token, _splat: "run" } });
-  }
-  if (session && session.status === "completed") {
-    navigate({ to: "/r/$token/$", params: { token, _splat: "done" } });
-  }
+  useEffect(() => {
+    if (!session) return;
+    if (session.status === "completed") {
+      navigate({ to: "/r/$token/$", params: { token, _splat: "done" } });
+    } else if (session.respondentName && session.respondentEmail) {
+      navigate({ to: "/r/$token/$", params: { token, _splat: "run" } });
+    }
+  }, [session, navigate, token]);
 
   if (query.isLoading) {
     return (
