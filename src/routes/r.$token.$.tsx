@@ -12,17 +12,17 @@ export const Route = createFileRoute("/r/$token/$")({
   component: RespondentSplat,
 });
 
-type ValidateResp =
-  | { ok: true; session: PublicSession & { payload?: unknown; result?: unknown } }
+type StateResp =
+  | { ok: true; session: PublicSession; payload: unknown; result: unknown }
   | { ok: false; reason: string };
 
-async function fetchValidate(token: string): Promise<ValidateResp> {
-  const res = await fetch("/api/public/r/validate", {
+async function fetchState(token: string): Promise<StateResp> {
+  const res = await fetch("/api/public/r/state", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ token }),
   });
-  return (await res.json()) as ValidateResp;
+  return (await res.json()) as StateResp;
 }
 
 function RespondentSplat() {
@@ -31,8 +31,8 @@ function RespondentSplat() {
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ["respondent", token],
-    queryFn: () => fetchValidate(token),
+    queryKey: ["respondent-state", token],
+    queryFn: () => fetchState(token),
     retry: false,
   });
 
