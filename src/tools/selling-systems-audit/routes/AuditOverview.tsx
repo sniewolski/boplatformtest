@@ -41,9 +41,6 @@ export function AuditOverview() {
         <p className="text-ink-muted text-base max-w-prose">
           Complete the audit to find gaps in your sales systems and prepare for your 1:1 audit and assessment review with Will Barron.
         </p>
-        <p className="text-ink-muted text-sm max-w-prose">
-          Work through each section at your own pace — your coach reviews what you submit before your call.
-        </p>
       </header>
 
       <ol className="flex flex-col">
