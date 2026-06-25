@@ -19,6 +19,8 @@ import { Route as RTokenSplatRouteImport } from './routes/r.$token.$'
 import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
 import { Route as AuthenticatedAppAdminIndexRouteImport } from './routes/_authenticated/app.admin.index'
 import { Route as ApiPublicRValidateRouteImport } from './routes/api/public/r/validate'
+import { Route as ApiPublicRStateRouteImport } from './routes/api/public/r/state'
+import { Route as ApiPublicRSaveRouteImport } from './routes/api/public/r/save'
 import { Route as ApiPublicRCompleteRouteImport } from './routes/api/public/r/complete'
 import { Route as ApiPublicRCaptureRouteImport } from './routes/api/public/r/capture'
 import { Route as AuthenticatedAppAdminAuditIndexRouteImport } from './routes/_authenticated/app.admin.audit.index'
@@ -75,6 +77,16 @@ const ApiPublicRValidateRoute = ApiPublicRValidateRouteImport.update({
   path: '/api/public/r/validate',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicRStateRoute = ApiPublicRStateRouteImport.update({
+  id: '/api/public/r/state',
+  path: '/api/public/r/state',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicRSaveRoute = ApiPublicRSaveRouteImport.update({
+  id: '/api/public/r/save',
+  path: '/api/public/r/save',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicRCompleteRoute = ApiPublicRCompleteRouteImport.update({
   id: '/api/public/r/complete',
   path: '/api/public/r/complete',
@@ -114,6 +126,8 @@ export interface FileRoutesByFullPath {
   '/r/$token/': typeof RTokenIndexRoute
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
+  '/api/public/r/save': typeof ApiPublicRSaveRoute
+  '/api/public/r/state': typeof ApiPublicRStateRoute
   '/api/public/r/validate': typeof ApiPublicRValidateRoute
   '/app/admin/': typeof AuthenticatedAppAdminIndexRoute
   '/app/admin/audit/$ownerId': typeof AuthenticatedAppAdminAuditOwnerIdRoute
@@ -128,6 +142,8 @@ export interface FileRoutesByTo {
   '/r/$token': typeof RTokenIndexRoute
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
+  '/api/public/r/save': typeof ApiPublicRSaveRoute
+  '/api/public/r/state': typeof ApiPublicRStateRoute
   '/api/public/r/validate': typeof ApiPublicRValidateRoute
   '/app/admin': typeof AuthenticatedAppAdminIndexRoute
   '/app/admin/audit/$ownerId': typeof AuthenticatedAppAdminAuditOwnerIdRoute
@@ -146,6 +162,8 @@ export interface FileRoutesById {
   '/r/$token/': typeof RTokenIndexRoute
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
+  '/api/public/r/save': typeof ApiPublicRSaveRoute
+  '/api/public/r/state': typeof ApiPublicRStateRoute
   '/api/public/r/validate': typeof ApiPublicRValidateRoute
   '/_authenticated/app/admin/': typeof AuthenticatedAppAdminIndexRoute
   '/_authenticated/app/admin/audit/$ownerId': typeof AuthenticatedAppAdminAuditOwnerIdRoute
@@ -164,6 +182,8 @@ export interface FileRouteTypes {
     | '/r/$token/'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
+    | '/api/public/r/save'
+    | '/api/public/r/state'
     | '/api/public/r/validate'
     | '/app/admin/'
     | '/app/admin/audit/$ownerId'
@@ -178,6 +198,8 @@ export interface FileRouteTypes {
     | '/r/$token'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
+    | '/api/public/r/save'
+    | '/api/public/r/state'
     | '/api/public/r/validate'
     | '/app/admin'
     | '/app/admin/audit/$ownerId'
@@ -195,6 +217,8 @@ export interface FileRouteTypes {
     | '/r/$token/'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
+    | '/api/public/r/save'
+    | '/api/public/r/state'
     | '/api/public/r/validate'
     | '/_authenticated/app/admin/'
     | '/_authenticated/app/admin/audit/$ownerId'
@@ -209,6 +233,8 @@ export interface RootRouteChildren {
   RTokenRoute: typeof RTokenRouteWithChildren
   ApiPublicRCaptureRoute: typeof ApiPublicRCaptureRoute
   ApiPublicRCompleteRoute: typeof ApiPublicRCompleteRoute
+  ApiPublicRSaveRoute: typeof ApiPublicRSaveRoute
+  ApiPublicRStateRoute: typeof ApiPublicRStateRoute
   ApiPublicRValidateRoute: typeof ApiPublicRValidateRoute
 }
 
@@ -282,6 +308,20 @@ declare module '@tanstack/react-router' {
       path: '/api/public/r/validate'
       fullPath: '/api/public/r/validate'
       preLoaderRoute: typeof ApiPublicRValidateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/r/state': {
+      id: '/api/public/r/state'
+      path: '/api/public/r/state'
+      fullPath: '/api/public/r/state'
+      preLoaderRoute: typeof ApiPublicRStateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/r/save': {
+      id: '/api/public/r/save'
+      path: '/api/public/r/save'
+      fullPath: '/api/public/r/save'
+      preLoaderRoute: typeof ApiPublicRSaveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/r/complete': {
@@ -375,6 +415,8 @@ const rootRouteChildren: RootRouteChildren = {
   RTokenRoute: RTokenRouteWithChildren,
   ApiPublicRCaptureRoute: ApiPublicRCaptureRoute,
   ApiPublicRCompleteRoute: ApiPublicRCompleteRoute,
+  ApiPublicRSaveRoute: ApiPublicRSaveRoute,
+  ApiPublicRStateRoute: ApiPublicRStateRoute,
   ApiPublicRValidateRoute: ApiPublicRValidateRoute,
 }
 export const routeTree = rootRouteImport

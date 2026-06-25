@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,7 @@ async function fetchValidate(token: string) {
 function RespondentEntry() {
   const { token } = Route.useParams();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const query = useQuery({
     queryKey: ["respondent", token],
@@ -35,6 +36,8 @@ function RespondentEntry() {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+
+  const session = query.data && query.data.ok ? query.data.session : null;
 
   const capture = useMutation({
     mutationFn: async () => {
@@ -51,8 +54,23 @@ function RespondentEntry() {
     },
     onSuccess: (data) => {
       queryClient.setQueryData(["respondent", token], data);
+      // Hand off to the per-tool splat route.
+      navigate({
+        to: "/r/$token/$",
+        params: { token, _splat: "run" },
+      });
     },
   });
+
+  // If they already captured (e.g. returning later), forward to the tool.
+  useEffect(() => {
+    if (!session) return;
+    if (session.status === "completed") {
+      navigate({ to: "/r/$token/$", params: { token, _splat: "done" } });
+    } else if (session.respondentName && session.respondentEmail) {
+      navigate({ to: "/r/$token/$", params: { token, _splat: "run" } });
+    }
+  }, [session, navigate, token]);
 
   if (query.isLoading) {
     return (
@@ -78,65 +96,47 @@ function RespondentEntry() {
     );
   }
 
-  const session = query.data.session;
-  const hasRespondent = !!session.respondentName && !!session.respondentEmail;
-
-  if (!hasRespondent) {
-    return (
-      <Centered>
-        <header className="flex flex-col gap-2 text-center">
-          <h1 className="text-2xl">You've been invited</h1>
-          <p className="text-ink-muted text-sm">
-            Enter your details to begin.
-          </p>
-        </header>
-        <form
-          className="w-full flex flex-col gap-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            capture.mutate();
-          }}
-        >
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="resp-name">Your name</Label>
-            <Input
-              id="resp-name"
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              disabled={capture.isPending}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="resp-email">Email</Label>
-            <Input
-              id="resp-email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={capture.isPending}
-            />
-          </div>
-          {capture.error && (
-            <p className="text-sm text-[var(--red)]">
-              {(capture.error as Error).message}
-            </p>
-          )}
-          <Button type="submit" disabled={capture.isPending || !name || !email}>
-            {capture.isPending ? "Saving…" : "Continue"}
-          </Button>
-        </form>
-      </Centered>
-    );
-  }
-
   return (
     <Centered>
-      <h1 className="text-2xl">Thanks, {session.respondentName}</h1>
-      <p className="text-ink-muted text-sm">
-        There's no tool to run on this link yet. You can close this tab.
-      </p>
+      <header className="flex flex-col gap-2 text-center">
+        <h1 className="text-2xl">You've been invited</h1>
+        <p className="text-ink-muted text-sm">Enter your details to begin.</p>
+      </header>
+      <form
+        className="w-full flex flex-col gap-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          capture.mutate();
+        }}
+      >
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="resp-name">Your name</Label>
+          <Input
+            id="resp-name"
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            disabled={capture.isPending}
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="resp-email">Email</Label>
+          <Input
+            id="resp-email"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={capture.isPending}
+          />
+        </div>
+        {capture.error && (
+          <p className="text-sm text-red">{(capture.error as Error).message}</p>
+        )}
+        <Button type="submit" disabled={capture.isPending || !name || !email}>
+          {capture.isPending ? "Saving…" : "Continue"}
+        </Button>
+      </form>
     </Centered>
   );
 }
