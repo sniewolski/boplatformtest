@@ -38,6 +38,8 @@ export function LikertRow({
           return (
             <label
               key={opt.value}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => onChange(opt.value)}
               className={`flex flex-col items-center gap-1 cursor-pointer rounded-md border px-2 py-2 transition-colors text-xs ${
                 checked
                   ? "border-ink bg-ink/5 text-ink ring-1 ring-ink"
@@ -50,7 +52,15 @@ export function LikertRow({
                 value={opt.value}
                 checked={checked}
                 onChange={() => onChange(opt.value)}
-                className="sr-only"
+                tabIndex={-1}
+                aria-hidden="true"
+                style={{
+                  position: "absolute",
+                  width: 1,
+                  height: 1,
+                  opacity: 0,
+                  pointerEvents: "none",
+                }}
               />
               <span aria-hidden className="font-medium tabular-nums">
                 {opt.value}
