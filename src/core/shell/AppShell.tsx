@@ -74,6 +74,12 @@ export function AppShell({
         to: `/app/tools/${t.key}`,
         label: t.navEntry!.label,
         icon: LayoutDashboard,
+        complete:
+          t.key === "selling-systems-audit"
+            ? auditComplete
+            : t.key === "salescode"
+              ? salescodeComplete
+              : undefined,
       })),
     { to: "/app/book-call", label: "Book a 1:1 call", icon: CalendarDays },
   ];
