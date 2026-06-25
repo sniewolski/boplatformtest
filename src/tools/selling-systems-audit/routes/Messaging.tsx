@@ -183,11 +183,6 @@ export function Messaging() {
         <h1 className="text-3xl" style={{ letterSpacing: "-0.02em" }}>
           Messaging & Positioning
         </h1>
-        <p className="text-ink-muted text-base max-w-prose">
-          Who you sell to, the problem you solve in their words, your value
-          proposition, the proof behind it, and how consistent the message is
-          across touchpoints.
-        </p>
       </header>
 
       {isReceived ? (
@@ -285,7 +280,6 @@ function IcpStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Ideal customer clarity"
-        subtitle="Who you're for, in enough detail that a prospect would recognise themselves."
       />
       <Question
         label="Describe your ideal client"
@@ -367,7 +361,6 @@ function ProblemStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Problem & pain clarity"
-        subtitle="The problem you solve — described in your client's words, not yours."
       />
       <Question
         label="What's the most painful problem you solve for them?"
@@ -418,7 +411,6 @@ function ValueStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Value proposition"
-        subtitle="What you deliver, for whom, and how you're different from the alternatives."
       />
       <Question
         label="Your value proposition"
@@ -522,7 +514,6 @@ function ProofStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Proof & credibility"
-        subtitle="The evidence behind your claims, and how well it speaks to your ICP."
       />
       <Question label="What types of evidence do you currently use?" hint="Pick all that apply.">
         <Chips
@@ -591,7 +582,6 @@ function ConsistencyStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Message consistency"
-        subtitle="How aligned the message is across touchpoints, and how clients describe you back."
       />
       <Question label="How consistent is your message across touchpoints?">
         <Segmented
@@ -659,7 +649,6 @@ function ReviewStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Review & submit"
-        subtitle="A quick read-back of your answers. Edit anything by stepping back."
       />
 
       <ReadGroup title="Ideal customer clarity">

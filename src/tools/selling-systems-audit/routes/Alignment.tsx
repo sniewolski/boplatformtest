@@ -182,11 +182,6 @@ export function Alignment() {
         <h1 className="text-3xl" style={{ letterSpacing: "-0.02em" }}>
           Marketing & Sales Alignment
         </h1>
-        <p className="text-ink-muted text-base max-w-prose">
-          Whether marketing and sales agree on a good lead, present a coherent
-          message, share intelligence both ways, and measure against connected
-          goals.
-        </p>
       </header>
 
       {isReceived ? (
@@ -292,7 +287,6 @@ function LeadQualityStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Lead quality & handoff"
-        subtitle="Whether marketing and sales mean the same thing by a good lead — and how often the ones that arrive actually fit."
       />
       <Question label="Do marketing and sales share the same picture of the ideal customer?">
         <Segmented
@@ -326,7 +320,6 @@ function ConsistencyStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Message consistency"
-        subtitle="Whether what marketing says and what sales says line up — and what prospects actually hear."
       />
       <Question label="Has a prospect ever turned up expecting something different from what marketing implied?">
         <div className="flex flex-col gap-4">
@@ -381,7 +374,6 @@ function FeedbackStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Feedback loops"
-        subtitle="Whether what sales learns gets back to marketing, and how often both sides actually compare notes."
       />
       <Question label="Does sales feed insight back to marketing — what's landing, what's not, who's buying?">
         <MaturitySpectrum
@@ -420,7 +412,6 @@ function EnablementStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Content & enablement"
-        subtitle="Whether sales has the content it needs at each stage of the buyer's decision."
       />
       <Question
         label="Which funnel stages do you have content for?"
@@ -456,7 +447,6 @@ function AttributionStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Attribution & measurement"
-        subtitle="Whether you can connect what marketing spends to what sales closes — and whether the goals on each side point the same way."
       />
       <Question label="Can you trace a closed deal back to the marketing source that started it?">
         <MaturitySpectrum
@@ -517,7 +507,6 @@ function ReviewStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Review & submit"
-        subtitle="A quick read-back of your answers. Edit anything by stepping back."
       />
 
       <ReadGroup title="Lead quality & handoff">

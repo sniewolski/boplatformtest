@@ -85,13 +85,13 @@ export function StepNav({
   );
 }
 
-export function StepHeader({ title, subtitle }: { title: string; subtitle: string }) {
+export function StepHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <div className="flex flex-col gap-2">
       <h2 className="text-lg font-medium" style={{ letterSpacing: "-0.01em" }}>
         {title}
       </h2>
-      <p className="text-ink-muted text-sm max-w-prose">{subtitle}</p>
+      {subtitle && <p className="text-ink-muted text-sm max-w-prose">{subtitle}</p>}
     </div>
   );
 }
