@@ -28,6 +28,20 @@ export function AppShell({
   const queryClient = useQueryClient();
   const { data: roles = [] } = useMyRoles(userId);
   const isAdmin = roles.includes("admin");
+  const { isLoading: readinessLoading, incomplete } = useBookingReadiness(userId);
+
+  const AUDIT_KEYS = new Set([
+    "conversion",
+    "pipeline",
+    "process",
+    "activity",
+    "messaging",
+    "alignment",
+  ]);
+  const incompleteKeys = new Set(incomplete.map((i) => i.key));
+  const auditComplete =
+    !readinessLoading && ![...AUDIT_KEYS].some((k) => incompleteKeys.has(k));
+  const salescodeComplete = !readinessLoading && !incompleteKeys.has("salescode");
 
   useEffect(() => {
     const html = document.documentElement;
