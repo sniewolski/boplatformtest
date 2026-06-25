@@ -183,11 +183,6 @@ export function Messaging() {
         <h1 className="text-3xl" style={{ letterSpacing: "-0.02em" }}>
           Messaging & Positioning
         </h1>
-        <p className="text-ink-muted text-base max-w-prose">
-          Who you sell to, the problem you solve in their words, your value
-          proposition, the proof behind it, and how consistent the message is
-          across touchpoints.
-        </p>
       </header>
 
       {isReceived ? (
