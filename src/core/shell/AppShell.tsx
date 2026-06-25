@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
 import { LayoutDashboard, Shield, ClipboardList, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +26,28 @@ export function AppShell({
   const queryClient = useQueryClient();
   const { data: roles = [] } = useMyRoles(userId);
   const isAdmin = roles.includes("admin");
+
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+
+    const previousHtmlOverflow = html.style.overflow;
+    const previousHtmlHeight = html.style.height;
+    const previousBodyOverflow = body.style.overflow;
+    const previousBodyHeight = body.style.height;
+
+    html.style.overflow = "hidden";
+    html.style.height = "100%";
+    body.style.overflow = "hidden";
+    body.style.height = "100%";
+
+    return () => {
+      html.style.overflow = previousHtmlOverflow;
+      html.style.height = previousHtmlHeight;
+      body.style.overflow = previousBodyOverflow;
+      body.style.height = previousBodyHeight;
+    };
+  }, []);
 
   const items: NavItem[] = [
     { to: "/app", label: "Dashboard", icon: LayoutDashboard },
