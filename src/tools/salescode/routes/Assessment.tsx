@@ -191,8 +191,7 @@ export function SalesCodeAssessment() {
   const atLastStep = stepIdx === STEPS.length - 1;
 
   return (
-    <div className="app-content py-8">
-      <div className="max-w-2xl mx-auto flex flex-col gap-6">
+    <div className="app-content py-12 flex flex-col gap-6">
         <Link
           to="/app/tools/$key/$"
           params={{ key: "salescode", _splat: "" }}
