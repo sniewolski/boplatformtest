@@ -256,13 +256,9 @@ function evaluateThreshold(spec: ThresholdSpec, answers: AnswerMap): TraitOutcom
   const above = cmp === "<" ? raw >= spec.threshold : isAbove;
   // For "<" compare: strength when raw < threshold (i.e. NOT above).
   const isStrengthSide =
-    spec.strengthSide === "neutral" ? false
-    : spec.strengthSide === "above" ? above
-    : !above;
+    spec.strengthSide === "above" ? above : !above;
   const label = above ? spec.aboveLabel : spec.belowLabel;
-  const kind: TraitOutcome["kind"] =
-    spec.strengthSide === "neutral" ? "neutral"
-    : isStrengthSide ? "strength" : "development";
+  const kind: TraitOutcome["kind"] = isStrengthSide ? "strength" : "development";
   return { key: spec.key, label, kind, raw };
 }
 
