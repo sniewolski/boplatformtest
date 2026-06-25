@@ -7,6 +7,7 @@ import { toolRegistry } from "@/tools/registry";
 import { useMyRoles } from "@/core/roles/useMyRoles";
 import { useBookingReadiness } from "@/lib/useBookingReadiness";
 import { Button } from "@/components/ui/button";
+import logoAsset from "@/assets/logo.png.asset.json";
 
 type NavItem = {
   to: string;
