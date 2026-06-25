@@ -39,7 +39,7 @@ export function AuditOverview() {
           Selling Systems Audit
         </h1>
         <p className="text-ink-muted text-base max-w-prose">
-          A multi-part diagnostic of your selling system.
+          Complete the audit to find gaps in your sales systems and prepare for your 1:1 audit and assessment review with Will Barron.
         </p>
         <p className="text-ink-muted text-sm max-w-prose">
           Work through each section at your own pace — your coach reviews what you submit before your call.
