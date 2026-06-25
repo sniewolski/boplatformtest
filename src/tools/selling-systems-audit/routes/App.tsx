@@ -31,7 +31,7 @@ export function SellingSystemsAuditApp({ splat }: ToolComponentProps) {
     (s) => s.key === segment && s.status === "locked",
   );
   if (locked) {
-    return <SectionLocked title={locked.label} description={locked.description} />;
+    return <SectionLocked title={locked.label} />;
   }
 
   return <AuditOverview />;

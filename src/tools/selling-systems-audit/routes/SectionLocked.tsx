@@ -7,7 +7,7 @@ export function SectionLocked({
   description,
 }: {
   title: string;
-  description: string;
+  description?: string;
 }) {
   return (
     <div className="app-content py-16 flex flex-col gap-8">
@@ -28,7 +28,9 @@ export function SectionLocked({
         <h1 className="text-2xl" style={{ letterSpacing: "-0.02em" }}>
           {title}
         </h1>
-        <p className="text-ink-muted text-base max-w-prose">{description}</p>
+        {description && (
+          <p className="text-ink-muted text-base max-w-prose">{description}</p>
+        )}
         <p className="text-ink-muted text-sm">
           Your coach is preparing this review. It will appear here when it's ready —
           no action needed from you.
