@@ -100,7 +100,7 @@ export function AppShell({
             className="text-ink font-semibold text-base"
             style={{ letterSpacing: "-0.02em" }}
           >
-            Platform
+            Sales Lab
           </Link>
         </div>
 

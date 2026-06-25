@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Platform — sign in" },
+      { title: "Sales Lab — sign in" },
       {
         name: "description",
-        content: "A private, invite-only platform for service-business owners.",
+        content: "Sales Lab is a private, invite-only platform for service-business owners.",
       },
     ],
   }),
@@ -19,7 +19,7 @@ function Index() {
     <main className="min-h-screen bg-background flex items-center justify-center px-6">
       <section className="w-full max-w-xl flex flex-col items-center text-center gap-8">
         <h1 className="text-ink" style={{ letterSpacing: "-0.02em" }}>
-          Platform
+          Sales Lab
         </h1>
 
         <div className="flex flex-col gap-2">

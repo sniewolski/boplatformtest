@@ -11,7 +11,7 @@ export const Route = createFileRoute("/login")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Sign in — Platform" },
+      { title: "Sign in — Sales Lab" },
       { name: "description", content: "Sign in to your private workspace." },
     ],
   }),
@@ -83,7 +83,7 @@ function LoginPage() {
             className="text-ink font-semibold"
             style={{ letterSpacing: "-0.02em" }}
           >
-            Platform
+            Sales Lab
           </Link>
           <h1 className="text-2xl">Sign in</h1>
           <p className="text-ink-muted text-sm">
