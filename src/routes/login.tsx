@@ -6,6 +6,7 @@ import { devLoginBypass } from "@/lib/dev-auth.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import logoAsset from "@/assets/logo.png.asset.json";
 
 export const Route = createFileRoute("/login")({
   ssr: false,
@@ -80,9 +81,10 @@ function LoginPage() {
         <header className="flex flex-col gap-2">
           <Link
             to="/"
-            className="text-ink font-semibold"
+            className="inline-flex items-center gap-2 text-ink font-semibold"
             style={{ letterSpacing: "-0.02em" }}
           >
+            <img src={logoAsset.url} alt="" className="size-6 shrink-0" />
             Sales Lab
           </Link>
           <h1 className="text-2xl">Sign in</h1>

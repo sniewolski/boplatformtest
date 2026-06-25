@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import logoAsset from "@/assets/logo.png.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -18,7 +19,8 @@ function Index() {
   return (
     <main className="min-h-screen bg-background flex items-center justify-center px-6">
       <section className="w-full max-w-xl flex flex-col items-center text-center gap-8">
-        <h1 className="text-ink" style={{ letterSpacing: "-0.02em" }}>
+        <h1 className="flex items-center justify-center gap-3 text-ink" style={{ letterSpacing: "-0.02em" }}>
+          <img src={logoAsset.url} alt="" className="size-10 shrink-0" />
           Sales Lab
         </h1>
 
