@@ -152,7 +152,7 @@ export function SalesCodeResultView({
             </h2>
             <ul className="flex flex-col gap-2">
               {items.map((t) => {
-                const meta = TRAIT_COPY[t.key];
+                const meta = traitCopy[t.key];
                 const isStrength = t.kind === "strength";
                 const body = isStrength ? meta.strengthLine : meta.growthLine;
                 return (
