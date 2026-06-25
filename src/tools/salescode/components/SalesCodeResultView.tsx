@@ -18,14 +18,18 @@ import { TYPE_PROFILES_RESPONDENT } from "../lib/typeProfiles.respondent";
  */
 export function SalesCodeResultView({
   result,
+  variant,
   headerSlot,
   footerSlot,
 }: {
   result: SalesCodeResult;
+  variant: "owner" | "respondent";
   headerSlot?: React.ReactNode;
   footerSlot?: React.ReactNode;
 }) {
-  const profile = TYPE_PROFILES[result.type];
+  const profiles = variant === "owner" ? TYPE_PROFILES : TYPE_PROFILES_RESPONDENT;
+  const traitCopy = variant === "owner" ? TRAIT_COPY : TRAIT_COPY_RESPONDENT;
+  const profile = profiles[result.type];
 
   const grouped: Record<TraitArea, TraitOutcome[]> = {
     "sales-skills": [],
