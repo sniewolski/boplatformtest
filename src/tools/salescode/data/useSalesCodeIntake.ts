@@ -92,3 +92,27 @@ export function useSubmitSalesCode(ownerId: string | undefined) {
     },
   });
 }
+
+/**
+ * Reopen a submitted assessment for retake. Flips `has_unsubmitted_changes`
+ * on the existing row; draft_answers already mirrors the last submission
+ * (Assessment.tsx upserts draft = submitted on submit) so the form
+ * pre-fills with the previous answers. Submitting again overwrites the
+ * stored result — no history is kept.
+ */
+export function useRetakeSalesCode(ownerId: string | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      if (!ownerId) throw new Error("Not signed in");
+      const { error } = await supabase
+        .from(TABLE as never)
+        .update({ has_unsubmitted_changes: true } as never)
+        .eq("owner_id", ownerId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["salescode-intake", ownerId] });
+    },
+  });
+}
