@@ -16,6 +16,7 @@ import { Route as RTokenRouteImport } from './routes/r.$token'
 import { Route as RTokenIndexRouteImport } from './routes/r.$token.index'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as RTokenSplatRouteImport } from './routes/r.$token.$'
+import { Route as AuthenticatedAppBookCallRouteImport } from './routes/_authenticated/app.book-call'
 import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
 import { Route as AuthenticatedAppAdminIndexRouteImport } from './routes/_authenticated/app.admin.index'
 import { Route as ApiPublicRValidateRouteImport } from './routes/api/public/r/validate'
@@ -61,6 +62,12 @@ const RTokenSplatRoute = RTokenSplatRouteImport.update({
   path: '/$',
   getParentRoute: () => RTokenRoute,
 } as any)
+const AuthenticatedAppBookCallRoute =
+  AuthenticatedAppBookCallRouteImport.update({
+    id: '/app/book-call',
+    path: '/app/book-call',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAppAdminRoute = AuthenticatedAppAdminRouteImport.update({
   id: '/app/admin',
   path: '/app/admin',
@@ -121,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/r/$token': typeof RTokenRouteWithChildren
   '/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
+  '/app/book-call': typeof AuthenticatedAppBookCallRoute
   '/r/$token/$': typeof RTokenSplatRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/r/$token/': typeof RTokenIndexRoute
@@ -137,6 +145,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/app/book-call': typeof AuthenticatedAppBookCallRoute
   '/r/$token/$': typeof RTokenSplatRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/r/$token': typeof RTokenIndexRoute
@@ -157,6 +166,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/r/$token': typeof RTokenRouteWithChildren
   '/_authenticated/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
+  '/_authenticated/app/book-call': typeof AuthenticatedAppBookCallRoute
   '/r/$token/$': typeof RTokenSplatRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/r/$token/': typeof RTokenIndexRoute
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/r/$token'
     | '/app/admin'
+    | '/app/book-call'
     | '/r/$token/$'
     | '/app/'
     | '/r/$token/'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/app/book-call'
     | '/r/$token/$'
     | '/app'
     | '/r/$token'
@@ -212,6 +224,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/r/$token'
     | '/_authenticated/app/admin'
+    | '/_authenticated/app/book-call'
     | '/r/$token/$'
     | '/_authenticated/app/'
     | '/r/$token/'
@@ -288,6 +301,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/r/$token/$'
       preLoaderRoute: typeof RTokenSplatRouteImport
       parentRoute: typeof RTokenRoute
+    }
+    '/_authenticated/app/book-call': {
+      id: '/_authenticated/app/book-call'
+      path: '/app/book-call'
+      fullPath: '/app/book-call'
+      preLoaderRoute: typeof AuthenticatedAppBookCallRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/app/admin': {
       id: '/_authenticated/app/admin'
@@ -382,12 +402,14 @@ const AuthenticatedAppAdminRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAppAdminRoute: typeof AuthenticatedAppAdminRouteWithChildren
+  AuthenticatedAppBookCallRoute: typeof AuthenticatedAppBookCallRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
   AuthenticatedAppToolsKeySplatRoute: typeof AuthenticatedAppToolsKeySplatRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAppAdminRoute: AuthenticatedAppAdminRouteWithChildren,
+  AuthenticatedAppBookCallRoute: AuthenticatedAppBookCallRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
   AuthenticatedAppToolsKeySplatRoute: AuthenticatedAppToolsKeySplatRoute,
 }
