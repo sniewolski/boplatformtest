@@ -24,8 +24,11 @@ import { Route as ApiPublicRStateRouteImport } from './routes/api/public/r/state
 import { Route as ApiPublicRSaveRouteImport } from './routes/api/public/r/save'
 import { Route as ApiPublicRCompleteRouteImport } from './routes/api/public/r/complete'
 import { Route as ApiPublicRCaptureRouteImport } from './routes/api/public/r/capture'
+import { Route as AuthenticatedAppAdminReviewRouteImport } from './routes/_authenticated/app.admin.review'
+import { Route as AuthenticatedAppAdminSalescodeIndexRouteImport } from './routes/_authenticated/app.admin.salescode.index'
 import { Route as AuthenticatedAppAdminAuditIndexRouteImport } from './routes/_authenticated/app.admin.audit.index'
 import { Route as AuthenticatedAppToolsKeySplatRouteImport } from './routes/_authenticated/app.tools.$key.$'
+import { Route as AuthenticatedAppAdminSalescodeOwnerIdRouteImport } from './routes/_authenticated/app.admin.salescode.$ownerId'
 import { Route as AuthenticatedAppAdminAuditOwnerIdRouteImport } from './routes/_authenticated/app.admin.audit.$ownerId'
 
 const LoginRoute = LoginRouteImport.update({
@@ -104,6 +107,18 @@ const ApiPublicRCaptureRoute = ApiPublicRCaptureRouteImport.update({
   path: '/api/public/r/capture',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAppAdminReviewRoute =
+  AuthenticatedAppAdminReviewRouteImport.update({
+    id: '/review',
+    path: '/review',
+    getParentRoute: () => AuthenticatedAppAdminRoute,
+  } as any)
+const AuthenticatedAppAdminSalescodeIndexRoute =
+  AuthenticatedAppAdminSalescodeIndexRouteImport.update({
+    id: '/salescode/',
+    path: '/salescode/',
+    getParentRoute: () => AuthenticatedAppAdminRoute,
+  } as any)
 const AuthenticatedAppAdminAuditIndexRoute =
   AuthenticatedAppAdminAuditIndexRouteImport.update({
     id: '/audit/',
@@ -115,6 +130,12 @@ const AuthenticatedAppToolsKeySplatRoute =
     id: '/app/tools/$key/$',
     path: '/app/tools/$key/$',
     getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAppAdminSalescodeOwnerIdRoute =
+  AuthenticatedAppAdminSalescodeOwnerIdRouteImport.update({
+    id: '/salescode/$ownerId',
+    path: '/salescode/$ownerId',
+    getParentRoute: () => AuthenticatedAppAdminRoute,
   } as any)
 const AuthenticatedAppAdminAuditOwnerIdRoute =
   AuthenticatedAppAdminAuditOwnerIdRouteImport.update({
@@ -132,6 +153,7 @@ export interface FileRoutesByFullPath {
   '/r/$token/$': typeof RTokenSplatRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/r/$token/': typeof RTokenIndexRoute
+  '/app/admin/review': typeof AuthenticatedAppAdminReviewRoute
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
   '/api/public/r/save': typeof ApiPublicRSaveRoute
@@ -139,8 +161,10 @@ export interface FileRoutesByFullPath {
   '/api/public/r/validate': typeof ApiPublicRValidateRoute
   '/app/admin/': typeof AuthenticatedAppAdminIndexRoute
   '/app/admin/audit/$ownerId': typeof AuthenticatedAppAdminAuditOwnerIdRoute
+  '/app/admin/salescode/$ownerId': typeof AuthenticatedAppAdminSalescodeOwnerIdRoute
   '/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
   '/app/admin/audit/': typeof AuthenticatedAppAdminAuditIndexRoute
+  '/app/admin/salescode/': typeof AuthenticatedAppAdminSalescodeIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -149,6 +173,7 @@ export interface FileRoutesByTo {
   '/r/$token/$': typeof RTokenSplatRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/r/$token': typeof RTokenIndexRoute
+  '/app/admin/review': typeof AuthenticatedAppAdminReviewRoute
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
   '/api/public/r/save': typeof ApiPublicRSaveRoute
@@ -156,8 +181,10 @@ export interface FileRoutesByTo {
   '/api/public/r/validate': typeof ApiPublicRValidateRoute
   '/app/admin': typeof AuthenticatedAppAdminIndexRoute
   '/app/admin/audit/$ownerId': typeof AuthenticatedAppAdminAuditOwnerIdRoute
+  '/app/admin/salescode/$ownerId': typeof AuthenticatedAppAdminSalescodeOwnerIdRoute
   '/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
   '/app/admin/audit': typeof AuthenticatedAppAdminAuditIndexRoute
+  '/app/admin/salescode': typeof AuthenticatedAppAdminSalescodeIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -170,6 +197,7 @@ export interface FileRoutesById {
   '/r/$token/$': typeof RTokenSplatRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/r/$token/': typeof RTokenIndexRoute
+  '/_authenticated/app/admin/review': typeof AuthenticatedAppAdminReviewRoute
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
   '/api/public/r/save': typeof ApiPublicRSaveRoute
@@ -177,8 +205,10 @@ export interface FileRoutesById {
   '/api/public/r/validate': typeof ApiPublicRValidateRoute
   '/_authenticated/app/admin/': typeof AuthenticatedAppAdminIndexRoute
   '/_authenticated/app/admin/audit/$ownerId': typeof AuthenticatedAppAdminAuditOwnerIdRoute
+  '/_authenticated/app/admin/salescode/$ownerId': typeof AuthenticatedAppAdminSalescodeOwnerIdRoute
   '/_authenticated/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
   '/_authenticated/app/admin/audit/': typeof AuthenticatedAppAdminAuditIndexRoute
+  '/_authenticated/app/admin/salescode/': typeof AuthenticatedAppAdminSalescodeIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -191,6 +221,7 @@ export interface FileRouteTypes {
     | '/r/$token/$'
     | '/app/'
     | '/r/$token/'
+    | '/app/admin/review'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
     | '/api/public/r/save'
@@ -198,8 +229,10 @@ export interface FileRouteTypes {
     | '/api/public/r/validate'
     | '/app/admin/'
     | '/app/admin/audit/$ownerId'
+    | '/app/admin/salescode/$ownerId'
     | '/app/tools/$key/$'
     | '/app/admin/audit/'
+    | '/app/admin/salescode/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -208,6 +241,7 @@ export interface FileRouteTypes {
     | '/r/$token/$'
     | '/app'
     | '/r/$token'
+    | '/app/admin/review'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
     | '/api/public/r/save'
@@ -215,8 +249,10 @@ export interface FileRouteTypes {
     | '/api/public/r/validate'
     | '/app/admin'
     | '/app/admin/audit/$ownerId'
+    | '/app/admin/salescode/$ownerId'
     | '/app/tools/$key/$'
     | '/app/admin/audit'
+    | '/app/admin/salescode'
   id:
     | '__root__'
     | '/'
@@ -228,6 +264,7 @@ export interface FileRouteTypes {
     | '/r/$token/$'
     | '/_authenticated/app/'
     | '/r/$token/'
+    | '/_authenticated/app/admin/review'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
     | '/api/public/r/save'
@@ -235,8 +272,10 @@ export interface FileRouteTypes {
     | '/api/public/r/validate'
     | '/_authenticated/app/admin/'
     | '/_authenticated/app/admin/audit/$ownerId'
+    | '/_authenticated/app/admin/salescode/$ownerId'
     | '/_authenticated/app/tools/$key/$'
     | '/_authenticated/app/admin/audit/'
+    | '/_authenticated/app/admin/salescode/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -358,6 +397,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicRCaptureRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/app/admin/review': {
+      id: '/_authenticated/app/admin/review'
+      path: '/review'
+      fullPath: '/app/admin/review'
+      preLoaderRoute: typeof AuthenticatedAppAdminReviewRouteImport
+      parentRoute: typeof AuthenticatedAppAdminRoute
+    }
+    '/_authenticated/app/admin/salescode/': {
+      id: '/_authenticated/app/admin/salescode/'
+      path: '/salescode'
+      fullPath: '/app/admin/salescode/'
+      preLoaderRoute: typeof AuthenticatedAppAdminSalescodeIndexRouteImport
+      parentRoute: typeof AuthenticatedAppAdminRoute
+    }
     '/_authenticated/app/admin/audit/': {
       id: '/_authenticated/app/admin/audit/'
       path: '/audit'
@@ -372,6 +425,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppToolsKeySplatRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/app/admin/salescode/$ownerId': {
+      id: '/_authenticated/app/admin/salescode/$ownerId'
+      path: '/salescode/$ownerId'
+      fullPath: '/app/admin/salescode/$ownerId'
+      preLoaderRoute: typeof AuthenticatedAppAdminSalescodeOwnerIdRouteImport
+      parentRoute: typeof AuthenticatedAppAdminRoute
+    }
     '/_authenticated/app/admin/audit/$ownerId': {
       id: '/_authenticated/app/admin/audit/$ownerId'
       path: '/audit/$ownerId'
@@ -383,16 +443,24 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAppAdminRouteChildren {
+  AuthenticatedAppAdminReviewRoute: typeof AuthenticatedAppAdminReviewRoute
   AuthenticatedAppAdminIndexRoute: typeof AuthenticatedAppAdminIndexRoute
   AuthenticatedAppAdminAuditOwnerIdRoute: typeof AuthenticatedAppAdminAuditOwnerIdRoute
+  AuthenticatedAppAdminSalescodeOwnerIdRoute: typeof AuthenticatedAppAdminSalescodeOwnerIdRoute
   AuthenticatedAppAdminAuditIndexRoute: typeof AuthenticatedAppAdminAuditIndexRoute
+  AuthenticatedAppAdminSalescodeIndexRoute: typeof AuthenticatedAppAdminSalescodeIndexRoute
 }
 
 const AuthenticatedAppAdminRouteChildren: AuthenticatedAppAdminRouteChildren = {
+  AuthenticatedAppAdminReviewRoute: AuthenticatedAppAdminReviewRoute,
   AuthenticatedAppAdminIndexRoute: AuthenticatedAppAdminIndexRoute,
   AuthenticatedAppAdminAuditOwnerIdRoute:
     AuthenticatedAppAdminAuditOwnerIdRoute,
+  AuthenticatedAppAdminSalescodeOwnerIdRoute:
+    AuthenticatedAppAdminSalescodeOwnerIdRoute,
   AuthenticatedAppAdminAuditIndexRoute: AuthenticatedAppAdminAuditIndexRoute,
+  AuthenticatedAppAdminSalescodeIndexRoute:
+    AuthenticatedAppAdminSalescodeIndexRoute,
 }
 
 const AuthenticatedAppAdminRouteWithChildren =
