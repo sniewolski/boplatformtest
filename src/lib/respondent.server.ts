@@ -115,3 +115,32 @@ export async function markCompleted(
 
   return { ok: !error };
 }
+
+/**
+ * Autosave the respondent's in-progress payload. Validates the token
+ * first; never advances status past `in_progress` (Submit handles that).
+ */
+export async function saveProgress(
+  token: string,
+  payload: unknown,
+): Promise<
+  | { ok: true }
+  | { ok: false; reason: "not_found" | "expired" | "revoked" | "completed" }
+> {
+  const v = await validateToken(token);
+  if (!v.ok) return v;
+  if (v.session.status === "completed") {
+    return { ok: false, reason: "completed" };
+  }
+
+  const { error } = await supabaseAdmin
+    .from("respondent_sessions")
+    .update({
+      payload: (payload ?? null) as never,
+      status:
+        v.session.status === "pending" ? "in_progress" : v.session.status,
+    })
+    .eq("token", token);
+
+  return error ? { ok: false, reason: "not_found" } : { ok: true };
+}
