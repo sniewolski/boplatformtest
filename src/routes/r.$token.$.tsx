@@ -58,7 +58,8 @@ function RespondentSplat() {
     return <UnavailableMessage />;
   }
 
-  const s = query.data.session;
+  const state = query.data;
+  const s = state.session;
   const toolKey = s.toolKey;
 
   if (toolKey === "salescode") {
@@ -68,9 +69,11 @@ function RespondentSplat() {
           <SalesCodeRespondent
             token={token}
             session={s}
+            payload={state.payload}
+            result={state.result}
             onCompleted={() => {
               void queryClient.invalidateQueries({
-                queryKey: ["respondent", token],
+                queryKey: ["respondent-state", token],
               });
             }}
           />
