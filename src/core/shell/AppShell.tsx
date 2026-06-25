@@ -59,7 +59,7 @@ export function AppShell({
           </Link>
         </div>
 
-        <nav className="flex-1 min-h-0 overflow-y-auto px-3 flex flex-col gap-1">
+        <nav className="flex-1 min-h-0 overflow-hidden px-3 flex flex-col gap-1">
           {items.map((item) => (
             <Link
               key={item.to}
