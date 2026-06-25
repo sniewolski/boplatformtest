@@ -19,7 +19,7 @@ import type { AnswerMap, Likert } from "../lib/types";
 import { LikertRow } from "../components/LikertRow";
 
 const AUTOSAVE_MS = 700;
-const PER_STEP = 20;
+const PER_STEP = 8;
 
 /**
  * Build fixed-size step chunks from PRESENTATION_ORDER. Last step holds
@@ -59,11 +59,17 @@ export function SalesCodeAssessment() {
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Hydrate once from draft_answers.
+  // Hydrate once from draft_answers, and land the respondent on the first
+  // step that still has an unanswered question (or the last step if every
+  // item is answered). Page index is derived, never stored.
   useEffect(() => {
     if (hydrated || !userId || isLoading) return;
     const d = (intake?.draft_answers ?? {}) as AnswerMap;
     setAnswers(d);
+    const firstIncomplete = STEP_CHUNKS.findIndex((ids) =>
+      ids.some((id) => !d[id]),
+    );
+    setStepIdx(firstIncomplete === -1 ? STEPS.length - 1 : firstIncomplete);
     setHydrated(true);
   }, [intake, isLoading, hydrated, userId]);
 
