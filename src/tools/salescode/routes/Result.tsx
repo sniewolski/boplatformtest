@@ -165,8 +165,7 @@ export function SalesCodeResultRoute() {
               Submitted {new Date(intake.submitted_at).toLocaleDateString()}
             </span>
           ) : null}
-        </footer>
-      </div>
+      </footer>
     </div>
   );
 }
