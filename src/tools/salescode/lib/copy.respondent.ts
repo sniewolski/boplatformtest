@@ -59,7 +59,7 @@ export const TRAIT_COPY_RESPONDENT: Record<TraitKey, TraitCopyEntry> = {
     whyItMatters:
       "Optimistic sales professionals are more likely to manage rejection and adversity better than a pessimistic individuals. On top of this, research shows that they are also 40% more likely to get a promotion in the next 12 months, six times more likely to be highly engaged at work and five times less likely to burnout than pessimists.",
     strengthLine: "You are very optimistic.",
-    growthLine: "Are are not very optimistic.",
+    growthLine: "You are not very optimistic.",
   },
   "self-esteem": {
     key: "self-esteem",
@@ -104,10 +104,10 @@ export const TRAIT_COPY_RESPONDENT: Record<TraitKey, TraitCopyEntry> = {
     key: "objection-handling",
     name: "Objection handling",
     whatItMeans:
-      "The ability to resolve or move past common sales objections that prospects will through at you to buy themselves time or get you off the phone.",
+      "The ability to resolve or move past common sales objections that prospects will throw at you to buy themselves time or get you off the phone.",
     whyItMatters:
       "If a prospect can stop you in your tracks with just a few words, before you've even had the opportunity to share your value with them, you're going to miss out a large percentage of your market. You must be able to defuse sales objections and answer or avoid them when they come up.",
-    strengthLine: "You able to handle objections.",
+    strengthLine: "You are able to handle objections.",
     growthLine: "You are not able to handle objections.",
   },
   "influence": {
@@ -124,9 +124,9 @@ export const TRAIT_COPY_RESPONDENT: Record<TraitKey, TraitCopyEntry> = {
     key: "industry-expert",
     name: "Industry expert",
     whatItMeans:
-      "You are known as in expert in your industry through sharing insights and publications.",
+      "You are known as an expert in your industry through sharing insights and publications.",
     whyItMatters:
-      "A huge part of winning B2B sales comes from the prospect trusting the seller. When you have know expertise in your industry, you've already built trust at distance and so can dramatically shorten your sales cycles.",
+      "A huge part of winning B2B sales comes from the prospect trusting the seller. When you have known expertise in your industry, you've already built trust at distance and so can dramatically shorten your sales cycles.",
     strengthLine: "You are known as an industry expert.",
     growthLine: "You are not an industry expert.",
   },
