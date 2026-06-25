@@ -191,89 +191,91 @@ export function SalesCodeAssessment() {
   const atLastStep = stepIdx === STEPS.length - 1;
 
   return (
-    <div className="max-w-2xl py-8 flex flex-col gap-6">
-      <Link
-        to="/app/tools/$key/$"
-        params={{ key: "salescode", _splat: "" }}
-        className="text-sm text-ink-muted hover:text-ink inline-flex items-center gap-1 w-fit"
-      >
-        <ArrowLeft className="size-3.5" /> Back to overview
-      </Link>
+    <div className="app-content py-8">
+      <div className="max-w-2xl mx-auto flex flex-col gap-6">
+        <Link
+          to="/app/tools/$key/$"
+          params={{ key: "salescode", _splat: "" }}
+          className="text-sm text-ink-muted hover:text-ink inline-flex items-center gap-1 w-fit"
+        >
+          <ArrowLeft className="size-3.5" /> Back to overview
+        </Link>
 
-      <header className="flex flex-col gap-2">
-        <h1 className="text-2xl text-ink" style={{ letterSpacing: "-0.01em" }}>
-          SalesCode assessment
-        </h1>
-        <p className="text-ink-muted text-sm">
-          Answer each statement honestly — there are no right answers. Your
-          progress saves automatically; you can leave and come back at any
-          time.
-        </p>
-      </header>
+        <header className="flex flex-col gap-2">
+          <h1 className="text-2xl text-ink" style={{ letterSpacing: "-0.01em" }}>
+            SalesCode assessment
+          </h1>
+          <p className="text-ink-muted text-sm">
+            Answer each statement honestly — there are no right answers. Your
+            progress saves automatically; you can leave and come back at any
+            time.
+          </p>
+        </header>
 
-      <ProgressBar steps={STEPS} currentIdx={stepIdx} onJump={goStep} />
+        <ProgressBar steps={STEPS} currentIdx={stepIdx} onJump={goStep} />
 
-      <StepHeader
-        title={`Part ${stepIdx + 1} of ${STEPS.length}`}
-        subtitle={`Answered ${stepAnswered} of ${chunk.length} in this part • ${answeredCount} of ${TOTAL_QUESTIONS} overall.`}
-      />
-
-      <div className="flex flex-col">
-        {chunk.map((id) => {
-          const q = QUESTIONS_BY_ID.get(id);
-          if (!q) return null;
-          return (
-            <LikertRow
-              key={id}
-              id={id}
-              text={q.text}
-              value={answers[id]}
-              onChange={(v) => setAnswer(id, v)}
-            />
-          );
-        })}
-      </div>
-
-      {atLastStep ? (
-        <div className="flex flex-col gap-3 pt-4 border-t border-border">
-          <div className="flex items-center justify-between gap-4">
-            <Button
-              variant="outline"
-              onClick={() => goStep(stepIdx - 1)}
-              className="active:scale-[0.97] transition-transform"
-            >
-              Back
-            </Button>
-            <span className="text-ink-muted text-xs tabular-nums">
-              {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved" : ""}
-            </span>
-            <Button
-              onClick={onSubmit}
-              disabled={!allAnswered || submit.isPending}
-              className="active:scale-[0.97] transition-transform"
-            >
-              {submit.isPending ? "Submitting…" : "Submit"}
-            </Button>
-          </div>
-          {!allAnswered ? (
-            <p className="text-xs text-ink-muted">
-              {TOTAL_QUESTIONS - answeredCount} item
-              {TOTAL_QUESTIONS - answeredCount === 1 ? "" : "s"} still need an answer.
-            </p>
-          ) : null}
-          {submitError ? (
-            <p className="text-xs text-red">{submitError}</p>
-          ) : null}
-        </div>
-      ) : (
-        <StepNav
-          currentIdx={stepIdx}
-          total={STEPS.length}
-          onPrev={() => goStep(stepIdx - 1)}
-          onNext={() => goStep(stepIdx + 1)}
-          saveState={saveState}
+        <StepHeader
+          title={`Part ${stepIdx + 1} of ${STEPS.length}`}
+          subtitle={`Answered ${stepAnswered} of ${chunk.length} in this part • ${answeredCount} of ${TOTAL_QUESTIONS} overall.`}
         />
-      )}
+
+        <div className="flex flex-col">
+          {chunk.map((id) => {
+            const q = QUESTIONS_BY_ID.get(id);
+            if (!q) return null;
+            return (
+              <LikertRow
+                key={id}
+                id={id}
+                text={q.text}
+                value={answers[id]}
+                onChange={(v) => setAnswer(id, v)}
+              />
+            );
+          })}
+        </div>
+
+        {atLastStep ? (
+          <div className="flex flex-col gap-3 pt-4 border-t border-border">
+            <div className="flex items-center justify-between gap-4">
+              <Button
+                variant="outline"
+                onClick={() => goStep(stepIdx - 1)}
+                className="active:scale-[0.97] transition-transform"
+              >
+                Back
+              </Button>
+              <span className="text-ink-muted text-xs tabular-nums">
+                {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved" : ""}
+              </span>
+              <Button
+                onClick={onSubmit}
+                disabled={!allAnswered || submit.isPending}
+                className="active:scale-[0.97] transition-transform"
+              >
+                {submit.isPending ? "Submitting…" : "Submit"}
+              </Button>
+            </div>
+            {!allAnswered ? (
+              <p className="text-xs text-ink-muted">
+                {TOTAL_QUESTIONS - answeredCount} item
+                {TOTAL_QUESTIONS - answeredCount === 1 ? "" : "s"} still need an answer.
+              </p>
+            ) : null}
+            {submitError ? (
+              <p className="text-xs text-red">{submitError}</p>
+            ) : null}
+          </div>
+        ) : (
+          <StepNav
+            currentIdx={stepIdx}
+            total={STEPS.length}
+            onPrev={() => goStep(stepIdx - 1)}
+            onNext={() => goStep(stepIdx + 1)}
+            saveState={saveState}
+          />
+        )}
+      </div>
     </div>
   );
 }

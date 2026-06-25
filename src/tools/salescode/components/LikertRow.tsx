@@ -26,7 +26,7 @@ export function LikertRow({
 }) {
   const name = `q-${id}`;
   return (
-    <fieldset className="flex flex-col gap-3 py-4 border-b border-border last:border-b-0">
+    <fieldset className="flex flex-col gap-4 py-6 border-b border-border last:border-b-0">
       <legend className="text-ink text-[15px] leading-snug">{text}</legend>
       <div
         role="radiogroup"
