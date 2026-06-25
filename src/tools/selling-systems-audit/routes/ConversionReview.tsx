@@ -428,7 +428,6 @@ function FoundationStep({
     <section className="flex flex-col gap-6">
       <StepHeader
         title="Foundation"
-        subtitle="The basics about your business and the shape of your funnel."
       />
       {needsCurrency && (
         <div className="flex flex-col gap-3 border border-dashed border-border rounded-xl px-6 py-6">
@@ -477,7 +476,6 @@ function LeadGenStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Lead Generation"
-        subtitle="Where your leads come from and how those sources stack up."
       />
       <Question label="What are your primary lead sources?" hint="Pick all that apply.">
         <Chips
@@ -529,7 +527,6 @@ function ProspectingStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Prospecting & Qualification"
-        subtitle="How you decide who's worth pursuing."
       />
       <Question
         label="What criteria do you use to qualify a lead?"
@@ -571,7 +568,6 @@ function DiscoveryStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Discovery & Needs Analysis"
-        subtitle="How you uncover what the prospect actually needs."
       />
       <Question
         label="Of your discovery calls, what % move to a proposal?"
@@ -639,7 +635,6 @@ function ProposalStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Proposal & Presentation"
-        subtitle="What happens after you send the proposal."
       />
       <Question label="Of proposals sent, what % close?">
         <PercentField
@@ -670,7 +665,6 @@ function ClosingStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Closing & Decision"
-        subtitle="What it takes to actually get the deal done."
       />
       <Question
         label="What's your average sales cycle length?"
@@ -708,7 +702,6 @@ function TargetsStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Targets & trend"
-        subtitle="A couple of last questions, then you'll review everything before sending it through. You can come back any time and update your answers."
       />
       <Question label="Do you have defined KPI targets for your funnel?">
         <YesNoToggle
@@ -831,7 +824,6 @@ function ReviewStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Review & submit"
-        subtitle="A quick read-back of what you entered. Use the steps above to edit anything, then submit."
       />
 
       <div className="flex flex-col gap-8">

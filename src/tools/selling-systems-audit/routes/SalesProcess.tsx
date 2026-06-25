@@ -209,7 +209,6 @@ export function SalesProcess() {
               <section className="flex flex-col gap-8">
                 <StepHeader
                   title="Stages"
-                  subtitle="The stages a deal moves through, from first contact to close. We've pre-filled six common ones — rename, reorder, add or remove to match how you actually sell."
                 />
                 <StageBuilder
                   value={ensureDefaultStages(stages.items)}
@@ -304,7 +303,6 @@ function DefinitionStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Process definition"
-        subtitle="How clearly your sales process is captured and shared."
       />
       <Question label="How well is your sales process documented?">
         <MaturitySpectrum
@@ -345,7 +343,6 @@ function AdherenceStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Adherence & quality"
-        subtitle="How consistently the process is followed, and how the experience holds together for the buyer."
       />
 
       <Question label="Do you measure how well people stick to the process?">
@@ -439,7 +436,6 @@ function ToolsStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Tools & enablement"
-        subtitle="The CRM, templates, and training that support the process."
       />
 
       <Question
@@ -576,7 +572,6 @@ function ReviewStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Review & submit"
-        subtitle="A quick read-back of your answers. Edit anything by stepping back."
       />
 
       <ReadGroup title="Process definition">

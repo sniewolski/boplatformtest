@@ -278,7 +278,6 @@ function TrackingStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="What you track"
-        subtitle="The activity numbers you actually capture today, and how."
       />
       <Question
         label="Which sales activities do you measure?"
@@ -319,7 +318,6 @@ function VolumeStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Activity volume"
-        subtitle="A rough read on how much outbound and meeting activity happens in a typical week."
       />
       <Question label="Calls made in a typical week">
         <Segmented
@@ -368,7 +366,6 @@ function QualityStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Quality & confidence"
-        subtitle="How consistent the activity is, what stands out, and how much you trust the numbers."
       />
       <Question label="How confident are you the activity is good quality?">
         <Segmented
@@ -473,7 +470,6 @@ function ReviewStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Review & submit"
-        subtitle="A quick read-back of your answers. Edit anything by stepping back."
       />
 
       <ReadGroup title="What you track">

@@ -325,7 +325,6 @@ function VolumeStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Volume & coverage"
-        subtitle="How much pipeline is in play, and how that compares to what you need."
       />
 
       {needsCurrency && (
@@ -412,7 +411,6 @@ function VelocityStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Velocity & stalling"
-        subtitle="How quickly deals move — and where they get stuck."
       />
 
       <Question label="Average age of an open opportunity">
@@ -488,7 +486,6 @@ function ForecastingStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Forecasting & visibility"
-        subtitle="How you predict what's coming, and how often you review."
       />
 
       <Question label="How do you forecast?">
@@ -638,7 +635,6 @@ function SummaryStep({
     <section className="flex flex-col gap-8">
       <StepHeader
         title="Review & submit"
-        subtitle="A quick read-back of your answers. Edit anything by stepping back."
       />
 
       <ReadGroup title="Volume & coverage">
