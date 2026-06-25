@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { ReceivedState } from "../components/ReceivedState";
 import { useSession } from "@/core/auth/useSession";
 import { Button } from "@/components/ui/button";
 import { useCurrency } from "@/core/settings/useCurrency";
