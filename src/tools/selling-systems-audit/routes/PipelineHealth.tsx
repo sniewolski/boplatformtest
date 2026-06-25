@@ -743,30 +743,3 @@ function SummaryStep({
     </section>
   );
 }
-
-function ReceivedState({ onEdit }: { onEdit: () => void }) {
-  return (
-    <section className="flex flex-col gap-5 border border-border rounded-xl px-8 py-10 items-start">
-      <div className="flex items-center gap-3">
-        <span className="inline-flex items-center justify-center size-9 rounded-full bg-[var(--surface-raised)] text-ink">
-          <Check className="size-5" aria-hidden />
-        </span>
-        <h2 className="text-xl" style={{ letterSpacing: "-0.01em" }}>
-          Received
-        </h2>
-      </div>
-      <p className="text-ink-muted text-sm max-w-prose">
-        Thanks — we've got everything we need for our call. If anything changes
-        before then, jump back in and update your answers; submit again and the
-        new version replaces the old.
-      </p>
-      <Button
-        variant="outline"
-        onClick={onEdit}
-        className="active:scale-[0.97] transition-transform"
-      >
-        Edit my answers
-      </Button>
-    </section>
-  );
-}
