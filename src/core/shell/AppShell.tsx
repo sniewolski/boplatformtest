@@ -12,6 +12,7 @@ type NavItem = {
   to: string;
   label: string;
   icon: typeof LayoutDashboard;
+  complete?: boolean;
 };
 
 export function AppShell({
