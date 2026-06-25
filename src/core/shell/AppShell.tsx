@@ -1,16 +1,18 @@
 import { useEffect, type ReactNode } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
-import { LayoutDashboard, Shield, ClipboardList, LogOut, CalendarDays } from "lucide-react";
+import { Check, LayoutDashboard, Shield, ClipboardList, LogOut, CalendarDays } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toolRegistry } from "@/tools/registry";
 import { useMyRoles } from "@/core/roles/useMyRoles";
+import { useBookingReadiness } from "@/lib/useBookingReadiness";
 import { Button } from "@/components/ui/button";
 
 type NavItem = {
   to: string;
   label: string;
   icon: typeof LayoutDashboard;
+  complete?: boolean;
 };
 
 export function AppShell({
@@ -26,6 +28,20 @@ export function AppShell({
   const queryClient = useQueryClient();
   const { data: roles = [] } = useMyRoles(userId);
   const isAdmin = roles.includes("admin");
+  const { isLoading: readinessLoading, incomplete } = useBookingReadiness(userId);
+
+  const AUDIT_KEYS = new Set([
+    "conversion",
+    "pipeline",
+    "process",
+    "activity",
+    "messaging",
+    "alignment",
+  ]);
+  const incompleteKeys = new Set(incomplete.map((i) => i.key));
+  const auditComplete =
+    !readinessLoading && ![...AUDIT_KEYS].some((k) => incompleteKeys.has(k));
+  const salescodeComplete = !readinessLoading && !incompleteKeys.has("salescode");
 
   useEffect(() => {
     const html = document.documentElement;
@@ -58,6 +74,12 @@ export function AppShell({
         to: `/app/tools/${t.key}`,
         label: t.navEntry!.label,
         icon: LayoutDashboard,
+        complete:
+          t.key === "selling-systems-audit"
+            ? auditComplete
+            : t.key === "salescode"
+              ? salescodeComplete
+              : undefined,
       })),
     { to: "/app/book-call", label: "Book a 1:1 call", icon: CalendarDays },
   ];
@@ -92,7 +114,14 @@ export function AppShell({
               activeOptions={{ exact: item.to === "/app" }}
             >
               <item.icon className="size-4" />
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {item.complete && (
+                <Check
+                  className="size-4 text-ink shrink-0"
+                  strokeWidth={2.5}
+                  aria-label="Complete"
+                />
+              )}
             </Link>
           ))}
 
