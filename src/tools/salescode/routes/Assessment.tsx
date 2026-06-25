@@ -273,8 +273,7 @@ export function SalesCodeAssessment() {
             onNext={() => goStep(stepIdx + 1)}
             saveState={saveState}
           />
-        )}
-      </div>
+      )}
     </div>
   );
 }
