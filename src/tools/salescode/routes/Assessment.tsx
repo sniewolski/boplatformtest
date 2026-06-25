@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useSession } from "@/core/auth/useSession";
 import { Button } from "@/components/ui/button";
@@ -49,6 +49,7 @@ const STEPS: ReadonlyArray<StepDef> = STEP_CHUNKS.map((_, i) => ({
 export function SalesCodeAssessment() {
   const { session } = useSession();
   const userId = session?.user.id;
+  const navigate = useNavigate({ from: "/app/tools/$key/$" });
   const { data: intake, isLoading } = useSalesCodeIntake(userId);
   const save = useSaveDraft(userId);
   const submit = useSubmitSalesCode(userId);
@@ -157,6 +158,10 @@ export function SalesCodeAssessment() {
     flushSave();
     try {
       await submit.mutateAsync({ draft: latestRef.current });
+      navigate({
+        to: "/app/tools/$key/$",
+        params: { key: "salescode", _splat: "result" },
+      });
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : "Submit failed.");
     }
@@ -170,23 +175,22 @@ export function SalesCodeAssessment() {
 
   const isSubmitted = !!intake?.submitted_at && !intake?.has_unsubmitted_changes;
 
-  // Received state: brief confirmation + link back to overview. The full
-  // result renderer arrives in the next phase.
+  // Fallback for someone returning to /assessment after already submitting.
   if (isSubmitted) {
     return (
       <div className="app-content py-12 flex flex-col gap-4">
         <Link
           to="/app/tools/$key/$"
-          params={{ key: "salescode", _splat: "" }}
+          params={{ key: "salescode", _splat: "result" }}
           className="text-sm text-ink-muted hover:text-ink inline-flex items-center gap-1"
         >
-          <ArrowLeft className="size-3.5" /> Back to overview
+          <ArrowLeft className="size-3.5" /> View your result
         </Link>
         <h1 className="text-2xl text-ink">Assessment received</h1>
         <p className="text-ink-muted">
           Your SalesCode type is{" "}
           <span className="font-mono text-ink">{intake.type_code ?? "—"}</span>.
-          The full result write-up appears on the overview.
+          View the full write-up on your result page.
         </p>
       </div>
     );
