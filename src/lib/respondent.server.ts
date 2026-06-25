@@ -144,3 +144,33 @@ export async function saveProgress(
 
   return error ? { ok: false, reason: "not_found" } : { ok: true };
 }
+
+/**
+ * Load the respondent's session including its in-progress `payload` and
+ * `result` blobs. Used by the per-tool splat route so the respondent can
+ * resume mid-flow or view their own completion screen.
+ */
+export async function loadSessionState(token: string): Promise<
+  | {
+      ok: true;
+      session: PublicSession;
+      payload: unknown;
+      result: unknown;
+    }
+  | { ok: false; reason: "not_found" | "expired" | "revoked" }
+> {
+  const v = await validateToken(token);
+  if (!v.ok) return v;
+  const { data, error } = await supabaseAdmin
+    .from("respondent_sessions")
+    .select("payload, result")
+    .eq("token", token)
+    .maybeSingle();
+  if (error || !data) return { ok: false, reason: "not_found" };
+  return {
+    ok: true,
+    session: v.session,
+    payload: data.payload,
+    result: data.result,
+  };
+}
