@@ -8,11 +8,8 @@ export const Route = createFileRoute("/_authenticated/app/")({
   component: Dashboard,
 });
 
-const TILE_BASE =
-  "border border-border rounded-xl p-5 aspect-[4/3] flex flex-col justify-between h-full";
-const TILE_INTERACTIVE =
-  TILE_BASE +
-  " hover:bg-[var(--surface-raised)] transition-[background-color] duration-[120ms]";
+const BOOK_TILE_CLASSES =
+  "block border border-border rounded-xl p-5 aspect-[4/3] flex flex-col h-full hover:bg-[var(--surface-raised)] transition-[background-color] duration-[120ms]";
 
 function BookCallTile() {
   const { session } = useSession();
@@ -22,38 +19,40 @@ function BookCallTile() {
   if (!allComplete) {
     return (
       <div
-        className={
-          TILE_BASE + " opacity-50 relative items-center justify-center"
-        }
+        className={BOOK_TILE_CLASSES + " opacity-50"}
         aria-disabled="true"
       >
-        <span className="text-ink-muted text-xs uppercase tracking-wider absolute top-5 left-5">
+        <span className="text-ink-muted text-xs uppercase tracking-wider">
           Book a 1:1 call
         </span>
-        <Lock
-          className="size-8 text-ink-muted"
-          strokeWidth={1.5}
-          aria-label="Locked until audit and assessment are complete"
-        />
-        <span className="text-ink-muted text-sm absolute bottom-5 left-5 right-5">
-          Finish your audit and assessment to unlock.
-        </span>
+        <div className="flex-1 flex flex-col items-center justify-center text-center gap-2">
+          <Lock
+            className="size-8 text-ink-muted"
+            strokeWidth={1.5}
+            aria-label="Locked until audit and assessment are complete"
+          />
+          <span className="text-ink-muted text-sm">
+            Finish your audit and assessment to unlock.
+          </span>
+        </div>
       </div>
     );
   }
 
   return (
-    <Link to="/app/book-call" className={TILE_INTERACTIVE}>
+    <Link to="/app/book-call" className={BOOK_TILE_CLASSES}>
       <span className="text-ink-muted text-xs uppercase tracking-wider">
         Book a 1:1 call
       </span>
-      <CalendarCheck className="size-8 text-ink" strokeWidth={1.5} />
-      <span
-        className="text-ink text-2xl font-medium"
-        style={{ letterSpacing: "-0.01em" }}
-      >
-        You're ready
-      </span>
+      <div className="flex-1 flex flex-col items-center justify-center text-center gap-2">
+        <CalendarCheck className="size-8 text-ink" strokeWidth={1.5} />
+        <span
+          className="text-ink text-2xl font-medium"
+          style={{ letterSpacing: "-0.01em" }}
+        >
+          You're ready
+        </span>
+      </div>
     </Link>
   );
 }

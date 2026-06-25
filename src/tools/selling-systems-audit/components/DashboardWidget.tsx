@@ -4,7 +4,7 @@ import { useBookingReadiness } from "@/lib/useBookingReadiness";
 import { useContentAssets } from "../content/useContentReview";
 
 const TILE_CLASSES =
-  "block border border-border rounded-xl p-5 aspect-[4/3] flex flex-col justify-between h-full hover:bg-[var(--surface-raised)] transition-[background-color] duration-[120ms]";
+  "block border border-border rounded-xl p-5 aspect-[4/3] flex flex-col h-full hover:bg-[var(--surface-raised)] transition-[background-color] duration-[120ms]";
 
 const AUDIT_SECTION_KEYS = [
   "conversion",
@@ -33,7 +33,7 @@ export function DashboardWidget() {
         Selling Systems Audit
       </span>
 
-      <div className="flex flex-col gap-4">
+      <div className="flex-1 flex flex-col items-center justify-center text-center gap-4">
         <div className="flex flex-col">
           <span
             className="text-ink text-4xl font-medium tabular-nums"
@@ -44,17 +44,9 @@ export function DashboardWidget() {
           <span className="text-ink-muted text-sm">audit sections submitted</span>
         </div>
 
-        <div className="border-t border-border pt-3 flex flex-col">
-          <span
-            className="text-ink text-lg font-medium tabular-nums"
-            style={{ letterSpacing: "-0.01em" }}
-          >
-            {contentCount}
-          </span>
-          <span className="text-ink-muted text-sm">
-            {contentCount === 1 ? "content piece added" : "content pieces added"}
-          </span>
-        </div>
+        <span className="text-ink-muted text-sm">
+          {contentCount} {contentCount === 1 ? "content piece added" : "content pieces added"}
+        </span>
       </div>
     </Link>
   );
