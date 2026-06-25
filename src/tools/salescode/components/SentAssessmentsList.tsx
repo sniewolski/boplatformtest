@@ -164,7 +164,7 @@ function ExpandedResult({ sessionId }: { sessionId: string }) {
 
   return (
     <div className="px-4 pb-6 pt-2 border-t border-border bg-background">
-      <SalesCodeResultView result={result} />
+      <SalesCodeResultView result={result} variant="respondent" />
     </div>
   );
 }

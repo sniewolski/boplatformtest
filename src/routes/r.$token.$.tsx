@@ -185,6 +185,7 @@ function SalesCodeRespondent({
     return (
       <SalesCodeResultView
         result={completed}
+        variant="respondent"
         headerSlot={
           <header className="flex flex-col gap-2">
             <h1 className="text-2xl text-ink">Thanks, {session.respondentName ?? "you"}</h1>

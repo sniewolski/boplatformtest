@@ -6,7 +6,9 @@ import {
   TRAIT_COPY,
   type TraitArea,
 } from "../lib/copy";
+import { TRAIT_COPY_RESPONDENT } from "../lib/copy.respondent";
 import { TYPE_PROFILES } from "../lib/typeProfiles";
+import { TYPE_PROFILES_RESPONDENT } from "../lib/typeProfiles.respondent";
 
 /**
  * Presentational SalesCode result view. Renders the archetype profile
@@ -16,14 +18,18 @@ import { TYPE_PROFILES } from "../lib/typeProfiles";
  */
 export function SalesCodeResultView({
   result,
+  variant,
   headerSlot,
   footerSlot,
 }: {
   result: SalesCodeResult;
+  variant: "owner" | "respondent";
   headerSlot?: React.ReactNode;
   footerSlot?: React.ReactNode;
 }) {
-  const profile = TYPE_PROFILES[result.type];
+  const profiles = variant === "owner" ? TYPE_PROFILES : TYPE_PROFILES_RESPONDENT;
+  const traitCopy = variant === "owner" ? TRAIT_COPY : TRAIT_COPY_RESPONDENT;
+  const profile = profiles[result.type];
 
   const grouped: Record<TraitArea, TraitOutcome[]> = {
     "sales-skills": [],
@@ -146,7 +152,7 @@ export function SalesCodeResultView({
             </h2>
             <ul className="flex flex-col gap-2">
               {items.map((t) => {
-                const meta = TRAIT_COPY[t.key];
+                const meta = traitCopy[t.key];
                 const isStrength = t.kind === "strength";
                 const body = isStrength ? meta.strengthLine : meta.growthLine;
                 return (

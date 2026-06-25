@@ -50,6 +50,7 @@ export function SalesCodeResultRoute() {
     <div className="app-content py-12">
       <SalesCodeResultView
         result={result}
+        variant="owner"
         footerSlot={
           <footer className="flex items-center justify-between gap-4 pt-2">
             <Button asChild variant="outline">
