@@ -1,31 +1,35 @@
 import { Link } from "@tanstack/react-router";
 import { useSession } from "@/core/auth/useSession";
-import { useConversionIntake } from "../data/useConversionReview";
+import { useContentAssets } from "../content/useContentReview";
+
+const TILE_CLASSES =
+  "block border border-border rounded-xl p-5 aspect-[4/3] flex flex-col justify-between h-full hover:bg-[var(--surface-raised)] transition-[background-color] duration-[120ms]";
 
 export function DashboardWidget() {
   const { session } = useSession();
   const userId = session?.user.id;
-  const { data: intake } = useConversionIntake(userId);
+  const { data: assets } = useContentAssets(userId);
 
-  let summary = "Not started — 0 of 4 reviews complete.";
-  if (intake?.submitted_at) {
-    summary = intake.has_unsubmitted_changes
-      ? "Submitted · edits pending re-submission."
-      : "Submitted — your coach has what they need.";
-  } else if (intake?.draft_answers) {
-    summary = "Draft in progress.";
-  }
+  const count = assets?.length ?? 0;
 
   return (
     <Link
       to="/app/tools/$key/$"
-      params={{ key: "selling-systems-audit", _splat: "" }}
-      className="block border border-border rounded-xl px-5 py-4 hover:bg-[var(--surface-raised)] transition-[background-color] duration-[120ms]"
+      params={{ key: "selling-systems-audit", _splat: "content" }}
+      className={TILE_CLASSES}
     >
-      <div className="flex items-baseline justify-between gap-4">
-        <span className="text-ink font-medium">Selling Systems Audit</span>
-      </div>
-      <span className="text-ink-muted text-sm tabular-nums">{summary}</span>
+      <span className="text-ink-muted text-xs uppercase tracking-wider">
+        Selling Systems Audit
+      </span>
+      <span
+        className="text-ink text-4xl font-medium tabular-nums"
+        style={{ letterSpacing: "-0.02em" }}
+      >
+        {count}
+      </span>
+      <span className="text-ink-muted text-sm">
+        {count === 1 ? "content piece added" : "content pieces added"}
+      </span>
     </Link>
   );
 }
