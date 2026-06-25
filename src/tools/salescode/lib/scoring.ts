@@ -100,9 +100,8 @@ type ThresholdSpec = {
   /**
    * Which side is the strength. "above" means raw > threshold ⇒ strength.
    * "below" handles the people-pleaser case (raw < threshold ⇒ strength).
-   * "neutral" is used for introvert/extrovert style (no S/D semantics).
    */
-  strengthSide: "above" | "below" | "neutral";
+  strengthSide: "above" | "below";
   /**
    * Comparator. Most traits use `>`; goal-setting and personal accountability
    * use `≥`; people-pleaser uses `<`.
@@ -111,7 +110,9 @@ type ThresholdSpec = {
 };
 
 const THRESHOLD_TRAITS: ReadonlyArray<ThresholdSpec> = [
-  // Introvert / Extrovert — neutral style trait (separate from the type's I/E axis).
+  // Introvert / Extrovert — Extrovert sits on the "above" side of the threshold.
+  // Treated as a normal binary trait; the strength/growth framing comes from
+  // the per-trait copy entry, not from the scoring layer.
   {
     key: "introvert-extrovert",
     offset: 38,
@@ -123,7 +124,7 @@ const THRESHOLD_TRAITS: ReadonlyArray<ThresholdSpec> = [
     threshold: 3,
     aboveLabel: "Extrovert",
     belowLabel: "Introvert",
-    strengthSide: "neutral",
+    strengthSide: "above",
   },
   // Assertiveness
   {
@@ -255,13 +256,9 @@ function evaluateThreshold(spec: ThresholdSpec, answers: AnswerMap): TraitOutcom
   const above = cmp === "<" ? raw >= spec.threshold : isAbove;
   // For "<" compare: strength when raw < threshold (i.e. NOT above).
   const isStrengthSide =
-    spec.strengthSide === "neutral" ? false
-    : spec.strengthSide === "above" ? above
-    : !above;
+    spec.strengthSide === "above" ? above : !above;
   const label = above ? spec.aboveLabel : spec.belowLabel;
-  const kind: TraitOutcome["kind"] =
-    spec.strengthSide === "neutral" ? "neutral"
-    : isStrengthSide ? "strength" : "development";
+  const kind: TraitOutcome["kind"] = isStrengthSide ? "strength" : "development";
   return { key: spec.key, label, kind, raw };
 }
 
