@@ -1,9 +1,22 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { listMyRespondentSessions } from "@/lib/sessions.functions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  deleteRespondentSession,
+  listMyRespondentSessions,
+} from "@/lib/sessions.functions";
 import { SalesCodeResultView } from "./SalesCodeResultView";
 import type { SalesCodeResult } from "../lib/types";
 
@@ -14,12 +27,24 @@ import type { SalesCodeResult } from "../lib/types";
  */
 export function SentAssessmentsList() {
   const list = useServerFn(listMyRespondentSessions);
+  const del = useServerFn(deleteRespondentSession);
+  const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: ["sessions", "salescode"],
     queryFn: () => list(),
   });
 
   const [openId, setOpenId] = useState<string | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
+  const deleteMutation = useMutation({
+    mutationFn: (sessionId: string) => del({ data: { sessionId } }),
+    onSuccess: (_data, sessionId) => {
+      if (openId === sessionId) setOpenId(null);
+      queryClient.invalidateQueries({ queryKey: ["sessions", "salescode"] });
+      setPendingDeleteId(null);
+    },
+  });
 
   if (query.isLoading) {
     return <p className="text-sm text-ink-muted">Loading…</p>;
@@ -43,48 +68,92 @@ export function SentAssessmentsList() {
   }
 
   return (
-    <ul className="flex flex-col divide-y divide-border rounded-2xl border border-border bg-surface">
-      {rows.map((r) => {
-        const isOpen = openId === r.id;
-        const isCompleted = r.status === "completed";
-        return (
-          <li key={r.id} className="flex flex-col">
-            <div className="flex items-center gap-3 px-4 py-3">
-              <div className="flex flex-col min-w-0 grow">
-                <span className="text-sm text-ink truncate">
-                  {r.respondent_name ?? "—"}
+    <>
+      <ul className="flex flex-col divide-y divide-border rounded-2xl border border-border bg-surface">
+        {rows.map((r) => {
+          const isOpen = openId === r.id;
+          const isCompleted = r.status === "completed";
+          return (
+            <li key={r.id} className="flex flex-col">
+              <div className="flex items-center gap-3 px-4 py-3">
+                <div className="flex flex-col min-w-0 grow">
+                  <span className="text-sm text-ink truncate">
+                    {r.respondent_name ?? "—"}
+                  </span>
+                  <span className="text-xs text-ink-muted truncate">
+                    {r.respondent_email ?? "Not started"}
+                  </span>
+                </div>
+                <StatusBadge status={r.status} />
+                <span className="text-xs text-ink-muted tabular-nums hidden sm:inline">
+                  {new Date(r.created_at).toLocaleDateString()}
                 </span>
-                <span className="text-xs text-ink-muted truncate">
-                  {r.respondent_email ?? "Not started"}
-                </span>
-              </div>
-              <StatusBadge status={r.status} />
-              <span className="text-xs text-ink-muted tabular-nums hidden sm:inline">
-                {new Date(r.created_at).toLocaleDateString()}
-              </span>
-              {isCompleted ? (
+                {isCompleted ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setOpenId(isOpen ? null : r.id)}
+                    className="inline-flex items-center gap-1"
+                  >
+                    {isOpen ? (
+                      <ChevronDown className="size-4" />
+                    ) : (
+                      <ChevronRight className="size-4" />
+                    )}
+                    {isOpen ? "Hide" : "View"}
+                  </Button>
+                ) : null}
                 <Button
                   type="button"
-                  variant="outline"
-                  onClick={() => setOpenId(isOpen ? null : r.id)}
-                  className="inline-flex items-center gap-1"
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Delete sent assessment"
+                  onClick={() => setPendingDeleteId(r.id)}
+                  className="text-ink-muted hover:text-ink"
                 >
-                  {isOpen ? (
-                    <ChevronDown className="size-4" />
-                  ) : (
-                    <ChevronRight className="size-4" />
-                  )}
-                  {isOpen ? "Hide" : "View"}
+                  <Trash2 className="size-4" />
                 </Button>
+              </div>
+              {isOpen && isCompleted ? (
+                <ExpandedResult sessionId={r.id} />
               ) : null}
-            </div>
-            {isOpen && isCompleted ? (
-              <ExpandedResult sessionId={r.id} />
-            ) : null}
-          </li>
-        );
-      })}
-    </ul>
+            </li>
+          );
+        })}
+      </ul>
+
+      <AlertDialog
+        open={pendingDeleteId !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleteMutation.isPending) setPendingDeleteId(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this sent assessment?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the respondent's link and any answers
+              they've submitted. This can't be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                if (pendingDeleteId) deleteMutation.mutate(pendingDeleteId);
+              }}
+              disabled={deleteMutation.isPending}
+              className="bg-red text-white hover:bg-red/90"
+            >
+              {deleteMutation.isPending ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 
