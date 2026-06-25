@@ -170,8 +170,8 @@ export function SalesCodeAssessment() {
     return (
       <div className="max-w-2xl py-8 flex flex-col gap-4">
         <Link
-          to="/app/tool/$toolKey/$"
-          params={{ toolKey: "salescode", _splat: "" }}
+          to="/app/tools/$key/$"
+          params={{ key: "salescode", _splat: "" }}
           className="text-sm text-ink-muted hover:text-ink inline-flex items-center gap-1"
         >
           <ArrowLeft className="size-3.5" /> Back to overview
@@ -193,8 +193,8 @@ export function SalesCodeAssessment() {
   return (
     <div className="max-w-2xl py-8 flex flex-col gap-6">
       <Link
-        to="/app/tool/$toolKey/$"
-        params={{ toolKey: "salescode", _splat: "" }}
+        to="/app/tools/$key/$"
+        params={{ key: "salescode", _splat: "" }}
         className="text-sm text-ink-muted hover:text-ink inline-flex items-center gap-1 w-fit"
       >
         <ArrowLeft className="size-3.5" /> Back to overview

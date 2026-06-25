@@ -63,8 +63,8 @@ export function SalesCodeOverview() {
           className="active:scale-[0.97] transition-transform"
         >
           <Link
-            to="/app/tool/$toolKey/$"
-            params={{ toolKey: "salescode", _splat: "assessment" }}
+            to="/app/tools/$key/$"
+            params={{ key: "salescode", _splat: "assessment" }}
             className="inline-flex items-center gap-2"
           >
             {ctaLabel} <ArrowRight className="size-4" />
