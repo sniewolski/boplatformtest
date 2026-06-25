@@ -319,10 +319,6 @@ export function ConversionReview() {
         <h1 className="text-3xl" style={{ letterSpacing: "-0.02em" }}>
           Sales Conversion Rates Review
         </h1>
-        <p className="text-ink-muted text-base max-w-prose">
-          Tell us how your selling motion runs today, stage by stage. We'll go
-          through it together on our call — there's nothing to analyse here.
-        </p>
       </header>
 
       {isReceived ? (
