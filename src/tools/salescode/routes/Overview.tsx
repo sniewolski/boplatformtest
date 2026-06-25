@@ -90,12 +90,13 @@ export function SalesCodeOverview() {
         <section className="rounded-2xl border border-border bg-surface p-6 max-w-xl flex flex-col gap-5">
           <div className="flex flex-col gap-1">
             <div className="flex items-baseline gap-3 flex-wrap">
-              <span className="font-mono text-2xl text-ink">
-                {typeCode ?? "—"}
-              </span>
               {profile ? (
-                <span className="text-ink text-lg">{profile.name}</span>
-              ) : null}
+                <span className="text-ink text-3xl font-semibold">{profile.name}</span>
+              ) : (
+                <span className="text-ink text-3xl font-semibold">
+                  {typeCode ?? "—"}
+                </span>
+              )}
             </div>
             {submittedDate ? (
               <span className="text-xs text-ink-muted">
