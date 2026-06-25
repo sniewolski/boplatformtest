@@ -117,12 +117,12 @@ export function AppShell({
                 Admin
               </Link>
               <Link
-                to="/app/admin/audit"
+                to="/app/admin/review"
                 className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-ink hover:bg-background transition-colors"
                 activeProps={{ className: "bg-background font-medium" }}
               >
                 <ClipboardList className="size-4" />
-                Audit review
+                Review
               </Link>
             </>
           )}
