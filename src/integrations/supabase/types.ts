@@ -235,6 +235,42 @@ export type Database = {
         }
         Relationships: []
       }
+      salescode_results: {
+        Row: {
+          created_at: string
+          draft_answers: Json
+          has_unsubmitted_changes: boolean
+          owner_id: string
+          submitted_answers: Json | null
+          submitted_at: string | null
+          traits: Json | null
+          type_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          draft_answers?: Json
+          has_unsubmitted_changes?: boolean
+          owner_id: string
+          submitted_answers?: Json | null
+          submitted_at?: string | null
+          traits?: Json | null
+          type_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          draft_answers?: Json
+          has_unsubmitted_changes?: boolean
+          owner_id?: string
+          submitted_answers?: Json | null
+          submitted_at?: string | null
+          traits?: Json | null
+          type_code?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       selling_systems_audit_activity: {
         Row: {
           draft_answers: Json | null
