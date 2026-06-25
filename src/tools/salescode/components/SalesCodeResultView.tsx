@@ -46,7 +46,9 @@ export function SalesCodeResultView({
         <article className="flex flex-col gap-8">
           <header className="flex flex-col gap-2">
             <h1 className="text-3xl text-ink">{profile.name}</h1>
-            <p className="text-lg text-ink-muted">{profile.tagline}</p>
+            {variant === "owner" ? (
+              <p className="text-lg text-ink-muted">{profile.tagline}</p>
+            ) : null}
           </header>
 
           {profile.intro.length > 0 ? (
