@@ -62,9 +62,8 @@ function Dashboard() {
 
   return (
     <div className="app-content py-16 flex flex-col gap-8">
-      <header className="flex flex-col gap-2">
+      <header>
         <h1 className="text-3xl">Dashboard</h1>
-        <p className="text-ink-muted text-sm">Your private workspace.</p>
       </header>
 
       {!hasTools ? (
