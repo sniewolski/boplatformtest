@@ -114,7 +114,14 @@ export function AppShell({
               activeOptions={{ exact: item.to === "/app" }}
             >
               <item.icon className="size-4" />
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {item.complete && (
+                <Check
+                  className="size-4 text-ink shrink-0"
+                  strokeWidth={2.5}
+                  aria-label="Complete"
+                />
+              )}
             </Link>
           ))}
 
