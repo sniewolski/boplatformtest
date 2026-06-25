@@ -179,10 +179,6 @@ export function PipelineHealth() {
         <h1 className="text-3xl" style={{ letterSpacing: "-0.02em" }}>
           Pipeline Health
         </h1>
-        <p className="text-ink-muted text-base max-w-prose">
-          A structured read on whether your pipeline can hit target — volume,
-          velocity, and how confidently you can see what's coming.
-        </p>
       </header>
 
       {isReceived ? (
