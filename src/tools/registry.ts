@@ -15,6 +15,7 @@ import type { ComponentType, ReactNode } from "react";
 import type { AnyRoute } from "@tanstack/react-router";
 
 import { sellingSystemsAuditManifest } from "./selling-systems-audit/manifest";
+import { salescodeManifest } from "./salescode/manifest";
 
 export type ToolNavEntry = {
   label: string;
@@ -43,4 +44,7 @@ export type ToolManifest = {
   publicRoutes?: AnyRoute[];
 };
 
-export const toolRegistry: ToolManifest[] = [sellingSystemsAuditManifest];
+export const toolRegistry: ToolManifest[] = [
+  sellingSystemsAuditManifest,
+  salescodeManifest,
+];
