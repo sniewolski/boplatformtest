@@ -1,9 +1,62 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { CalendarCheck, Lock } from "lucide-react";
 import { toolRegistry } from "@/tools/registry";
+import { useSession } from "@/core/auth/useSession";
+import { useBookingReadiness } from "@/lib/useBookingReadiness";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: Dashboard,
 });
+
+const TILE_BASE =
+  "border border-border rounded-xl p-5 aspect-[4/3] flex flex-col justify-between h-full";
+const TILE_INTERACTIVE =
+  TILE_BASE +
+  " hover:bg-[var(--surface-raised)] transition-[background-color] duration-[120ms]";
+
+function BookCallTile() {
+  const { session } = useSession();
+  const userId = session?.user.id;
+  const { allComplete } = useBookingReadiness(userId);
+
+  if (!allComplete) {
+    return (
+      <div
+        className={
+          TILE_BASE + " opacity-50 relative items-center justify-center"
+        }
+        aria-disabled="true"
+      >
+        <span className="text-ink-muted text-xs uppercase tracking-wider absolute top-5 left-5">
+          Book a 1:1 call
+        </span>
+        <Lock
+          className="size-8 text-ink-muted"
+          strokeWidth={1.5}
+          aria-label="Locked until audit and assessment are complete"
+        />
+        <span className="text-ink-muted text-sm absolute bottom-5 left-5 right-5">
+          Finish your audit and assessment to unlock.
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <Link to="/app/book-call" className={TILE_INTERACTIVE}>
+      <span className="text-ink-muted text-xs uppercase tracking-wider">
+        Book a 1:1 call
+      </span>
+      <CalendarCheck className="size-8 text-ink" strokeWidth={1.5} />
+      <span
+        className="text-ink text-2xl font-medium"
+        style={{ letterSpacing: "-0.01em" }}
+      >
+        You're ready
+      </span>
+    </Link>
+  );
+}
 
 function Dashboard() {
   const hasTools = toolRegistry.length > 0;
@@ -23,7 +76,7 @@ function Dashboard() {
           </p>
         </div>
       ) : (
-        <ul className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(320px,1fr))]">
+        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {toolRegistry.map((tool) => (
             <li key={tool.key}>
               {tool.dashboardWidget ? (
@@ -36,6 +89,9 @@ function Dashboard() {
               )}
             </li>
           ))}
+          <li>
+            <BookCallTile />
+          </li>
         </ul>
       )}
     </div>

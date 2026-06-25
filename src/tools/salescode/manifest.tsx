@@ -1,6 +1,7 @@
 import { Compass } from "lucide-react";
 import type { ToolManifest } from "../registry";
 import { SalesCodeApp } from "./routes/App";
+import { DashboardWidget } from "./components/DashboardWidget";
 
 export const salescodeManifest: ToolManifest = {
   key: "salescode",
@@ -11,6 +12,9 @@ export const salescodeManifest: ToolManifest = {
   navEntry: {
     label: "SalesCode",
     icon: Compass,
+  },
+  dashboardWidget: {
+    render: () => <DashboardWidget />,
   },
   Component: SalesCodeApp,
 };
