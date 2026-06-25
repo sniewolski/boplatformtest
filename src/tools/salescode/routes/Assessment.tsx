@@ -158,7 +158,7 @@ export function SalesCodeAssessment() {
 
   if (isLoading || !hydrated) {
     return (
-      <div className="max-w-2xl py-8 text-ink-muted">Loading…</div>
+      <div className="app-content py-12 text-ink-muted">Loading…</div>
     );
   }
 
@@ -168,7 +168,7 @@ export function SalesCodeAssessment() {
   // result renderer arrives in the next phase.
   if (isSubmitted) {
     return (
-      <div className="max-w-2xl py-8 flex flex-col gap-4">
+      <div className="app-content py-12 flex flex-col gap-4">
         <Link
           to="/app/tools/$key/$"
           params={{ key: "salescode", _splat: "" }}
@@ -191,8 +191,7 @@ export function SalesCodeAssessment() {
   const atLastStep = stepIdx === STEPS.length - 1;
 
   return (
-    <div className="app-content py-8">
-      <div className="max-w-2xl mx-auto flex flex-col gap-6">
+    <div className="app-content py-12 flex flex-col gap-6">
         <Link
           to="/app/tools/$key/$"
           params={{ key: "salescode", _splat: "" }}
@@ -274,8 +273,7 @@ export function SalesCodeAssessment() {
             onNext={() => goStep(stepIdx + 1)}
             saveState={saveState}
           />
-        )}
-      </div>
+      )}
     </div>
   );
 }

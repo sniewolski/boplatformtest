@@ -27,25 +27,23 @@ export function SalesCodeResultRoute() {
 
   if (isLoading) {
     return (
-      <div className="app-content py-8">
-        <p className="max-w-2xl mx-auto text-ink-muted text-sm">Loading…</p>
+      <div className="app-content py-12">
+        <p className="text-ink-muted text-sm">Loading…</p>
       </div>
     );
   }
   if (!intake?.submitted_answers) {
     return (
-      <div className="app-content py-8">
-        <div className="max-w-2xl mx-auto flex flex-col gap-4">
-          <p className="text-ink-muted">
-            No submitted result yet. Complete the assessment to see your SalesCode.
-          </p>
-          <div>
-            <Button asChild variant="outline">
-              <Link to="/app/tools/$key/$" params={{ key: "salescode", _splat: "" }}>
-                <ArrowLeft className="size-4 mr-2" /> Back
-              </Link>
-            </Button>
-          </div>
+      <div className="app-content py-12 flex flex-col gap-4">
+        <p className="text-ink-muted">
+          No submitted result yet. Complete the assessment to see your SalesCode.
+        </p>
+        <div>
+          <Button asChild variant="outline">
+            <Link to="/app/tools/$key/$" params={{ key: "salescode", _splat: "" }}>
+              <ArrowLeft className="size-4 mr-2" /> Back
+            </Link>
+          </Button>
         </div>
       </div>
     );
@@ -68,8 +66,7 @@ export function SalesCodeResultRoute() {
   }
 
   return (
-    <div className="app-content py-8">
-      <div className="max-w-3xl mx-auto flex flex-col gap-10">
+    <div className="app-content py-12 flex flex-col gap-10">
         <header className="flex flex-col gap-3">
           <span className="text-xs text-ink-muted uppercase tracking-wide">Your SalesCode</span>
           <h1 className="text-4xl font-mono text-ink" style={{ letterSpacing: "0.02em" }}>
@@ -168,8 +165,7 @@ export function SalesCodeResultRoute() {
               Submitted {new Date(intake.submitted_at).toLocaleDateString()}
             </span>
           ) : null}
-        </footer>
-      </div>
+      </footer>
     </div>
   );
 }
