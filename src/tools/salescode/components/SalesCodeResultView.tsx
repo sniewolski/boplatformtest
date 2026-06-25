@@ -6,7 +6,9 @@ import {
   TRAIT_COPY,
   type TraitArea,
 } from "../lib/copy";
+import { TRAIT_COPY_RESPONDENT } from "../lib/copy.respondent";
 import { TYPE_PROFILES } from "../lib/typeProfiles";
+import { TYPE_PROFILES_RESPONDENT } from "../lib/typeProfiles.respondent";
 
 /**
  * Presentational SalesCode result view. Renders the archetype profile
