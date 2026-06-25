@@ -98,9 +98,11 @@
   --radius-2xl: calc(var(--radius) + 4px);
   --radius-3xl: calc(var(--radius) + 4px);
 
-  /* One family. */
+  /* One family (Geist). --font-serif is a scoped editorial exception for
+     pull-quotes only — not a second UI typeface. */
   --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: ui-serif, Georgia, "Times New Roman", serif;
 
   /* Color tokens exposed as utilities. The default neutral palette is overridden,
      not augmented — no zinc/slate/gray shorthand should appear in this project. */
