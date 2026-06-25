@@ -64,7 +64,10 @@ export function SalesCodeOverview() {
         >
           <Link
             to="/app/tools/$key/$"
-            params={{ key: "salescode", _splat: "assessment" }}
+            params={{
+              key: "salescode",
+              _splat: isSubmitted ? "result" : "assessment",
+            }}
             className="inline-flex items-center gap-2"
           >
             {ctaLabel} <ArrowRight className="size-4" />
