@@ -97,9 +97,10 @@ export function AppShell({
         <div className="px-6 py-6">
           <Link
             to="/app"
-            className="text-ink font-semibold text-base"
+            className="inline-flex items-center gap-2 text-ink font-semibold text-base"
             style={{ letterSpacing: "-0.02em" }}
           >
+            <img src={logoAsset.url} alt="" className="size-5 shrink-0" />
             Sales Lab
           </Link>
         </div>

@@ -80,9 +80,10 @@ function LoginPage() {
         <header className="flex flex-col gap-2">
           <Link
             to="/"
-            className="text-ink font-semibold"
+            className="inline-flex items-center gap-2 text-ink font-semibold"
             style={{ letterSpacing: "-0.02em" }}
           >
+            <img src={logoAsset.url} alt="" className="size-6 shrink-0" />
             Sales Lab
           </Link>
           <h1 className="text-2xl">Sign in</h1>
