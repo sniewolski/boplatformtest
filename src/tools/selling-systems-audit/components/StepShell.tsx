@@ -74,13 +74,14 @@ export function StepNav({
       <span className="text-ink-muted text-xs tabular-nums">
         {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved" : ""}
       </span>
-      <Button
-        onClick={onNext}
-        disabled={atEnd}
-        className="active:scale-[0.97] transition-transform"
-      >
-        Continue
-      </Button>
+      {!atEnd && (
+        <Button
+          onClick={onNext}
+          className="active:scale-[0.97] transition-transform"
+        >
+          Continue
+        </Button>
+      )}
     </div>
   );
 }
