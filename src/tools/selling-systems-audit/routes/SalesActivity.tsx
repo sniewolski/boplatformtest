@@ -181,10 +181,6 @@ export function SalesActivity() {
         <h1 className="text-3xl" style={{ letterSpacing: "-0.02em" }}>
           Sales Activity Metrics
         </h1>
-        <p className="text-ink-muted text-base max-w-prose">
-          What sales activity you measure, how healthy the numbers look, and
-          how confidently you read them.
-        </p>
       </header>
 
       {isReceived ? (
