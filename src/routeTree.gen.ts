@@ -19,6 +19,7 @@ import { Route as RTokenSplatRouteImport } from './routes/r.$token.$'
 import { Route as AuthenticatedAppBookCallRouteImport } from './routes/_authenticated/app.book-call'
 import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
 import { Route as AuthenticatedAppAdminIndexRouteImport } from './routes/_authenticated/app.admin.index'
+import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicRValidateRouteImport } from './routes/api/public/r/validate'
 import { Route as ApiPublicRStateRouteImport } from './routes/api/public/r/state'
 import { Route as ApiPublicRSaveRouteImport } from './routes/api/public/r/save'
@@ -81,6 +82,12 @@ const AuthenticatedAppAdminIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedAppAdminRoute,
+  } as any)
+const LovableEmailQueueProcessRoute =
+  LovableEmailQueueProcessRouteImport.update({
+    id: '/lovable/email/queue/process',
+    path: '/lovable/email/queue/process',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicRValidateRoute = ApiPublicRValidateRouteImport.update({
   id: '/api/public/r/validate',
@@ -159,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/api/public/r/save': typeof ApiPublicRSaveRoute
   '/api/public/r/state': typeof ApiPublicRStateRoute
   '/api/public/r/validate': typeof ApiPublicRValidateRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/app/admin/': typeof AuthenticatedAppAdminIndexRoute
   '/app/admin/audit/$ownerId': typeof AuthenticatedAppAdminAuditOwnerIdRoute
   '/app/admin/salescode/$ownerId': typeof AuthenticatedAppAdminSalescodeOwnerIdRoute
@@ -179,6 +187,7 @@ export interface FileRoutesByTo {
   '/api/public/r/save': typeof ApiPublicRSaveRoute
   '/api/public/r/state': typeof ApiPublicRStateRoute
   '/api/public/r/validate': typeof ApiPublicRValidateRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/app/admin': typeof AuthenticatedAppAdminIndexRoute
   '/app/admin/audit/$ownerId': typeof AuthenticatedAppAdminAuditOwnerIdRoute
   '/app/admin/salescode/$ownerId': typeof AuthenticatedAppAdminSalescodeOwnerIdRoute
@@ -203,6 +212,7 @@ export interface FileRoutesById {
   '/api/public/r/save': typeof ApiPublicRSaveRoute
   '/api/public/r/state': typeof ApiPublicRStateRoute
   '/api/public/r/validate': typeof ApiPublicRValidateRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/_authenticated/app/admin/': typeof AuthenticatedAppAdminIndexRoute
   '/_authenticated/app/admin/audit/$ownerId': typeof AuthenticatedAppAdminAuditOwnerIdRoute
   '/_authenticated/app/admin/salescode/$ownerId': typeof AuthenticatedAppAdminSalescodeOwnerIdRoute
@@ -227,6 +237,7 @@ export interface FileRouteTypes {
     | '/api/public/r/save'
     | '/api/public/r/state'
     | '/api/public/r/validate'
+    | '/lovable/email/queue/process'
     | '/app/admin/'
     | '/app/admin/audit/$ownerId'
     | '/app/admin/salescode/$ownerId'
@@ -247,6 +258,7 @@ export interface FileRouteTypes {
     | '/api/public/r/save'
     | '/api/public/r/state'
     | '/api/public/r/validate'
+    | '/lovable/email/queue/process'
     | '/app/admin'
     | '/app/admin/audit/$ownerId'
     | '/app/admin/salescode/$ownerId'
@@ -270,6 +282,7 @@ export interface FileRouteTypes {
     | '/api/public/r/save'
     | '/api/public/r/state'
     | '/api/public/r/validate'
+    | '/lovable/email/queue/process'
     | '/_authenticated/app/admin/'
     | '/_authenticated/app/admin/audit/$ownerId'
     | '/_authenticated/app/admin/salescode/$ownerId'
@@ -288,6 +301,7 @@ export interface RootRouteChildren {
   ApiPublicRSaveRoute: typeof ApiPublicRSaveRoute
   ApiPublicRStateRoute: typeof ApiPublicRStateRoute
   ApiPublicRValidateRoute: typeof ApiPublicRValidateRoute
+  LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -361,6 +375,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/admin/'
       preLoaderRoute: typeof AuthenticatedAppAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAppAdminRoute
+    }
+    '/lovable/email/queue/process': {
+      id: '/lovable/email/queue/process'
+      path: '/lovable/email/queue/process'
+      fullPath: '/lovable/email/queue/process'
+      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/r/validate': {
       id: '/api/public/r/validate'
@@ -508,6 +529,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicRSaveRoute: ApiPublicRSaveRoute,
   ApiPublicRStateRoute: ApiPublicRStateRoute,
   ApiPublicRValidateRoute: ApiPublicRValidateRoute,
+  LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
