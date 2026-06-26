@@ -24,12 +24,7 @@ function Index() {
           Sales Lab
         </h1>
 
-        <div className="flex flex-col gap-2">
-          <p className="text-ink text-base">A private, invite-only workspace.</p>
-          <p className="text-ink-muted text-sm">
-            Access is provisioned by an administrator. There is no public sign-up.
-          </p>
-        </div>
+        <p className="text-ink text-base">A private, invite-only workspace.</p>
 
         <Button asChild>
           <Link to="/login">Sign in</Link>
