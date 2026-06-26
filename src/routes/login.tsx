@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, useRouter, Link } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { devLoginBypass } from "@/lib/dev-auth.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,11 +19,8 @@ export const Route = createFileRoute("/login")({
 
 type Step = "email" | "code";
 
-const DEV_CODE = "000000";
-
 function LoginPage() {
   const router = useRouter();
-  const runDevBypass = useServerFn(devLoginBypass);
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -35,9 +30,23 @@ function LoginPage() {
 
   async function handleRequestCode(e: React.FormEvent) {
     e.preventDefault();
+    setPending(true);
     setError(null);
-    setNotice(`Email delivery isn't configured yet — use code ${DEV_CODE} to sign in.`);
-    setStep("code");
+    setNotice(null);
+    const trimmed = email.trim();
+    try {
+      const { error: otpErr } = await supabase.auth.signInWithOtp({
+        email: trimmed,
+        options: { shouldCreateUser: false },
+      });
+      if (otpErr) throw new Error(otpErr.message);
+      setNotice(`We've sent a 6-digit code to ${trimmed}. It expires shortly.`);
+      setStep("code");
+    } catch {
+      setError("We couldn't send a sign-in code. Check the address and try again.");
+    } finally {
+      setPending(false);
+    }
   }
 
   async function handleVerify(e: React.FormEvent) {
@@ -46,23 +55,12 @@ function LoginPage() {
     setError(null);
     const trimmed = code.trim();
     try {
-      if (trimmed === DEV_CODE) {
-        const { token } = await runDevBypass({
-          data: { email: email.trim(), code: trimmed },
-        });
-        const { error: verifyErr } = await supabase.auth.verifyOtp({
-          token_hash: token,
-          type: "magiclink",
-        });
-        if (verifyErr) throw new Error(verifyErr.message);
-      } else {
-        const { error: verifyErr } = await supabase.auth.verifyOtp({
-          email: email.trim(),
-          token: trimmed,
-          type: "email",
-        });
-        if (verifyErr) throw new Error(verifyErr.message);
-      }
+      const { error: verifyErr } = await supabase.auth.verifyOtp({
+        email: email.trim(),
+        token: trimmed,
+        type: "email",
+      });
+      if (verifyErr) throw new Error(verifyErr.message);
       router.navigate({ to: "/app" });
     } catch (err) {
       setError(
