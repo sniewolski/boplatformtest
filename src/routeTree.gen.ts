@@ -20,6 +20,8 @@ import { Route as AuthenticatedAppBookCallRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
 import { Route as AuthenticatedAppAdminIndexRouteImport } from './routes/_authenticated/app.admin.index'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicRValidateRouteImport } from './routes/api/public/r/validate'
 import { Route as ApiPublicRStateRouteImport } from './routes/api/public/r/state'
 import { Route as ApiPublicRSaveRouteImport } from './routes/api/public/r/save'
@@ -89,6 +91,16 @@ const LovableEmailQueueProcessRoute =
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
+const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
+  id: '/lovable/email/auth/webhook',
+  path: '/lovable/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
+  id: '/lovable/email/auth/preview',
+  path: '/lovable/email/auth/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicRValidateRoute = ApiPublicRValidateRouteImport.update({
   id: '/api/public/r/validate',
   path: '/api/public/r/validate',
@@ -166,6 +178,8 @@ export interface FileRoutesByFullPath {
   '/api/public/r/save': typeof ApiPublicRSaveRoute
   '/api/public/r/state': typeof ApiPublicRStateRoute
   '/api/public/r/validate': typeof ApiPublicRValidateRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/app/admin/': typeof AuthenticatedAppAdminIndexRoute
   '/app/admin/audit/$ownerId': typeof AuthenticatedAppAdminAuditOwnerIdRoute
@@ -187,6 +201,8 @@ export interface FileRoutesByTo {
   '/api/public/r/save': typeof ApiPublicRSaveRoute
   '/api/public/r/state': typeof ApiPublicRStateRoute
   '/api/public/r/validate': typeof ApiPublicRValidateRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/app/admin': typeof AuthenticatedAppAdminIndexRoute
   '/app/admin/audit/$ownerId': typeof AuthenticatedAppAdminAuditOwnerIdRoute
@@ -212,6 +228,8 @@ export interface FileRoutesById {
   '/api/public/r/save': typeof ApiPublicRSaveRoute
   '/api/public/r/state': typeof ApiPublicRStateRoute
   '/api/public/r/validate': typeof ApiPublicRValidateRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/_authenticated/app/admin/': typeof AuthenticatedAppAdminIndexRoute
   '/_authenticated/app/admin/audit/$ownerId': typeof AuthenticatedAppAdminAuditOwnerIdRoute
@@ -237,6 +255,8 @@ export interface FileRouteTypes {
     | '/api/public/r/save'
     | '/api/public/r/state'
     | '/api/public/r/validate'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
     | '/app/admin/'
     | '/app/admin/audit/$ownerId'
@@ -258,6 +278,8 @@ export interface FileRouteTypes {
     | '/api/public/r/save'
     | '/api/public/r/state'
     | '/api/public/r/validate'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
     | '/app/admin'
     | '/app/admin/audit/$ownerId'
@@ -282,6 +304,8 @@ export interface FileRouteTypes {
     | '/api/public/r/save'
     | '/api/public/r/state'
     | '/api/public/r/validate'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
     | '/_authenticated/app/admin/'
     | '/_authenticated/app/admin/audit/$ownerId'
@@ -301,6 +325,8 @@ export interface RootRouteChildren {
   ApiPublicRSaveRoute: typeof ApiPublicRSaveRoute
   ApiPublicRStateRoute: typeof ApiPublicRStateRoute
   ApiPublicRValidateRoute: typeof ApiPublicRValidateRoute
+  LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
+  LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
@@ -381,6 +407,20 @@ declare module '@tanstack/react-router' {
       path: '/lovable/email/queue/process'
       fullPath: '/lovable/email/queue/process'
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/webhook': {
+      id: '/lovable/email/auth/webhook'
+      path: '/lovable/email/auth/webhook'
+      fullPath: '/lovable/email/auth/webhook'
+      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/preview': {
+      id: '/lovable/email/auth/preview'
+      path: '/lovable/email/auth/preview'
+      fullPath: '/lovable/email/auth/preview'
+      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/r/validate': {
@@ -529,6 +569,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicRSaveRoute: ApiPublicRSaveRoute,
   ApiPublicRStateRoute: ApiPublicRStateRoute,
   ApiPublicRValidateRoute: ApiPublicRValidateRoute,
+  LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
+  LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
