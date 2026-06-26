@@ -88,4 +88,3 @@ const footer = {
   lineHeight: '1.5',
   margin: '0',
 }
-
