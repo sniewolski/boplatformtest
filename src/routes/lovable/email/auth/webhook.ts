@@ -14,7 +14,7 @@ import { ReauthenticationEmail } from '@/lib/email-templates/reauthentication'
 const EMAIL_SUBJECTS: Record<string, string> = {
   signup: 'Confirm your email',
   invite: "You've been invited",
-  magiclink: 'Your login link',
+  magiclink: 'Your Sales Lab login code',
   recovery: 'Reset your password',
   email_change: 'Confirm your new email',
   reauthentication: 'Your verification code',
@@ -31,7 +31,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "boplatformtest"
+const SITE_NAME = "Sales Lab"
 const SENDER_DOMAIN = "notify.lab.salesman.com"
 const ROOT_DOMAIN = "lab.salesman.com"
 const FROM_DOMAIN = "lab.salesman.com"
