@@ -96,6 +96,10 @@ export const setAccountStatus = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
 
+    if (data.userId === context.userId) {
+      throw new Error("You can't suspend your own account.");
+    }
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("profiles")
@@ -105,6 +109,44 @@ export const setAccountStatus = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+export const deleteUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({ userId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+
+    if (data.userId === context.userId) {
+      throw new Error("You can't delete your own account.");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Last-admin check: only relevant if the target is an admin.
+    const { data: targetRoles, error: rolesErr } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.userId);
+    if (rolesErr) throw new Error(rolesErr.message);
+    const targetIsAdmin = (targetRoles ?? []).some((r: any) => r.role === "admin");
+    if (targetIsAdmin) {
+      const { count, error: countErr } = await supabaseAdmin
+        .from("user_roles")
+        .select("*", { count: "exact", head: true })
+        .eq("role", "admin");
+      if (countErr) throw new Error(countErr.message);
+      if ((count ?? 0) <= 1) {
+        throw new Error("Can't delete the last remaining admin.");
+      }
+    }
+
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 
 export const setAdminRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
