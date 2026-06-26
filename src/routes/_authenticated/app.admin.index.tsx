@@ -2,10 +2,26 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { listOwners, provisionOwner, setAccountStatus, setAdminRole } from "@/lib/admin.functions";
+import {
+  deleteUser,
+  listOwners,
+  provisionOwner,
+  setAccountStatus,
+  setAdminRole,
+} from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/app/admin/")({
   component: AdminHome,
@@ -18,6 +34,7 @@ function AdminHome() {
   const provision = useServerFn(provisionOwner);
   const setStatus = useServerFn(setAccountStatus);
   const setAdmin = useServerFn(setAdminRole);
+  const del = useServerFn(deleteUser);
 
   const owners = useQuery({
     queryKey: ["admin", "owners"],
@@ -27,6 +44,8 @@ function AdminHome() {
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; email: string } | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const provisionMut = useMutation({
     mutationFn: (vars: { email: string; fullName?: string }) =>
@@ -46,6 +65,7 @@ function AdminHome() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "owners"] });
     },
+    onError: (err: Error) => setFeedback(err.message),
   });
 
   const adminMut = useMutation({
@@ -55,6 +75,16 @@ function AdminHome() {
       queryClient.invalidateQueries({ queryKey: ["admin", "owners"] });
     },
     onError: (err: Error) => setFeedback(err.message),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: (vars: { userId: string }) => del({ data: vars }),
+    onSuccess: () => {
+      setDeleteTarget(null);
+      setDeleteError(null);
+      queryClient.invalidateQueries({ queryKey: ["admin", "owners"] });
+    },
+    onError: (err: Error) => setDeleteError(err.message),
   });
 
   return (
@@ -168,6 +198,19 @@ function AdminHome() {
                     >
                       {suspended ? "Reinstate" : "Suspend"}
                     </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={isSelf}
+                      title={isSelf ? "You can't delete your own account." : undefined}
+                      className="text-[var(--red)] hover:text-[var(--red)]"
+                      onClick={() => {
+                        setDeleteError(null);
+                        setDeleteTarget({ id: row.id, email: row.email });
+                      }}
+                    >
+                      Delete
+                    </Button>
                   </div>
                 </li>
               );
@@ -176,6 +219,45 @@ function AdminHome() {
         )}
       </section>
 
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteTarget(null);
+            setDeleteError(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {deleteTarget?.email}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the user and all of their data — audit
+              submissions, SalesCode results, and any assessments they sent.
+              This can't be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {deleteError && (
+            <p className="text-sm text-[var(--red)]">{deleteError}</p>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMut.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteMut.isPending || !deleteTarget}
+              onClick={(e) => {
+                e.preventDefault();
+                if (!deleteTarget) return;
+                deleteMut.mutate({ userId: deleteTarget.id });
+              }}
+              className="bg-[var(--red)] text-white hover:bg-[var(--red)]/90"
+            >
+              {deleteMut.isPending ? "Deleting…" : "Delete user"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
