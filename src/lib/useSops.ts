@@ -195,14 +195,18 @@ export function useReplaceSopFile() {
   return useMutation({
     mutationFn: async (vars: { sop: Sop; file: File }) => {
       if (vars.file.size > SOPS_MAX_BYTES) throw new Error("File is over 20MB.");
-      if (!/\.pdf$/i.test(vars.file.name) || vars.file.type !== "application/pdf") {
-        throw new Error("Only PDF files are allowed.");
+      if (!isAllowedSopFile(vars.file)) {
+        throw new Error("Only PDF or Word (.docx) files are allowed.");
       }
       const folderSeg = vars.sop.folder_id ?? "unassigned";
       const path = `${folderSeg}/${vars.sop.id}/${safeName(vars.file.name)}`;
+      const contentType = isDocxFileName(vars.file.name)
+        ? SOPS_DOCX_MIME
+        : "application/pdf";
       const { error: upErr } = await supabase.storage
         .from(SOPS_BUCKET)
-        .upload(path, vars.file, { contentType: "application/pdf", upsert: true });
+        .upload(path, vars.file, { contentType, upsert: true });
+
       if (upErr) throw upErr;
       try {
         await replace({
