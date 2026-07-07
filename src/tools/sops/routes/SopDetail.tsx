@@ -11,6 +11,11 @@ import { SOPS_BUCKET, getSopSignedUrl, type Sop } from "@/lib/useSops";
 
 
 export function SopDetail({ sopId }: { sopId: string }) {
+  useEffect(() => {
+    // pdf.js worker — pin to the same version we install (pdfjs-dist 6.x)
+    pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+  }, []);
+
   const meta = useQuery({
     queryKey: ["sop", sopId],
     queryFn: async (): Promise<Sop | null> => {
