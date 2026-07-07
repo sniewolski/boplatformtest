@@ -65,7 +65,7 @@ export const createSop = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
-    await assertPdfAtPath(data.filePath);
+    await assertPdfOrDocxAtPath(data.filePath);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row, error } = await supabaseAdmin
@@ -102,7 +102,7 @@ export const replaceSopFile = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
-    await assertPdfAtPath(data.filePath);
+    await assertPdfOrDocxAtPath(data.filePath);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: existing, error: exErr } = await supabaseAdmin
