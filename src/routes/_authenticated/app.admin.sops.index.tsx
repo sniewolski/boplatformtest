@@ -524,7 +524,7 @@ function EditSopDialog({
             <input
               id="edit-file"
               type="file"
-              accept="application/pdf,.pdf"
+              accept={SOPS_ACCEPT_ATTR}
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
               className="text-sm text-ink file:mr-3 file:px-3 file:py-1.5 file:rounded-md file:border file:border-border file:bg-background file:text-ink file:text-sm hover:file:bg-[var(--surface-raised)]"
             />
