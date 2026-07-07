@@ -155,15 +155,19 @@ export function useUploadSop() {
       file: File;
     }) => {
       if (vars.file.size > SOPS_MAX_BYTES) throw new Error("File is over 20MB.");
-      if (!/\.pdf$/i.test(vars.file.name) || vars.file.type !== "application/pdf") {
-        throw new Error("Only PDF files are allowed.");
+      if (!isAllowedSopFile(vars.file)) {
+        throw new Error("Only PDF or Word (.docx) files are allowed.");
       }
       const sopId = crypto.randomUUID();
       const folderSeg = vars.folderId ?? "unassigned";
       const path = `${folderSeg}/${sopId}/${safeName(vars.file.name)}`;
+      const contentType = isDocxFileName(vars.file.name)
+        ? SOPS_DOCX_MIME
+        : "application/pdf";
       const { error: upErr } = await supabase.storage
         .from(SOPS_BUCKET)
-        .upload(path, vars.file, { contentType: "application/pdf", upsert: false });
+        .upload(path, vars.file, { contentType, upsert: false });
+
       if (upErr) throw upErr;
       try {
         await create({
