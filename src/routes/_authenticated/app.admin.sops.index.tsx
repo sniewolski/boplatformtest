@@ -481,7 +481,7 @@ function EditSopDialog({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Edit SOP</DialogTitle>
-          <DialogDescription>Update metadata or replace the PDF.</DialogDescription>
+          <DialogDescription>Update metadata or replace the file.</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
