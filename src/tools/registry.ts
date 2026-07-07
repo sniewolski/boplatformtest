@@ -44,7 +44,10 @@ export type ToolManifest = {
   publicRoutes?: AnyRoute[];
 };
 
+import { sopsManifest } from "./sops/manifest";
+
 export const toolRegistry: ToolManifest[] = [
   sellingSystemsAuditManifest,
   salescodeManifest,
+  sopsManifest,
 ];
