@@ -313,6 +313,14 @@ function UploadSopDialog({
   const [file, setFile] = useState<File | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
+  // Re-sync the folder to the caller's default whenever the dialog opens
+  // (per-folder "Add" buttons pass different defaults).
+  useEffect(() => {
+    if (open) {
+      setFolderId(defaultFolderId ?? UNASSIGNED);
+    }
+  }, [open, defaultFolderId]);
+
   function reset() {
     setTitle("");
     setDescription("");
@@ -324,10 +332,10 @@ function UploadSopDialog({
   async function submit() {
     setErr(null);
     if (!title.trim()) return setErr("Give it a title.");
-    if (!file) return setErr("Choose a PDF.");
+    if (!file) return setErr("Choose a PDF or Word file.");
     if (file.size > SOPS_MAX_BYTES) return setErr("File is over 20MB.");
-    if (!/\.pdf$/i.test(file.name) || file.type !== "application/pdf") {
-      return setErr("Only PDF files are allowed.");
+    if (!isAllowedSopFile(file)) {
+      return setErr("Only PDF or Word (.docx) files are allowed.");
     }
     try {
       await upload.mutateAsync({
@@ -354,7 +362,7 @@ function UploadSopDialog({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Upload SOP</DialogTitle>
-          <DialogDescription>PDF only, up to 20MB.</DialogDescription>
+          <DialogDescription>PDF or Word, up to 20MB.</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
@@ -393,17 +401,18 @@ function UploadSopDialog({
             </Select>
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="sop-file">PDF file</Label>
+            <Label htmlFor="sop-file">File (PDF or Word)</Label>
             <input
               id="sop-file"
               type="file"
-              accept="application/pdf,.pdf"
+              accept={SOPS_ACCEPT_ATTR}
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
               className="text-sm text-ink file:mr-3 file:px-3 file:py-1.5 file:rounded-md file:border file:border-border file:bg-background file:text-ink file:text-sm hover:file:bg-[var(--surface-raised)]"
             />
           </div>
           {err && <p className="text-[var(--red)] text-sm">{err}</p>}
         </div>
+
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={upload.isPending}>
             Cancel
