@@ -1,14 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  ArrowLeft,
+  Download,
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+} from "lucide-react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { SOPS_BUCKET, getSopSignedUrl, type Sop } from "@/lib/useSops";
-
+import {
+  SOPS_BUCKET,
+  getSopSignedUrl,
+  isDocxFileName,
+  type Sop,
+} from "@/lib/useSops";
 
 export function SopDetail({ sopId }: { sopId: string }) {
   useEffect(() => {
@@ -57,6 +67,7 @@ export function SopDetail({ sopId }: { sopId: string }) {
   }, [signedUrl]);
 
   const fileProp = useMemo(() => (signedUrl ? { url: signedUrl } : null), [signedUrl]);
+  const isDocx = meta.data ? isDocxFileName(meta.data.file_name) : false;
 
   return (
     <div className="app-content py-16 flex flex-col gap-6">
@@ -101,10 +112,10 @@ export function SopDetail({ sopId }: { sopId: string }) {
               >
                 <Button variant="outline" size="sm" disabled={!signedUrl}>
                   <Download className="size-4" />
-                  Download PDF
+                  {isDocx ? "Download to view" : "Download PDF"}
                 </Button>
               </a>
-              {numPages && numPages > 1 && (
+              {!isDocx && numPages && numPages > 1 && (
                 <div className="flex items-center gap-2 text-sm text-ink-muted">
                   <Button
                     variant="ghost"
@@ -130,38 +141,53 @@ export function SopDetail({ sopId }: { sopId: string }) {
             </div>
           </header>
 
-          <div
-            className="border border-border rounded-xl overflow-hidden bg-[var(--surface-raised)] flex justify-center"
-            ref={(el) => {
-              if (el && el.clientWidth !== containerWidth) {
-                setContainerWidth(el.clientWidth);
-              }
-            }}
-          >
-            {!signedUrl && (
-              <div className="py-24 text-ink-muted text-sm">Preparing preview…</div>
-            )}
-            {loadError && (
-              <div className="py-24 text-[var(--red)] text-sm">{loadError}</div>
-            )}
-            {fileProp && !loadError && (
-              <Document
-                file={fileProp}
-                onLoadSuccess={({ numPages: n }) => setNumPages(n)}
-                onLoadError={(e) => setLoadError(e.message || "Failed to load PDF.")}
-                loading={
-                  <div className="py-24 text-ink-muted text-sm">Loading PDF…</div>
+          {isDocx ? (
+            <div className="border border-border rounded-xl bg-[var(--surface-raised)] px-6 py-10 flex items-center gap-4">
+              <FileText className="size-8 text-ink-muted shrink-0" aria-hidden />
+              <div className="flex flex-col min-w-0">
+                <span className="text-ink text-sm truncate">
+                  {meta.data.file_name}
+                </span>
+                <span className="text-ink-muted text-xs">
+                  Word document — in-app preview isn't available. Use
+                  “Download to view”.
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div
+              className="border border-border rounded-xl overflow-hidden bg-[var(--surface-raised)] flex justify-center"
+              ref={(el) => {
+                if (el && el.clientWidth !== containerWidth) {
+                  setContainerWidth(el.clientWidth);
                 }
-              >
-                <Page
-                  pageIndex={pageIndex}
-                  width={containerWidth ? Math.min(containerWidth - 2, 900) : 800}
-                  renderAnnotationLayer={false}
-                  renderTextLayer={false}
-                />
-              </Document>
-            )}
-          </div>
+              }}
+            >
+              {!signedUrl && (
+                <div className="py-24 text-ink-muted text-sm">Preparing preview…</div>
+              )}
+              {loadError && (
+                <div className="py-24 text-[var(--red)] text-sm">{loadError}</div>
+              )}
+              {fileProp && !loadError && (
+                <Document
+                  file={fileProp}
+                  onLoadSuccess={({ numPages: n }) => setNumPages(n)}
+                  onLoadError={(e) => setLoadError(e.message || "Failed to load PDF.")}
+                  loading={
+                    <div className="py-24 text-ink-muted text-sm">Loading PDF…</div>
+                  }
+                >
+                  <Page
+                    pageIndex={pageIndex}
+                    width={containerWidth ? Math.min(containerWidth - 2, 900) : 800}
+                    renderAnnotationLayer={false}
+                    renderTextLayer={false}
+                  />
+                </Document>
+              )}
+            </div>
+          )}
         </>
       )}
     </div>

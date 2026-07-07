@@ -6,6 +6,25 @@ import { createSop, deleteSop, replaceSopFile } from "@/lib/sops.functions";
 export const SOPS_BUCKET = "sops";
 export const SOPS_MAX_BYTES = 20 * 1024 * 1024;
 
+export const SOPS_DOCX_MIME =
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+export const SOPS_ACCEPT_ATTR = `application/pdf,.pdf,${SOPS_DOCX_MIME},.docx`;
+
+export function isAllowedSopFile(file: File): boolean {
+  const nameOk = /\.(pdf|docx)$/i.test(file.name);
+  const typeOk =
+    file.type === "application/pdf" ||
+    file.type === SOPS_DOCX_MIME ||
+    // Some browsers/OS may not set a MIME type for .docx
+    file.type === "";
+  return nameOk && typeOk;
+}
+
+export function isDocxFileName(name: string): boolean {
+  return /\.docx$/i.test(name);
+}
+
+
 export type SopFolder = {
   id: string;
   name: string;
@@ -136,15 +155,19 @@ export function useUploadSop() {
       file: File;
     }) => {
       if (vars.file.size > SOPS_MAX_BYTES) throw new Error("File is over 20MB.");
-      if (!/\.pdf$/i.test(vars.file.name) || vars.file.type !== "application/pdf") {
-        throw new Error("Only PDF files are allowed.");
+      if (!isAllowedSopFile(vars.file)) {
+        throw new Error("Only PDF or Word (.docx) files are allowed.");
       }
       const sopId = crypto.randomUUID();
       const folderSeg = vars.folderId ?? "unassigned";
       const path = `${folderSeg}/${sopId}/${safeName(vars.file.name)}`;
+      const contentType = isDocxFileName(vars.file.name)
+        ? SOPS_DOCX_MIME
+        : "application/pdf";
       const { error: upErr } = await supabase.storage
         .from(SOPS_BUCKET)
-        .upload(path, vars.file, { contentType: "application/pdf", upsert: false });
+        .upload(path, vars.file, { contentType, upsert: false });
+
       if (upErr) throw upErr;
       try {
         await create({
@@ -172,14 +195,18 @@ export function useReplaceSopFile() {
   return useMutation({
     mutationFn: async (vars: { sop: Sop; file: File }) => {
       if (vars.file.size > SOPS_MAX_BYTES) throw new Error("File is over 20MB.");
-      if (!/\.pdf$/i.test(vars.file.name) || vars.file.type !== "application/pdf") {
-        throw new Error("Only PDF files are allowed.");
+      if (!isAllowedSopFile(vars.file)) {
+        throw new Error("Only PDF or Word (.docx) files are allowed.");
       }
       const folderSeg = vars.sop.folder_id ?? "unassigned";
       const path = `${folderSeg}/${vars.sop.id}/${safeName(vars.file.name)}`;
+      const contentType = isDocxFileName(vars.file.name)
+        ? SOPS_DOCX_MIME
+        : "application/pdf";
       const { error: upErr } = await supabase.storage
         .from(SOPS_BUCKET)
-        .upload(path, vars.file, { contentType: "application/pdf", upsert: true });
+        .upload(path, vars.file, { contentType, upsert: true });
+
       if (upErr) throw upErr;
       try {
         await replace({
