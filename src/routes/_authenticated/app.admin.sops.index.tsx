@@ -32,7 +32,9 @@ import {
 import {
   Sop,
   SopFolder,
+  SOPS_ACCEPT_ATTR,
   SOPS_MAX_BYTES,
+  isAllowedSopFile,
   useCreateFolder,
   useDeleteFolder,
   useDeleteSop,
@@ -43,6 +45,7 @@ import {
   useUpdateSopMeta,
   useUploadSop,
 } from "@/lib/useSops";
+
 
 export const Route = createFileRoute("/_authenticated/app/admin/sops/")({
   component: SopsAdmin,
