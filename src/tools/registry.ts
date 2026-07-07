@@ -16,6 +16,7 @@ import type { AnyRoute } from "@tanstack/react-router";
 
 import { sellingSystemsAuditManifest } from "./selling-systems-audit/manifest";
 import { salescodeManifest } from "./salescode/manifest";
+import { sopsManifest } from "./sops/manifest";
 
 export type ToolNavEntry = {
   label: string;
