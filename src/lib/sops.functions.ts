@@ -25,7 +25,7 @@ async function assertAdmin(supabase: any, userId: string) {
   if (!data) throw new Error("Forbidden");
 }
 
-async function assertPdfAtPath(storagePath: string): Promise<void> {
+async function assertPdfOrDocxAtPath(storagePath: string): Promise<void> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin.storage.from(BUCKET).download(storagePath);
   if (error || !data) throw new Error("Uploaded file not found");
@@ -37,9 +37,15 @@ async function assertPdfAtPath(storagePath: string): Promise<void> {
   // %PDF-
   const isPdf =
     head[0] === 0x25 && head[1] === 0x50 && head[2] === 0x44 && head[3] === 0x46 && head[4] === 0x2d;
-  if (!isPdf) {
+  // PK\x03\x04 — docx is a ZIP container
+  const isZip =
+    head[0] === 0x50 && head[1] === 0x4b && head[2] === 0x03 && head[3] === 0x04;
+  const lower = storagePath.toLowerCase();
+  const isDocxByExt = lower.endsWith(".docx");
+  const ok = isPdf || (isZip && isDocxByExt);
+  if (!ok) {
     await supabaseAdmin.storage.from(BUCKET).remove([storagePath]);
-    throw new Error("File is not a valid PDF.");
+    throw new Error("File must be a PDF or Word (.docx) document.");
   }
 }
 
