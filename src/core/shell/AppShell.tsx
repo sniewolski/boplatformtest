@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
-import { Check, LayoutDashboard, Shield, ClipboardList, LogOut, CalendarDays } from "lucide-react";
+import { Check, LayoutDashboard, Shield, ClipboardList, FileText, LogOut, CalendarDays } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toolRegistry } from "@/tools/registry";
@@ -154,6 +154,14 @@ export function AppShell({
               >
                 <ClipboardList className="size-4" />
                 Review
+              </Link>
+              <Link
+                to="/app/admin/sops"
+                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-ink hover:bg-background transition-colors"
+                activeProps={{ className: "bg-background font-medium" }}
+              >
+                <FileText className="size-4" />
+                SOPs
               </Link>
             </>
           )}

@@ -27,7 +27,9 @@ import { Route as ApiPublicRStateRouteImport } from './routes/api/public/r/state
 import { Route as ApiPublicRSaveRouteImport } from './routes/api/public/r/save'
 import { Route as ApiPublicRCompleteRouteImport } from './routes/api/public/r/complete'
 import { Route as ApiPublicRCaptureRouteImport } from './routes/api/public/r/capture'
+import { Route as AuthenticatedAppAdminSopsRouteImport } from './routes/_authenticated/app.admin.sops'
 import { Route as AuthenticatedAppAdminReviewRouteImport } from './routes/_authenticated/app.admin.review'
+import { Route as AuthenticatedAppAdminSopsIndexRouteImport } from './routes/_authenticated/app.admin.sops.index'
 import { Route as AuthenticatedAppAdminSalescodeIndexRouteImport } from './routes/_authenticated/app.admin.salescode.index'
 import { Route as AuthenticatedAppAdminAuditIndexRouteImport } from './routes/_authenticated/app.admin.audit.index'
 import { Route as AuthenticatedAppToolsKeySplatRouteImport } from './routes/_authenticated/app.tools.$key.$'
@@ -126,11 +128,23 @@ const ApiPublicRCaptureRoute = ApiPublicRCaptureRouteImport.update({
   path: '/api/public/r/capture',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAppAdminSopsRoute =
+  AuthenticatedAppAdminSopsRouteImport.update({
+    id: '/sops',
+    path: '/sops',
+    getParentRoute: () => AuthenticatedAppAdminRoute,
+  } as any)
 const AuthenticatedAppAdminReviewRoute =
   AuthenticatedAppAdminReviewRouteImport.update({
     id: '/review',
     path: '/review',
     getParentRoute: () => AuthenticatedAppAdminRoute,
+  } as any)
+const AuthenticatedAppAdminSopsIndexRoute =
+  AuthenticatedAppAdminSopsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAppAdminSopsRoute,
   } as any)
 const AuthenticatedAppAdminSalescodeIndexRoute =
   AuthenticatedAppAdminSalescodeIndexRouteImport.update({
@@ -173,6 +187,7 @@ export interface FileRoutesByFullPath {
   '/app/': typeof AuthenticatedAppIndexRoute
   '/r/$token/': typeof RTokenIndexRoute
   '/app/admin/review': typeof AuthenticatedAppAdminReviewRoute
+  '/app/admin/sops': typeof AuthenticatedAppAdminSopsRouteWithChildren
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
   '/api/public/r/save': typeof ApiPublicRSaveRoute
@@ -187,6 +202,7 @@ export interface FileRoutesByFullPath {
   '/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
   '/app/admin/audit/': typeof AuthenticatedAppAdminAuditIndexRoute
   '/app/admin/salescode/': typeof AuthenticatedAppAdminSalescodeIndexRoute
+  '/app/admin/sops/': typeof AuthenticatedAppAdminSopsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -210,6 +226,7 @@ export interface FileRoutesByTo {
   '/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
   '/app/admin/audit': typeof AuthenticatedAppAdminAuditIndexRoute
   '/app/admin/salescode': typeof AuthenticatedAppAdminSalescodeIndexRoute
+  '/app/admin/sops': typeof AuthenticatedAppAdminSopsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -223,6 +240,7 @@ export interface FileRoutesById {
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/r/$token/': typeof RTokenIndexRoute
   '/_authenticated/app/admin/review': typeof AuthenticatedAppAdminReviewRoute
+  '/_authenticated/app/admin/sops': typeof AuthenticatedAppAdminSopsRouteWithChildren
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
   '/api/public/r/save': typeof ApiPublicRSaveRoute
@@ -237,6 +255,7 @@ export interface FileRoutesById {
   '/_authenticated/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
   '/_authenticated/app/admin/audit/': typeof AuthenticatedAppAdminAuditIndexRoute
   '/_authenticated/app/admin/salescode/': typeof AuthenticatedAppAdminSalescodeIndexRoute
+  '/_authenticated/app/admin/sops/': typeof AuthenticatedAppAdminSopsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -250,6 +269,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/r/$token/'
     | '/app/admin/review'
+    | '/app/admin/sops'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
     | '/api/public/r/save'
@@ -264,6 +284,7 @@ export interface FileRouteTypes {
     | '/app/tools/$key/$'
     | '/app/admin/audit/'
     | '/app/admin/salescode/'
+    | '/app/admin/sops/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -287,6 +308,7 @@ export interface FileRouteTypes {
     | '/app/tools/$key/$'
     | '/app/admin/audit'
     | '/app/admin/salescode'
+    | '/app/admin/sops'
   id:
     | '__root__'
     | '/'
@@ -299,6 +321,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/'
     | '/r/$token/'
     | '/_authenticated/app/admin/review'
+    | '/_authenticated/app/admin/sops'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
     | '/api/public/r/save'
@@ -313,6 +336,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/tools/$key/$'
     | '/_authenticated/app/admin/audit/'
     | '/_authenticated/app/admin/salescode/'
+    | '/_authenticated/app/admin/sops/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -458,12 +482,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicRCaptureRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/app/admin/sops': {
+      id: '/_authenticated/app/admin/sops'
+      path: '/sops'
+      fullPath: '/app/admin/sops'
+      preLoaderRoute: typeof AuthenticatedAppAdminSopsRouteImport
+      parentRoute: typeof AuthenticatedAppAdminRoute
+    }
     '/_authenticated/app/admin/review': {
       id: '/_authenticated/app/admin/review'
       path: '/review'
       fullPath: '/app/admin/review'
       preLoaderRoute: typeof AuthenticatedAppAdminReviewRouteImport
       parentRoute: typeof AuthenticatedAppAdminRoute
+    }
+    '/_authenticated/app/admin/sops/': {
+      id: '/_authenticated/app/admin/sops/'
+      path: '/'
+      fullPath: '/app/admin/sops/'
+      preLoaderRoute: typeof AuthenticatedAppAdminSopsIndexRouteImport
+      parentRoute: typeof AuthenticatedAppAdminSopsRoute
     }
     '/_authenticated/app/admin/salescode/': {
       id: '/_authenticated/app/admin/salescode/'
@@ -503,8 +541,23 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedAppAdminSopsRouteChildren {
+  AuthenticatedAppAdminSopsIndexRoute: typeof AuthenticatedAppAdminSopsIndexRoute
+}
+
+const AuthenticatedAppAdminSopsRouteChildren: AuthenticatedAppAdminSopsRouteChildren =
+  {
+    AuthenticatedAppAdminSopsIndexRoute: AuthenticatedAppAdminSopsIndexRoute,
+  }
+
+const AuthenticatedAppAdminSopsRouteWithChildren =
+  AuthenticatedAppAdminSopsRoute._addFileChildren(
+    AuthenticatedAppAdminSopsRouteChildren,
+  )
+
 interface AuthenticatedAppAdminRouteChildren {
   AuthenticatedAppAdminReviewRoute: typeof AuthenticatedAppAdminReviewRoute
+  AuthenticatedAppAdminSopsRoute: typeof AuthenticatedAppAdminSopsRouteWithChildren
   AuthenticatedAppAdminIndexRoute: typeof AuthenticatedAppAdminIndexRoute
   AuthenticatedAppAdminAuditOwnerIdRoute: typeof AuthenticatedAppAdminAuditOwnerIdRoute
   AuthenticatedAppAdminSalescodeOwnerIdRoute: typeof AuthenticatedAppAdminSalescodeOwnerIdRoute
@@ -514,6 +567,7 @@ interface AuthenticatedAppAdminRouteChildren {
 
 const AuthenticatedAppAdminRouteChildren: AuthenticatedAppAdminRouteChildren = {
   AuthenticatedAppAdminReviewRoute: AuthenticatedAppAdminReviewRoute,
+  AuthenticatedAppAdminSopsRoute: AuthenticatedAppAdminSopsRouteWithChildren,
   AuthenticatedAppAdminIndexRoute: AuthenticatedAppAdminIndexRoute,
   AuthenticatedAppAdminAuditOwnerIdRoute:
     AuthenticatedAppAdminAuditOwnerIdRoute,
