@@ -739,6 +739,7 @@ export type Database = {
           created_at: string
           error_message: string | null
           external_url: string | null
+          failed_pages: Json
           id: string
           source_type: string
           status: string
@@ -752,6 +753,7 @@ export type Database = {
           created_at?: string
           error_message?: string | null
           external_url?: string | null
+          failed_pages?: Json
           id?: string
           source_type: string
           status?: string
@@ -765,6 +767,7 @@ export type Database = {
           created_at?: string
           error_message?: string | null
           external_url?: string | null
+          failed_pages?: Json
           id?: string
           source_type?: string
           status?: string
