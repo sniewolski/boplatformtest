@@ -163,6 +163,14 @@ export function AppShell({
                 <FileText className="size-4" />
                 SOPs
               </Link>
+              <Link
+                to="/app/admin/will-ai"
+                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-ink hover:bg-background transition-colors"
+                activeProps={{ className: "bg-background font-medium" }}
+              >
+                <MessagesSquare className="size-4" />
+                Will AI
+              </Link>
             </>
           )}
         </nav>
