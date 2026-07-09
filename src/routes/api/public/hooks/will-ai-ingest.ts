@@ -137,17 +137,34 @@ function grayscaleVariance(pixels: Uint8Array | Uint8ClampedArray): number {
   return acc / pixels.length;
 }
 
-/** Count image/vector-ish structural blocks on a page from mupdf JSON. */
-function countVisualBlocks(structuredJson: any): number {
-  const blocks = structuredJson?.blocks ?? [];
+/**
+ * Count drawing operations on a page (vector fills, strokes, raster fills).
+ *
+ * We deliberately do NOT use mupdf's structured-text JSON blocks here —
+ * that API surfaces only `text` and (with `preserve-images`) `image`
+ * blocks, so it's blind to vector-drawn diagrams. Running a custom
+ * Device across the page is the only way to see fillPath/strokePath
+ * calls, which is where diagrams live in a typeset book.
+ */
+function countGraphicsOps(mupdf: any, page: any): number {
   let n = 0;
-  for (const b of blocks) {
-    // mupdf 1.28 uses "image" for image blocks; text blocks are "text".
-    // Any non-text block counts as a visual block.
-    if (b?.type && b.type !== "text") n++;
+  const device = new mupdf.Device({
+    fillPath: () => { n++; },
+    strokePath: () => { n++; },
+    fillImage: () => { n++; },
+  });
+  try {
+    page.run(device, mupdf.Matrix.identity);
+  } catch {
+    // If the device can't run, fall through with whatever count accrued.
   }
   return n;
 }
+
+/** Section-divider pages ("02. Influence | SECTION 1 - SKILLS") are
+ * skipped even when they carry a big illustration — they add no
+ * retrievable content and their captions crowd search results. */
+const SECTION_DIVIDER_RE = /\b(section|chapter|part|module)\b/i;
 
 /**
  * Try to detect the running section-footer text on this page (e.g.
