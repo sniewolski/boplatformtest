@@ -397,46 +397,37 @@ export const sendWillAiMessage = createServerFn({ method: "POST" })
       usedFallback = false;
     }
 
-    // ── Step 5: persist (create conversation lazily if this was turn 1) ──
-    let conversationId = data.conversationId;
-    if (!conversationId) {
-      const { data: conv, error: convErr } = await supabase
-        .from("will_ai_conversations")
-        .insert({ owner_id: data.ownerId })
-        .select("id")
-        .single();
-      if (convErr) throw new Error(`Failed to create conversation: ${convErr.message}`);
-      conversationId = conv.id;
-    }
-
-    const { error: userInsErr } = await supabase.from("will_ai_messages").insert({
-      conversation_id: conversationId,
-      owner_id: data.ownerId,
-      role: "user",
-      content: data.userMessage,
-      cited_chunk_ids: [],
-      used_fallback: false,
-    });
-    if (userInsErr) throw new Error(`Failed to save user message: ${userInsErr.message}`);
-
-    const { data: assistantRow, error: asstInsErr } = await supabase
-      .from("will_ai_messages")
-      .insert({
-        conversation_id: conversationId,
-        owner_id: data.ownerId,
-        role: "assistant",
-        content: assistantAnswer,
-        cited_chunk_ids: citedChunkIds as any,
-        used_fallback: usedFallback,
-      })
-      .select("id, content, cited_chunk_ids, used_fallback, created_at")
-      .single();
-    if (asstInsErr) throw new Error(`Failed to save assistant message: ${asstInsErr.message}`);
+    // ── Step 5: persist atomically ──
+    //
+    // All three writes (conversation row if turn 1, user message, assistant
+    // message) run inside a single Postgres transaction via the
+    // `persist_will_ai_turn` RPC. Three separate PostgREST inserts would
+    // NOT be a transaction — a mid-sequence failure would leave an orphan
+    // conversation or a user message without an assistant reply.
+    const { data: persisted, error: persistErr } = await supabase.rpc(
+      "persist_will_ai_turn" as any,
+      {
+        p_conversation_id: data.conversationId,
+        p_owner_id: data.ownerId,
+        p_user_message: data.userMessage,
+        p_assistant_message: assistantAnswer,
+        p_cited_chunk_ids: citedChunkIds as any,
+        p_used_fallback: usedFallback,
+      },
+    );
+    if (persistErr) throw new Error(`Failed to persist turn: ${persistErr.message}`);
+    const row = (Array.isArray(persisted) ? persisted[0] : persisted) as any;
+    if (!row) throw new Error("persist_will_ai_turn returned no row");
 
     return {
-      conversationId,
-      assistantMessage: assistantRow,
-      // Debug/observability — Phase 6 can decide whether to surface any of it.
+      conversationId: row.conversation_id as string,
+      assistantMessage: {
+        id: row.assistant_id,
+        content: row.assistant_content,
+        cited_chunk_ids: row.assistant_cited_chunk_ids ?? [],
+        used_fallback: row.assistant_used_fallback,
+        created_at: row.assistant_created_at,
+      },
       debug: {
         topDistance: top1?.distance ?? null,
         retrievedCount: allMatches.length,

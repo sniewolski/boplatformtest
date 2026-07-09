@@ -821,6 +821,24 @@ export type Database = {
         }
         Returns: number
       }
+      persist_will_ai_turn: {
+        Args: {
+          p_assistant_message: string
+          p_cited_chunk_ids: string[]
+          p_conversation_id: string
+          p_owner_id: string
+          p_used_fallback: boolean
+          p_user_message: string
+        }
+        Returns: {
+          assistant_cited_chunk_ids: string[]
+          assistant_content: string
+          assistant_created_at: string
+          assistant_id: string
+          assistant_used_fallback: boolean
+          conversation_id: string
+        }[]
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
