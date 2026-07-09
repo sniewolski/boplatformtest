@@ -323,10 +323,15 @@ async function processSource(
     }
 
     // 3. Decide.
-    // Section-divider pages ("02. Influence | SECTION 1 - SKILLS") always
-    // skip, even with a big illustration — they're navigation, not content.
+    // Section-divider pages ("02. Influence | SECTION 1 - SKILLS") skip
+    // even when they carry decorative art. Guarded by a graphics ceiling
+    // so a divider page that happens to contain a real diagram (>= 8 ops)
+    // isn't silently dropped — real content diagrams in the audited book
+    // run 10-30 ops; page furniture / section characters run 2-3.
     const isSectionDivider =
-      charCount < SKIP_TEXT_MAX && SECTION_DIVIDER_RE.test(cleanText);
+      charCount < SKIP_TEXT_MAX
+      && SECTION_DIVIDER_RE.test(cleanText)
+      && graphicsCount < 8;
     const isBlank =
       charCount < SKIP_TEXT_MAX && graphicsCount === 0 && variance < SKIP_VARIANCE_MAX;
     if (isSectionDivider || isBlank) {
