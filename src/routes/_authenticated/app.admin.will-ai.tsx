@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { AlertTriangle, Check, Clock, Loader2 } from "lucide-react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -127,8 +128,9 @@ function WillAiAdmin() {
                           <button
                             type="button"
                             onClick={() => toggleExpanded(s.id)}
-                            className="text-xs text-[var(--amber,#b45309)] w-fit underline-offset-2 hover:underline"
+                            className="inline-flex items-center gap-1.5 text-xs text-ink-muted w-fit underline-offset-2 hover:underline"
                           >
+                            <AlertTriangle className="w-3.5 h-3.5" />
                             {failedCount} failed page
                             {failedCount === 1 ? "" : "s"} —{" "}
                             {isExpanded ? "hide" : "show"}
@@ -325,21 +327,39 @@ function UploadForm() {
 }
 
 function StatusBadge({ status }: { status: WillAiSource["status"] }) {
-  const styles: Record<WillAiSource["status"], string> = {
-    pending:
-      "bg-[var(--surface-raised)] text-ink-muted border border-border",
-    processing:
-      "bg-blue-500/10 text-blue-600 border border-blue-500/30 animate-pulse",
-    completed:
-      "bg-emerald-500/10 text-emerald-700 border border-emerald-500/30",
-    failed:
-      "bg-[var(--red)]/10 text-[var(--red)] border border-[var(--red)]/40 font-medium",
-  };
+  const base =
+    "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide border";
+  if (status === "failed") {
+    return (
+      <span
+        className={`${base} bg-[var(--red)]/10 text-[var(--red)] border-[var(--red)]/40 font-medium`}
+      >
+        failed
+      </span>
+    );
+  }
+  const neutral =
+    "bg-[var(--surface-raised)] text-ink-muted border-border";
+  if (status === "pending") {
+    return (
+      <span className={`${base} ${neutral}`}>
+        <Clock className="w-3 h-3" />
+        pending
+      </span>
+    );
+  }
+  if (status === "processing") {
+    return (
+      <span className={`${base} ${neutral} animate-pulse`}>
+        <Loader2 className="w-3 h-3 animate-spin" />
+        processing
+      </span>
+    );
+  }
   return (
-    <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${styles[status]}`}
-    >
-      {status}
+    <span className={`${base} bg-[var(--surface-raised)] text-ink border-border`}>
+      <Check className="w-3 h-3" />
+      completed
     </span>
   );
 }
