@@ -627,6 +627,154 @@ export type Database = {
         }
         Relationships: []
       }
+      will_ai_chunks: {
+        Row: {
+          chunk_type: string
+          content: string
+          created_at: string
+          embedding: string | null
+          id: string
+          image_storage_path: string | null
+          page_number: number | null
+          section_label: string | null
+          source_id: string
+          timestamp_seconds: number | null
+        }
+        Insert: {
+          chunk_type: string
+          content: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          image_storage_path?: string | null
+          page_number?: number | null
+          section_label?: string | null
+          source_id: string
+          timestamp_seconds?: number | null
+        }
+        Update: {
+          chunk_type?: string
+          content?: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          image_storage_path?: string | null
+          page_number?: number | null
+          section_label?: string | null
+          source_id?: string
+          timestamp_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "will_ai_chunks_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "will_ai_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      will_ai_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          owner_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          owner_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+        }
+        Relationships: []
+      }
+      will_ai_messages: {
+        Row: {
+          cited_chunk_ids: Json
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          owner_id: string
+          role: string
+          used_fallback: boolean
+        }
+        Insert: {
+          cited_chunk_ids?: Json
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          owner_id: string
+          role: string
+          used_fallback?: boolean
+        }
+        Update: {
+          cited_chunk_ids?: Json
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          owner_id?: string
+          role?: string
+          used_fallback?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "will_ai_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "will_ai_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      will_ai_sources: {
+        Row: {
+          author: string | null
+          created_at: string
+          error_message: string | null
+          external_url: string | null
+          id: string
+          source_type: string
+          status: string
+          storage_path: string | null
+          title: string
+          total_pages: number | null
+          updated_at: string
+        }
+        Insert: {
+          author?: string | null
+          created_at?: string
+          error_message?: string | null
+          external_url?: string | null
+          id?: string
+          source_type: string
+          status?: string
+          storage_path?: string | null
+          title: string
+          total_pages?: number | null
+          updated_at?: string
+        }
+        Update: {
+          author?: string | null
+          created_at?: string
+          error_message?: string | null
+          external_url?: string | null
+          id?: string
+          source_type?: string
+          status?: string
+          storage_path?: string | null
+          title?: string
+          total_pages?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -665,6 +813,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      will_ai_ingestion_dispatch: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "owner" | "admin"
