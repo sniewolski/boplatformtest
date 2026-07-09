@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { AlertTriangle, Check, Clock, Loader2 } from "lucide-react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +15,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
 import {
   type WillAiFailedPage,
   type WillAiSource,
@@ -31,6 +34,33 @@ export const Route = createFileRoute("/_authenticated/app/admin/will-ai")({
 });
 
 function WillAiAdmin() {
+  return (
+    <div className="app-content py-16 flex flex-col gap-8">
+      <header className="flex flex-col gap-2">
+        <h1 className="text-3xl">Will AI</h1>
+        <p className="text-ink-muted text-sm max-w-prose">
+          Manage the source material Will draws from, and see where owners
+          asked questions the material didn't cover.
+        </p>
+      </header>
+
+      <Tabs defaultValue="sources" className="flex flex-col gap-6">
+        <TabsList className="self-start">
+          <TabsTrigger value="sources">Sources</TabsTrigger>
+          <TabsTrigger value="gaps">Content gaps</TabsTrigger>
+        </TabsList>
+        <TabsContent value="sources" className="mt-0">
+          <SourcesTab />
+        </TabsContent>
+        <TabsContent value="gaps" className="mt-0">
+          <ContentGapsTab />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function SourcesTab() {
   const sources = useWillAiSources();
   const counts = useWillAiChunkCounts();
 
@@ -58,15 +88,7 @@ function WillAiAdmin() {
   }
 
   return (
-    <div className="app-content py-16 flex flex-col gap-12">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-3xl">Will AI content</h1>
-        <p className="text-ink-muted text-sm max-w-prose">
-          Upload the books, transcripts, and other sources Will draws from.
-          Ingestion runs in the background — status updates automatically.
-        </p>
-      </header>
-
+    <div className="flex flex-col gap-12">
       {sources.error && (
         <p className="text-sm text-[var(--red)]">
           {(sources.error as Error).message}
