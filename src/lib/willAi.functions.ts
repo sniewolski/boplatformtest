@@ -419,14 +419,26 @@ export const sendWillAiMessage = createServerFn({ method: "POST" })
     const row = (Array.isArray(persisted) ? persisted[0] : persisted) as any;
     if (!row) throw new Error("persist_will_ai_turn returned no row");
 
+    // Both messages come back from the RPC as fully persisted rows — the
+    // client uses these directly to seed the message-thread cache without a
+    // follow-up refetch. `isNewConversation` tells the client whether to
+    // invalidate the conversations list (only needed on turn 1).
     return {
       conversationId: row.conversation_id as string,
+      isNewConversation: data.conversationId === null,
+      userMessage: {
+        id: row.user_id as string,
+        content: data.userMessage,
+        cited_chunk_ids: [] as string[],
+        used_fallback: false,
+        created_at: row.user_created_at as string,
+      },
       assistantMessage: {
-        id: row.assistant_id,
-        content: row.assistant_content,
-        cited_chunk_ids: row.assistant_cited_chunk_ids ?? [],
-        used_fallback: row.assistant_used_fallback,
-        created_at: row.assistant_created_at,
+        id: row.assistant_id as string,
+        content: row.assistant_content as string,
+        cited_chunk_ids: (row.assistant_cited_chunk_ids ?? []) as string[],
+        used_fallback: row.assistant_used_fallback as boolean,
+        created_at: row.assistant_created_at as string,
       },
       debug: {
         topDistance: top1?.distance ?? null,
