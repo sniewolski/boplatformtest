@@ -799,6 +799,19 @@ export type Database = {
         }
         Returns: boolean
       }
+      match_will_ai_chunks: {
+        Args: { match_count?: number; query_embedding: string }
+        Returns: {
+          chunk_type: string
+          content: string
+          distance: number
+          id: string
+          image_storage_path: string
+          page_number: number
+          section_label: string
+          source_id: string
+        }[]
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
