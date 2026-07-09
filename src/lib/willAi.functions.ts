@@ -397,9 +397,20 @@ export const sendWillAiMessage = createServerFn({ method: "POST" })
       usedFallback = false;
     }
 
-    // ── Step 5: persist ──
+    // ── Step 5: persist (create conversation lazily if this was turn 1) ──
+    let conversationId = data.conversationId;
+    if (!conversationId) {
+      const { data: conv, error: convErr } = await supabase
+        .from("will_ai_conversations")
+        .insert({ owner_id: data.ownerId })
+        .select("id")
+        .single();
+      if (convErr) throw new Error(`Failed to create conversation: ${convErr.message}`);
+      conversationId = conv.id;
+    }
+
     const { error: userInsErr } = await supabase.from("will_ai_messages").insert({
-      conversation_id: conversationId!,
+      conversation_id: conversationId,
       owner_id: data.ownerId,
       role: "user",
       content: data.userMessage,
@@ -411,7 +422,7 @@ export const sendWillAiMessage = createServerFn({ method: "POST" })
     const { data: assistantRow, error: asstInsErr } = await supabase
       .from("will_ai_messages")
       .insert({
-        conversation_id: conversationId!,
+        conversation_id: conversationId,
         owner_id: data.ownerId,
         role: "assistant",
         content: assistantAnswer,
@@ -423,7 +434,7 @@ export const sendWillAiMessage = createServerFn({ method: "POST" })
     if (asstInsErr) throw new Error(`Failed to save assistant message: ${asstInsErr.message}`);
 
     return {
-      conversationId: conversationId!,
+      conversationId,
       assistantMessage: assistantRow,
       // Debug/observability — Phase 6 can decide whether to surface any of it.
       debug: {
