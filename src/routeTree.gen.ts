@@ -27,6 +27,7 @@ import { Route as ApiPublicRStateRouteImport } from './routes/api/public/r/state
 import { Route as ApiPublicRSaveRouteImport } from './routes/api/public/r/save'
 import { Route as ApiPublicRCompleteRouteImport } from './routes/api/public/r/complete'
 import { Route as ApiPublicRCaptureRouteImport } from './routes/api/public/r/capture'
+import { Route as ApiPublicHooksWillAiIngestRouteImport } from './routes/api/public/hooks/will-ai-ingest'
 import { Route as AuthenticatedAppAdminSopsRouteImport } from './routes/_authenticated/app.admin.sops'
 import { Route as AuthenticatedAppAdminReviewRouteImport } from './routes/_authenticated/app.admin.review'
 import { Route as AuthenticatedAppAdminSopsIndexRouteImport } from './routes/_authenticated/app.admin.sops.index'
@@ -128,6 +129,12 @@ const ApiPublicRCaptureRoute = ApiPublicRCaptureRouteImport.update({
   path: '/api/public/r/capture',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksWillAiIngestRoute =
+  ApiPublicHooksWillAiIngestRouteImport.update({
+    id: '/api/public/hooks/will-ai-ingest',
+    path: '/api/public/hooks/will-ai-ingest',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAppAdminSopsRoute =
   AuthenticatedAppAdminSopsRouteImport.update({
     id: '/sops',
@@ -188,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/r/$token/': typeof RTokenIndexRoute
   '/app/admin/review': typeof AuthenticatedAppAdminReviewRoute
   '/app/admin/sops': typeof AuthenticatedAppAdminSopsRouteWithChildren
+  '/api/public/hooks/will-ai-ingest': typeof ApiPublicHooksWillAiIngestRoute
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
   '/api/public/r/save': typeof ApiPublicRSaveRoute
@@ -212,6 +220,7 @@ export interface FileRoutesByTo {
   '/app': typeof AuthenticatedAppIndexRoute
   '/r/$token': typeof RTokenIndexRoute
   '/app/admin/review': typeof AuthenticatedAppAdminReviewRoute
+  '/api/public/hooks/will-ai-ingest': typeof ApiPublicHooksWillAiIngestRoute
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
   '/api/public/r/save': typeof ApiPublicRSaveRoute
@@ -241,6 +250,7 @@ export interface FileRoutesById {
   '/r/$token/': typeof RTokenIndexRoute
   '/_authenticated/app/admin/review': typeof AuthenticatedAppAdminReviewRoute
   '/_authenticated/app/admin/sops': typeof AuthenticatedAppAdminSopsRouteWithChildren
+  '/api/public/hooks/will-ai-ingest': typeof ApiPublicHooksWillAiIngestRoute
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
   '/api/public/r/save': typeof ApiPublicRSaveRoute
@@ -270,6 +280,7 @@ export interface FileRouteTypes {
     | '/r/$token/'
     | '/app/admin/review'
     | '/app/admin/sops'
+    | '/api/public/hooks/will-ai-ingest'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
     | '/api/public/r/save'
@@ -294,6 +305,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/r/$token'
     | '/app/admin/review'
+    | '/api/public/hooks/will-ai-ingest'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
     | '/api/public/r/save'
@@ -322,6 +334,7 @@ export interface FileRouteTypes {
     | '/r/$token/'
     | '/_authenticated/app/admin/review'
     | '/_authenticated/app/admin/sops'
+    | '/api/public/hooks/will-ai-ingest'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
     | '/api/public/r/save'
@@ -344,6 +357,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   LoginRoute: typeof LoginRoute
   RTokenRoute: typeof RTokenRouteWithChildren
+  ApiPublicHooksWillAiIngestRoute: typeof ApiPublicHooksWillAiIngestRoute
   ApiPublicRCaptureRoute: typeof ApiPublicRCaptureRoute
   ApiPublicRCompleteRoute: typeof ApiPublicRCompleteRoute
   ApiPublicRSaveRoute: typeof ApiPublicRSaveRoute
@@ -482,6 +496,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicRCaptureRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/will-ai-ingest': {
+      id: '/api/public/hooks/will-ai-ingest'
+      path: '/api/public/hooks/will-ai-ingest'
+      fullPath: '/api/public/hooks/will-ai-ingest'
+      preLoaderRoute: typeof ApiPublicHooksWillAiIngestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/app/admin/sops': {
       id: '/_authenticated/app/admin/sops'
       path: '/sops'
@@ -618,6 +639,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   LoginRoute: LoginRoute,
   RTokenRoute: RTokenRouteWithChildren,
+  ApiPublicHooksWillAiIngestRoute: ApiPublicHooksWillAiIngestRoute,
   ApiPublicRCaptureRoute: ApiPublicRCaptureRoute,
   ApiPublicRCompleteRoute: ApiPublicRCompleteRoute,
   ApiPublicRSaveRoute: ApiPublicRSaveRoute,
@@ -630,13 +652,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
