@@ -37,7 +37,7 @@ const SKIP_TEXT_MAX = 40;
 const SKIP_VARIANCE_MAX = 25; // grayscale variance below this ≈ blank/uniform page
 const DUAL_TEXT_MIN = 100;
 const EMBEDDING_MODEL = "gemini-embedding-001";
-const CAPTION_MODEL = "gemini-2.5-flash";
+const CAPTION_MODEL = "gemini-3.5-flash";
 const EMBEDDING_DIMS = 768;
 
 type IngestionPayload = { source_id?: string; [k: string]: unknown };
