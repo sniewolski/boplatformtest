@@ -191,10 +191,46 @@ export function useSendWillAiMessage(ownerId: string | null | undefined) {
       return res;
     },
     onSuccess: (res) => {
-      void qc.invalidateQueries({
-        queryKey: ["will-ai-messages", res.conversationId],
-      });
-      void qc.invalidateQueries({ queryKey: ["will-ai-conversations", ownerId] });
+      // Seed the message-thread cache directly with the two persisted rows
+      // the RPC returned. Both are real database rows (real ids + real
+      // created_at) so a later natural refetch of the same query key won't
+      // reveal a mismatch. Avoids a follow-up round-trip after send.
+      const convId = res.conversationId;
+      const userRow = {
+        ...res.userMessage,
+        conversation_id: convId,
+        owner_id: ownerId!,
+        role: "user" as const,
+      } satisfies WillAiMessage;
+      const assistantRow = {
+        ...res.assistantMessage,
+        conversation_id: convId,
+        owner_id: ownerId!,
+        role: "assistant" as const,
+      } satisfies WillAiMessage;
+
+      qc.setQueryData<WillAiMessage[]>(
+        ["will-ai-messages", convId],
+        (prev) => {
+          const base = prev ?? [];
+          // Guard against a race where a refetch already landed these rows.
+          const existing = new Set(base.map((m) => m.id));
+          const next = [...base];
+          if (!existing.has(userRow.id)) next.push(userRow);
+          if (!existing.has(assistantRow.id)) next.push(assistantRow);
+          return next;
+        },
+      );
+
+      // Only refresh the "Past chats" list when a new conversation was
+      // created this turn — otherwise the list is unchanged and a refetch
+      // is wasted work.
+      if (res.isNewConversation) {
+        void qc.invalidateQueries({
+          queryKey: ["will-ai-conversations", ownerId],
+        });
+      }
     },
   });
 }
+
