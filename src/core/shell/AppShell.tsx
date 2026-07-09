@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
-import { Check, LayoutDashboard, Shield, ClipboardList, FileText, LogOut, CalendarDays } from "lucide-react";
+import { Check, LayoutDashboard, Shield, ClipboardList, FileText, LogOut, CalendarDays, MessagesSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toolRegistry } from "@/tools/registry";
