@@ -50,4 +50,5 @@ export const toolRegistry: ToolManifest[] = [
   sellingSystemsAuditManifest,
   salescodeManifest,
   sopsManifest,
+  willAiManifest,
 ];
