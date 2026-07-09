@@ -319,28 +319,27 @@ export const sendWillAiMessage = createServerFn({ method: "POST" })
 
     const supabase = context.supabase;
 
-    // ── Step 0: ensure conversation ──
-    let conversationId = data.conversationId;
-    if (!conversationId) {
-      const { data: conv, error: convErr } = await supabase
-        .from("will_ai_conversations")
-        .insert({ owner_id: data.ownerId })
-        .select("id")
-        .single();
-      if (convErr) throw new Error(`Failed to create conversation: ${convErr.message}`);
-      conversationId = conv.id;
+    // ── Step 0: load prior history IF an existing conversation was passed ──
+    //
+    // Deliberately do NOT create the conversation row up-front. Creating it
+    // before generation means a mid-flight failure on turn 1 leaves an
+    // orphan row whose id the client never learned — so a Retry would spawn
+    // a second orphan. Instead, defer creation until after generation
+    // succeeds, atomically with persisting the messages. For turn 1,
+    // `conversationId` is null and there are no priors to load, so this
+    // reorder costs nothing.
+    let priors: PriorMessage[] = [];
+    if (data.conversationId) {
+      const { data: priorRows, error: priorErr } = await supabase
+        .from("will_ai_messages")
+        .select("role, content, created_at")
+        .eq("conversation_id", data.conversationId)
+        .order("created_at", { ascending: true });
+      if (priorErr) throw new Error(`Failed to load history: ${priorErr.message}`);
+      priors = (priorRows ?? [])
+        .filter((r: any) => r.role === "user" || r.role === "assistant")
+        .map((r: any) => ({ role: r.role as "user" | "assistant", content: r.content }));
     }
-
-    // ── Step 1: load prior history for query construction + LLM context ──
-    const { data: priorRows, error: priorErr } = await supabase
-      .from("will_ai_messages")
-      .select("role, content, created_at")
-      .eq("conversation_id", conversationId!)
-      .order("created_at", { ascending: true });
-    if (priorErr) throw new Error(`Failed to load history: ${priorErr.message}`);
-    const priors: PriorMessage[] = (priorRows ?? [])
-      .filter((r: any) => r.role === "user" || r.role === "assistant")
-      .map((r: any) => ({ role: r.role as "user" | "assistant", content: r.content }));
 
     // ── Step 2: retrieval ──
     const retrievalQuery = buildRetrievalQuery(data.userMessage, priors);
@@ -398,9 +397,20 @@ export const sendWillAiMessage = createServerFn({ method: "POST" })
       usedFallback = false;
     }
 
-    // ── Step 5: persist ──
+    // ── Step 5: persist (create conversation lazily if this was turn 1) ──
+    let conversationId = data.conversationId;
+    if (!conversationId) {
+      const { data: conv, error: convErr } = await supabase
+        .from("will_ai_conversations")
+        .insert({ owner_id: data.ownerId })
+        .select("id")
+        .single();
+      if (convErr) throw new Error(`Failed to create conversation: ${convErr.message}`);
+      conversationId = conv.id;
+    }
+
     const { error: userInsErr } = await supabase.from("will_ai_messages").insert({
-      conversation_id: conversationId!,
+      conversation_id: conversationId,
       owner_id: data.ownerId,
       role: "user",
       content: data.userMessage,
@@ -412,7 +422,7 @@ export const sendWillAiMessage = createServerFn({ method: "POST" })
     const { data: assistantRow, error: asstInsErr } = await supabase
       .from("will_ai_messages")
       .insert({
-        conversation_id: conversationId!,
+        conversation_id: conversationId,
         owner_id: data.ownerId,
         role: "assistant",
         content: assistantAnswer,
@@ -424,7 +434,7 @@ export const sendWillAiMessage = createServerFn({ method: "POST" })
     if (asstInsErr) throw new Error(`Failed to save assistant message: ${asstInsErr.message}`);
 
     return {
-      conversationId: conversationId!,
+      conversationId,
       assistantMessage: assistantRow,
       // Debug/observability — Phase 6 can decide whether to surface any of it.
       debug: {
