@@ -37,7 +37,7 @@ const SKIP_TEXT_MAX = 40;
 const SKIP_VARIANCE_MAX = 25; // grayscale variance below this ≈ blank/uniform page
 const DUAL_TEXT_MIN = 100;
 const EMBEDDING_MODEL = "gemini-embedding-001";
-const CAPTION_MODEL = "gemini-2.5-flash";
+const CAPTION_MODEL = "gemini-3.5-flash";
 const EMBEDDING_DIMS = 768;
 
 type IngestionPayload = { source_id?: string; [k: string]: unknown };
@@ -149,6 +149,60 @@ function countVisualBlocks(structuredJson: any): number {
   return n;
 }
 
+/**
+ * Try to detect the running section-footer text on this page (e.g.
+ * "SECTION 1 - SKILLS"). Scan text lines in the bottom ~18% of the page
+ * for a short, uppercase-ish string that looks like a section marker.
+ * Returns null when no plausible candidate is found — the caller carries
+ * the last-seen label forward.
+ */
+function detectSectionLabel(structuredJson: any): string | null {
+  const blocks = structuredJson?.blocks ?? [];
+  if (!Array.isArray(blocks) || blocks.length === 0) return null;
+
+  // Compute page height from block bboxes (mupdf JSON uses [x0,y0,x1,y1]).
+  let pageBottom = 0;
+  for (const b of blocks) {
+    const bbox = b?.bbox;
+    if (Array.isArray(bbox) && typeof bbox[3] === "number" && bbox[3] > pageBottom) {
+      pageBottom = bbox[3];
+    }
+  }
+  if (pageBottom <= 0) return null;
+  const footerCutoff = pageBottom * 0.82;
+
+  const candidates: string[] = [];
+  for (const b of blocks) {
+    if (b?.type !== "text") continue;
+    const lines = b?.lines ?? [];
+    for (const line of lines) {
+      const bbox = line?.bbox;
+      if (!Array.isArray(bbox) || typeof bbox[1] !== "number") continue;
+      if (bbox[1] < footerCutoff) continue;
+      const raw = (line?.spans ?? [])
+        .map((s: any) => s?.text ?? "")
+        .join("")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (!raw) continue;
+      candidates.push(raw);
+    }
+  }
+
+  for (const text of candidates) {
+    if (text.length > 80 || text.length < 3) continue;
+    if (/^\d+$/.test(text)) continue; // page number
+    const letters = text.replace(/[^A-Za-z]/g, "");
+    if (letters.length < 3) continue;
+    const isSectionish =
+      /\b(section|chapter|part|module)\b/i.test(text) ||
+      // Mostly uppercase running header (>=70% of letters uppercase).
+      letters.replace(/[a-z]/g, "").length / letters.length >= 0.7;
+    if (isSectionish) return text;
+  }
+  return null;
+}
+
 // -------------------- per-source processor --------------------
 
 async function processSource(
@@ -195,13 +249,24 @@ async function processSource(
   const csGray = mupdf.ColorSpace.DeviceGray;
   const csRgb = mupdf.ColorSpace.DeviceRGB;
 
+  // Section-footer label carries forward: once we've seen "SECTION 2 - X"
+  // it stays attached to every subsequent chunk until we detect a new one.
+  let currentSectionLabel: string | null = null;
+  // Per-page failures surfaced back to admins on the source row.
+  const failedPages: Array<{ page: number; stage: string; error: string }> = [];
+  const recordFailure = (page: number, stage: string, err: unknown) => {
+    const msg = err instanceof Error ? err.message : String(err);
+    failedPages.push({ page, stage, error: msg.slice(0, 500) });
+    console.warn(`will-ai-ingest: ${stage} failed`, { sourceId, page, err: msg });
+  };
+
   for (let i = 0; i < totalPages; i++) {
     const pageNumber = i + 1;
     let page: any;
     try {
       page = doc.loadPage(i);
     } catch (err) {
-      console.warn("will-ai-ingest: skipping unreadable page", { sourceId, pageNumber, err });
+      recordFailure(pageNumber, "load_page", err);
       continue;
     }
 
@@ -213,11 +278,17 @@ async function processSource(
       text = st.asText();
       structured = JSON.parse(st.asJSON());
     } catch (err) {
-      console.warn("will-ai-ingest: structured text failed", { sourceId, pageNumber, err });
+      recordFailure(pageNumber, "structured_text", err);
     }
     const cleanText = text.replace(/\s+/g, " ").trim();
     const charCount = cleanText.length;
     const blockCount = structured ? countVisualBlocks(structured) : 0;
+
+    // Update running section label if this page shows a new one.
+    if (structured) {
+      const detected = detectSectionLabel(structured);
+      if (detected) currentSectionLabel = detected;
+    }
 
     // 2. Low-res grayscale variance probe (cheap render).
     let variance = 0;
@@ -231,7 +302,7 @@ async function processSource(
       variance = grayscaleVariance(probePix.getPixels());
       probePix.destroy();
     } catch (err) {
-      console.warn("will-ai-ingest: probe render failed", { sourceId, pageNumber, err });
+      recordFailure(pageNumber, "variance_probe", err);
     }
 
     // 3. Decide.
@@ -276,13 +347,14 @@ async function processSource(
           content: caption,
           page_number: pageNumber,
           image_storage_path: imagePath,
+          section_label: currentSectionLabel,
           embedding: embedding as any,
         });
         if (insErr) throw new Error(`Insert diagram chunk failed: ${insErr.message}`);
       } catch (err) {
         // A single-page failure shouldn't abort the whole book — record and
         // move on. The whole-book attempt is retried by pgmq on hard throws.
-        console.warn("will-ai-ingest: diagram chunk failed", { sourceId, pageNumber, err });
+        recordFailure(pageNumber, "diagram_chunk", err);
       }
     }
 
@@ -296,18 +368,23 @@ async function processSource(
           chunk_type: "text",
           content: cleanText,
           page_number: pageNumber,
+          section_label: currentSectionLabel,
           embedding: embedding as any,
         });
         if (insErr) throw new Error(`Insert text chunk failed: ${insErr.message}`);
       } catch (err) {
-        console.warn("will-ai-ingest: text chunk failed", { sourceId, pageNumber, err });
+        recordFailure(pageNumber, "text_chunk", err);
       }
     }
   }
 
   await supabase
     .from("will_ai_sources")
-    .update({ status: "completed", error_message: null })
+    .update({
+      status: "completed",
+      error_message: null,
+      failed_pages: failedPages as any,
+    })
     .eq("id", sourceId);
 }
 
