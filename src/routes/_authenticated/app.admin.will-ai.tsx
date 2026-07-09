@@ -385,3 +385,165 @@ function StatusBadge({ status }: { status: WillAiSource["status"] }) {
     </span>
   );
 }
+
+// -------------------- content gaps --------------------
+
+type ContentGap = {
+  fallbackId: string;
+  ownerId: string;
+  ownerEmail: string | null;
+  question: string | null;
+  askedAt: string;
+};
+
+const CONTENT_GAPS_LIMIT = 50;
+
+/**
+ * "Content gaps" surfaces the questions Will couldn't answer from the
+ * material — every assistant message flagged `used_fallback = true`, joined
+ * back to the user message that triggered it (the user-role row immediately
+ * before the fallback, by created_at, in the same conversation).
+ *
+ * We deliberately show the QUESTION, not the fallback's response text — the
+ * response is the same canned closing line for every gap and reveals
+ * nothing about what's missing from the material.
+ *
+ * Capped at the most recent 50 rows. No pagination, no reviewed/dismiss
+ * state — this is pure read visibility (per spec).
+ */
+function useContentGaps() {
+  return useQuery({
+    queryKey: ["will-ai-content-gaps", CONTENT_GAPS_LIMIT],
+    queryFn: async (): Promise<ContentGap[]> => {
+      const { data: fallbacks, error: fbErr } = await supabase
+        .from("will_ai_messages")
+        .select("id, conversation_id, owner_id, created_at")
+        .eq("role", "assistant")
+        .eq("used_fallback", true)
+        .order("created_at", { ascending: false })
+        .limit(CONTENT_GAPS_LIMIT);
+      if (fbErr) throw fbErr;
+      const rows = (fallbacks ?? []) as Array<{
+        id: string;
+        conversation_id: string;
+        owner_id: string;
+        created_at: string;
+      }>;
+      if (rows.length === 0) return [];
+
+      const conversationIds = Array.from(
+        new Set(rows.map((r) => r.conversation_id)),
+      );
+      const ownerIds = Array.from(new Set(rows.map((r) => r.owner_id)));
+
+      const [{ data: users, error: uErr }, { data: profiles }] =
+        await Promise.all([
+          supabase
+            .from("will_ai_messages")
+            .select("conversation_id, content, created_at")
+            .eq("role", "user")
+            .in("conversation_id", conversationIds)
+            .order("created_at", { ascending: true }),
+          supabase
+            .from("profiles")
+            .select("id, email")
+            .in("id", ownerIds),
+        ]);
+      if (uErr) throw uErr;
+
+      const userMsgsByConv = new Map<
+        string,
+        Array<{ content: string; created_at: string }>
+      >();
+      for (const u of (users ?? []) as any[]) {
+        const list = userMsgsByConv.get(u.conversation_id) ?? [];
+        list.push({ content: u.content, created_at: u.created_at });
+        userMsgsByConv.set(u.conversation_id, list);
+      }
+      const emailById = new Map<string, string>();
+      for (const p of (profiles ?? []) as any[]) emailById.set(p.id, p.email);
+
+      return rows.map((r) => {
+        const priors = userMsgsByConv.get(r.conversation_id) ?? [];
+        // The triggering question is the last user message with created_at
+        // strictly before the fallback's created_at.
+        let question: string | null = null;
+        for (const u of priors) {
+          if (u.created_at < r.created_at) question = u.content;
+          else break;
+        }
+        return {
+          fallbackId: r.id,
+          ownerId: r.owner_id,
+          ownerEmail: emailById.get(r.owner_id) ?? null,
+          question,
+          askedAt: r.created_at,
+        };
+      });
+    },
+  });
+}
+
+function ContentGapsTab() {
+  const gaps = useContentGaps();
+  const rows = gaps.data ?? [];
+
+  if (gaps.isLoading) {
+    return <p className="text-ink-muted text-sm">Loading…</p>;
+  }
+  if (gaps.error) {
+    return (
+      <p className="text-sm text-[var(--red)]">
+        {(gaps.error as Error).message}
+      </p>
+    );
+  }
+  if (rows.length === 0) {
+    return (
+      <div className="flex flex-col items-start gap-2 py-8">
+        <p className="text-ink text-sm">No content gaps yet.</p>
+        <p className="text-ink-muted text-xs max-w-prose">
+          When a question can't be answered from the material, it'll show up
+          here so you can decide what to add.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <section className="flex flex-col gap-4">
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 className="text-xl">Recent unanswered questions</h2>
+        <span className="text-ink-muted text-xs">
+          {rows.length} shown · newest first
+        </span>
+      </div>
+      <ul className="flex flex-col divide-y divide-border border border-border rounded-xl">
+        {rows.map((g) => (
+          <li key={g.fallbackId} className="flex flex-col px-5 py-4 gap-1.5">
+            {g.question ? (
+              <p className="text-ink text-sm whitespace-pre-wrap break-words">
+                {g.question}
+              </p>
+            ) : (
+              <p className="text-ink-muted text-sm italic">
+                (question not found in conversation history)
+              </p>
+            )}
+            <p className="text-ink-muted text-xs">
+              {g.ownerEmail ?? g.ownerId} ·{" "}
+              {new Date(g.askedAt).toLocaleString(undefined, {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+              })}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
