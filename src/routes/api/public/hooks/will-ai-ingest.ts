@@ -149,6 +149,60 @@ function countVisualBlocks(structuredJson: any): number {
   return n;
 }
 
+/**
+ * Try to detect the running section-footer text on this page (e.g.
+ * "SECTION 1 - SKILLS"). Scan text lines in the bottom ~18% of the page
+ * for a short, uppercase-ish string that looks like a section marker.
+ * Returns null when no plausible candidate is found — the caller carries
+ * the last-seen label forward.
+ */
+function detectSectionLabel(structuredJson: any): string | null {
+  const blocks = structuredJson?.blocks ?? [];
+  if (!Array.isArray(blocks) || blocks.length === 0) return null;
+
+  // Compute page height from block bboxes (mupdf JSON uses [x0,y0,x1,y1]).
+  let pageBottom = 0;
+  for (const b of blocks) {
+    const bbox = b?.bbox;
+    if (Array.isArray(bbox) && typeof bbox[3] === "number" && bbox[3] > pageBottom) {
+      pageBottom = bbox[3];
+    }
+  }
+  if (pageBottom <= 0) return null;
+  const footerCutoff = pageBottom * 0.82;
+
+  const candidates: string[] = [];
+  for (const b of blocks) {
+    if (b?.type !== "text") continue;
+    const lines = b?.lines ?? [];
+    for (const line of lines) {
+      const bbox = line?.bbox;
+      if (!Array.isArray(bbox) || typeof bbox[1] !== "number") continue;
+      if (bbox[1] < footerCutoff) continue;
+      const raw = (line?.spans ?? [])
+        .map((s: any) => s?.text ?? "")
+        .join("")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (!raw) continue;
+      candidates.push(raw);
+    }
+  }
+
+  for (const text of candidates) {
+    if (text.length > 80 || text.length < 3) continue;
+    if (/^\d+$/.test(text)) continue; // page number
+    const letters = text.replace(/[^A-Za-z]/g, "");
+    if (letters.length < 3) continue;
+    const isSectionish =
+      /\b(section|chapter|part|module)\b/i.test(text) ||
+      // Mostly uppercase running header (>=70% of letters uppercase).
+      letters.replace(/[a-z]/g, "").length / letters.length >= 0.7;
+    if (isSectionish) return text;
+  }
+  return null;
+}
+
 // -------------------- per-source processor --------------------
 
 async function processSource(
