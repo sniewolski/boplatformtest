@@ -438,14 +438,3 @@ export const sendWillAiMessage = createServerFn({ method: "POST" })
       },
     };
   });
-      // Debug/observability — Phase 6 can decide whether to surface any of it.
-      debug: {
-        topDistance: top1?.distance ?? null,
-        retrievedCount: allMatches.length,
-        contextCount: usedFallback
-          ? 0
-          : allMatches.filter((c) => c.distance <= RETRIEVAL_DISTANCE_THRESHOLD).length,
-        usedFallback,
-      },
-    };
-  });
