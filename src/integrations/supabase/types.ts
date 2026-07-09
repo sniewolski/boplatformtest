@@ -837,6 +837,8 @@ export type Database = {
           assistant_id: string
           assistant_used_fallback: boolean
           conversation_id: string
+          user_created_at: string
+          user_id: string
         }[]
       }
       read_email_batch: {
