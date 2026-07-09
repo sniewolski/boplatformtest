@@ -56,6 +56,7 @@ export const createWillAiSource = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
     z
       .object({
+        sourceId: z.string().uuid(),
         sourceType: z.enum(["book", "video", "podcast", "blog_post", "document"]),
         title: z.string().trim().min(1).max(300),
         author: z.string().trim().max(200).optional().nullable(),
@@ -65,12 +66,23 @@ export const createWillAiSource = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
+
+    // Enforce single-source layout: everything for this source lives under
+    // `${sourceId}/…`. Reject any client that tries to upload elsewhere.
+    const expectedPrefix = `${data.sourceId}/`;
+    if (!data.filePath.startsWith(expectedPrefix)) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      await supabaseAdmin.storage.from(BUCKET).remove([data.filePath]);
+      throw new Error("File path must live under the source id");
+    }
+
     await assertPdfAtPath(data.filePath);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row, error } = await supabaseAdmin
       .from("will_ai_sources")
       .insert({
+        id: data.sourceId,
         source_type: data.sourceType,
         title: data.title,
         author: data.author ?? null,

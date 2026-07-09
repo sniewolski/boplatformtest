@@ -49,9 +49,6 @@ export function isPdfFile(file: File): boolean {
   return nameOk && typeOk;
 }
 
-function safeName(name: string): string {
-  return name.replace(/[^a-zA-Z0-9._-]/g, "_");
-}
 
 function hasActive(rows: WillAiSource[] | undefined): boolean {
   return !!rows?.some((r) => r.status === "pending" || r.status === "processing");
@@ -119,8 +116,11 @@ export function useUploadWillAiSource() {
       }
       if (!isPdfFile(vars.file)) throw new Error("Only PDF files are allowed.");
 
-      const id = crypto.randomUUID();
-      const path = `uploads/${id}/${safeName(vars.file.name)}`;
+      // The client-generated id IS the row id. All artifacts for this source
+      // (source PDF + rendered page images) live under `${sourceId}/…`,
+      // so delete/retry can find them without extra lookups.
+      const sourceId = crypto.randomUUID();
+      const path = `${sourceId}/source.pdf`;
       const { error: upErr } = await supabase.storage
         .from(WILL_AI_BUCKET)
         .upload(path, vars.file, {
@@ -132,6 +132,7 @@ export function useUploadWillAiSource() {
       try {
         await create({
           data: {
+            sourceId,
             sourceType: vars.sourceType,
             title: vars.title.trim(),
             author: vars.author?.trim() || null,
