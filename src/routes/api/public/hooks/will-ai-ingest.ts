@@ -299,7 +299,7 @@ async function processSource(
     }
     const cleanText = text.replace(/\s+/g, " ").trim();
     const charCount = cleanText.length;
-    const blockCount = structured ? countVisualBlocks(structured) : 0;
+    const graphicsCount = countGraphicsOps(mupdf, page);
 
     // Update running section label if this page shows a new one.
     if (structured) {
@@ -323,15 +323,22 @@ async function processSource(
     }
 
     // 3. Decide.
-    const isSkip = charCount < SKIP_TEXT_MAX && blockCount === 0 && variance < SKIP_VARIANCE_MAX;
-    if (isSkip) {
+    // Section-divider pages ("02. Influence | SECTION 1 - SKILLS") always
+    // skip, even with a big illustration — they're navigation, not content.
+    const isSectionDivider =
+      charCount < SKIP_TEXT_MAX && SECTION_DIVIDER_RE.test(cleanText);
+    const isBlank =
+      charCount < SKIP_TEXT_MAX && graphicsCount === 0 && variance < SKIP_VARIANCE_MAX;
+    if (isSectionDivider || isBlank) {
       continue;
     }
 
-    const diagramByBlocks = blockCount >= 1;
+    // ≥3 drawing ops distinguishes real diagrams from page furniture
+    // (footer rules, page-number underlines each register as 1 stroke).
+    const diagramByGraphics = graphicsCount >= 3;
     const diagramByScribble =
       charCount < SKIP_TEXT_MAX && variance >= SKIP_VARIANCE_MAX;
-    const isDiagramEligible = diagramByBlocks || diagramByScribble;
+    const isDiagramEligible = diagramByGraphics || diagramByScribble;
     const hasSubstantialText = charCount >= DUAL_TEXT_MIN;
 
     // 4a. Diagram chunk (full-res raster + caption + embed).
