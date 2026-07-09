@@ -249,13 +249,24 @@ async function processSource(
   const csGray = mupdf.ColorSpace.DeviceGray;
   const csRgb = mupdf.ColorSpace.DeviceRGB;
 
+  // Section-footer label carries forward: once we've seen "SECTION 2 - X"
+  // it stays attached to every subsequent chunk until we detect a new one.
+  let currentSectionLabel: string | null = null;
+  // Per-page failures surfaced back to admins on the source row.
+  const failedPages: Array<{ page: number; stage: string; error: string }> = [];
+  const recordFailure = (page: number, stage: string, err: unknown) => {
+    const msg = err instanceof Error ? err.message : String(err);
+    failedPages.push({ page, stage, error: msg.slice(0, 500) });
+    console.warn(`will-ai-ingest: ${stage} failed`, { sourceId, page, err: msg });
+  };
+
   for (let i = 0; i < totalPages; i++) {
     const pageNumber = i + 1;
     let page: any;
     try {
       page = doc.loadPage(i);
     } catch (err) {
-      console.warn("will-ai-ingest: skipping unreadable page", { sourceId, pageNumber, err });
+      recordFailure(pageNumber, "load_page", err);
       continue;
     }
 
@@ -267,11 +278,17 @@ async function processSource(
       text = st.asText();
       structured = JSON.parse(st.asJSON());
     } catch (err) {
-      console.warn("will-ai-ingest: structured text failed", { sourceId, pageNumber, err });
+      recordFailure(pageNumber, "structured_text", err);
     }
     const cleanText = text.replace(/\s+/g, " ").trim();
     const charCount = cleanText.length;
     const blockCount = structured ? countVisualBlocks(structured) : 0;
+
+    // Update running section label if this page shows a new one.
+    if (structured) {
+      const detected = detectSectionLabel(structured);
+      if (detected) currentSectionLabel = detected;
+    }
 
     // 2. Low-res grayscale variance probe (cheap render).
     let variance = 0;
@@ -285,7 +302,7 @@ async function processSource(
       variance = grayscaleVariance(probePix.getPixels());
       probePix.destroy();
     } catch (err) {
-      console.warn("will-ai-ingest: probe render failed", { sourceId, pageNumber, err });
+      recordFailure(pageNumber, "variance_probe", err);
     }
 
     // 3. Decide.
@@ -330,13 +347,14 @@ async function processSource(
           content: caption,
           page_number: pageNumber,
           image_storage_path: imagePath,
+          section_label: currentSectionLabel,
           embedding: embedding as any,
         });
         if (insErr) throw new Error(`Insert diagram chunk failed: ${insErr.message}`);
       } catch (err) {
         // A single-page failure shouldn't abort the whole book — record and
         // move on. The whole-book attempt is retried by pgmq on hard throws.
-        console.warn("will-ai-ingest: diagram chunk failed", { sourceId, pageNumber, err });
+        recordFailure(pageNumber, "diagram_chunk", err);
       }
     }
 
@@ -350,18 +368,23 @@ async function processSource(
           chunk_type: "text",
           content: cleanText,
           page_number: pageNumber,
+          section_label: currentSectionLabel,
           embedding: embedding as any,
         });
         if (insErr) throw new Error(`Insert text chunk failed: ${insErr.message}`);
       } catch (err) {
-        console.warn("will-ai-ingest: text chunk failed", { sourceId, pageNumber, err });
+        recordFailure(pageNumber, "text_chunk", err);
       }
     }
   }
 
   await supabase
     .from("will_ai_sources")
-    .update({ status: "completed", error_message: null })
+    .update({
+      status: "completed",
+      error_message: null,
+      failed_pages: failedPages as any,
+    })
     .eq("id", sourceId);
 }
 
