@@ -124,7 +124,7 @@ function bytesToBase64(bytes: Uint8Array): string {
 }
 
 /** Variance of a grayscale pixel buffer. Higher = more visual content. */
-function grayscaleVariance(pixels: Uint8Array): number {
+function grayscaleVariance(pixels: Uint8Array | Uint8ClampedArray): number {
   if (pixels.length === 0) return 0;
   let sum = 0;
   for (let i = 0; i < pixels.length; i++) sum += pixels[i];
