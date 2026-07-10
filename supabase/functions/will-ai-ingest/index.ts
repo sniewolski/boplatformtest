@@ -43,24 +43,66 @@ async function markSourceFailed(
 
 // -------------------- helpers --------------------
 
+// Transient Gemini errors (503 UNAVAILABLE, 429 rate-limit) get a short
+// bounded retry. Non-transient failures (other 4xx, malformed JSON, empty
+// payload) throw on the first attempt so the caller records them in
+// failed_pages immediately — same behavior as before.
+const GEMINI_RETRY_DELAYS_MS = [1000, 3000];
+
+class TransientGeminiError extends Error {
+  constructor(public status: number, message: string) {
+    super(message);
+    this.name = "TransientGeminiError";
+  }
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function withGeminiRetry<T>(label: string, fn: () => Promise<T>): Promise<T> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt <= GEMINI_RETRY_DELAYS_MS.length; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (!(err instanceof TransientGeminiError) || attempt === GEMINI_RETRY_DELAYS_MS.length) {
+        throw err;
+      }
+      const delay = GEMINI_RETRY_DELAYS_MS[attempt];
+      console.warn(`will-ai-ingest: ${label} transient ${err.status}, retrying in ${delay}ms`, {
+        attempt: attempt + 1,
+        message: err.message.slice(0, 200),
+      });
+      await sleep(delay);
+    }
+  }
+  throw lastErr;
+}
+
 async function fetchGeminiEmbedding(apiKey: string, text: string): Promise<number[]> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${EMBEDDING_MODEL}:embedContent?key=${encodeURIComponent(apiKey)}`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      content: { parts: [{ text }] },
-      outputDimensionality: EMBEDDING_DIMS,
-    }),
+  return withGeminiRetry("embedding", async () => {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        content: { parts: [{ text }] },
+        outputDimensionality: EMBEDDING_DIMS,
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      const msg = `Embedding failed (${res.status}): ${body.slice(0, 300)}`;
+      if (res.status === 503 || res.status === 429) throw new TransientGeminiError(res.status, msg);
+      throw new Error(msg);
+    }
+    const json: any = await res.json();
+    const values: number[] | undefined = json?.embedding?.values;
+    if (!values || values.length === 0) throw new Error("Embedding response missing values");
+    return values;
   });
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Embedding failed (${res.status}): ${body.slice(0, 300)}`);
-  }
-  const json: any = await res.json();
-  const values: number[] | undefined = json?.embedding?.values;
-  if (!values || values.length === 0) throw new Error("Embedding response missing values");
-  return values;
 }
 
 async function captionDiagram(
@@ -80,23 +122,28 @@ async function captionDiagram(
   if (pageContext.trim()) {
     parts.push({ text: `Adjacent page text (for context, do not repeat verbatim):\n${pageContext.slice(0, 1500)}` });
   }
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ contents: [{ role: "user", parts }] }),
+  return withGeminiRetry("caption", async () => {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contents: [{ role: "user", parts }] }),
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      const msg = `Caption failed (${res.status}): ${body.slice(0, 300)}`;
+      if (res.status === 503 || res.status === 429) throw new TransientGeminiError(res.status, msg);
+      throw new Error(msg);
+    }
+    const json: any = await res.json();
+    const caption: string = ((json?.candidates?.[0]?.content?.parts ?? []) as any[])
+      .map((p: any) => p?.text ?? "")
+      .join("")
+      .trim();
+    if (!caption) throw new Error("Caption response was empty");
+    return caption;
   });
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Caption failed (${res.status}): ${body.slice(0, 300)}`);
-  }
-  const json: any = await res.json();
-  const caption: string = ((json?.candidates?.[0]?.content?.parts ?? []) as any[])
-    .map((p: any) => p?.text ?? "")
-    .join("")
-    .trim();
-  if (!caption) throw new Error("Caption response was empty");
-  return caption;
 }
+
 
 function bytesToBase64(bytes: Uint8Array): string {
   let bin = "";
