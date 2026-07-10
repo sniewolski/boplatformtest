@@ -349,9 +349,50 @@ export function WillAiChat() {
           )}
         </DialogContent>
       </Dialog>
+        </div>
+      </div>
+
+      {/* Delete confirmation */}
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this conversation?</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{deleteTarget?.title}" and all of its messages will be removed.
+              This can't be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteConv.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteConv.isPending || !deleteTarget}
+              onClick={(e) => {
+                e.preventDefault();
+                if (!deleteTarget) return;
+                const targetId = deleteTarget.id;
+                deleteConv.mutate(targetId, {
+                  onSuccess: () => {
+                    if (activeId === targetId) setActiveId(null);
+                    setDeleteTarget(null);
+                  },
+                });
+              }}
+              className="bg-[var(--red)] text-white hover:bg-[var(--red)]/90"
+            >
+              {deleteConv.isPending ? "Deleting…" : "Delete conversation"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
+
 
 // -------------------- message row --------------------
 
