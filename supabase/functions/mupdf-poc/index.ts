@@ -6,7 +6,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const BUCKET = "will-ai-content";
-const SOURCE_ID = "965212af-04e7-4016-b348-1c769dd8e665";
+const SOURCE_ID = "a5d0b720-66f8-41e6-b2e3-e8aebe9af33e";
 const STORAGE_PATH = `${SOURCE_ID}/source.pdf`;
 const OUT_PATH = `${SOURCE_ID}/proof/mupdf-poc-page-1.png`;
 
