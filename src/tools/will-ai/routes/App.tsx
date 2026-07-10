@@ -25,11 +25,16 @@ const WillAiChat = lazy(() =>
 export function WillAiApp(_props: ToolComponentProps) {
   const { session } = useSession();
   const userId = session?.user.id ?? null;
-  const { data: roles = [] } = useMyRoles(userId ?? undefined);
+  const { data: roles = [], isLoading: rolesLoading } = useMyRoles(userId ?? undefined);
   const isAdmin = roles.includes("admin");
-  const { data: settings, isLoading } = useWillAiSettings();
+  const { data: settings, isLoading: settingsLoading } = useWillAiSettings();
 
-  if (!isAdmin && !isLoading && settings?.owner_access_enabled === false) {
+  if (
+    !rolesLoading &&
+    !settingsLoading &&
+    !isAdmin &&
+    settings?.owner_access_enabled === false
+  ) {
     return (
       <div className="app-content py-16 flex flex-col items-center justify-center text-center gap-3 min-h-[calc(100vh-8rem)]">
         <Lock className="size-6 text-ink-muted" aria-hidden />
