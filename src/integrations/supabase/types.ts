@@ -853,7 +853,7 @@ export type Database = {
           p_user_message: string
         }
         Returns: {
-          assistant_cited_chunk_ids: string[]
+          assistant_cited_chunk_ids: Json
           assistant_content: string
           assistant_created_at: string
           assistant_id: string
