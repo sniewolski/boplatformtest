@@ -116,25 +116,39 @@ export function AppShell({
         </div>
 
         <nav className="flex-1 min-h-0 overflow-hidden px-3 flex flex-col gap-1">
-          {items.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-ink hover:bg-background transition-colors"
-              activeProps={{ className: "bg-background font-medium" }}
-              activeOptions={{ exact: item.to === "/app" }}
-            >
-              <item.icon className="size-4" />
-              <span className="flex-1">{item.label}</span>
-              {item.complete && (
-                <Check
-                  className="size-4 text-ink shrink-0"
-                  strokeWidth={2.5}
-                  aria-label="Complete"
-                />
-              )}
-            </Link>
-          ))}
+          {items.map((item) =>
+            item.disabled ? (
+              <div
+                key={item.to}
+                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-ink-muted cursor-not-allowed select-none"
+                aria-disabled="true"
+                title="Temporarily unavailable"
+              >
+                <item.icon className="size-4" />
+                <span className="flex-1">{item.label}</span>
+                <Lock className="size-3.5 shrink-0" aria-hidden />
+              </div>
+            ) : (
+              <Link
+                key={item.to}
+                to={item.to}
+                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-ink hover:bg-background transition-colors"
+                activeProps={{ className: "bg-background font-medium" }}
+                activeOptions={{ exact: item.to === "/app" }}
+              >
+                <item.icon className="size-4" />
+                <span className="flex-1">{item.label}</span>
+                {item.complete && (
+                  <Check
+                    className="size-4 text-ink shrink-0"
+                    strokeWidth={2.5}
+                    aria-label="Complete"
+                  />
+                )}
+              </Link>
+            ),
+          )}
+
 
           {isAdmin && (
             <>
