@@ -349,7 +349,7 @@ function Citations({
         <DiagramCitation key={c.id} chunk={c} onOpenPdf={onOpenPdf} />
       ))}
       {texts.length > 0 && (
-        <div className="flex flex-wrap gap-x-3 gap-y-1">
+        <div className="flex flex-wrap gap-1.5">
           {texts.map((c) => (
             <CitationLink key={c.id} chunk={c} onOpenPdf={onOpenPdf} />
           ))}
@@ -372,6 +372,7 @@ function CitationLink({
   onOpenPdf: (sourceTitle: string, storagePath: string, page: number) => void;
 }) {
   const disabled = !chunk.source_storage_path || chunk.page_number == null;
+  const pageLabel = chunk.page_number != null ? `p.${chunk.page_number}` : null;
   return (
     <button
       type="button"
@@ -384,9 +385,16 @@ function CitationLink({
           chunk.page_number!,
         )
       }
-      className="text-xs text-ink-muted hover:text-ink underline underline-offset-2 decoration-dotted disabled:cursor-not-allowed disabled:hover:text-ink-muted active:scale-[0.97] transition-transform"
+      title={citationLabel(chunk)}
+      className="inline-flex items-center gap-1.5 max-w-full rounded-[12px] border border-border bg-[var(--surface-raised)] px-2.5 py-1 text-xs text-ink hover:border-[var(--red)] hover:text-[var(--red)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-border disabled:hover:text-ink active:scale-[0.97] transition-[transform,color,border-color]"
     >
-      {citationLabel(chunk)}
+      <FileText className="size-3 shrink-0 opacity-70" aria-hidden />
+      <span className="truncate max-w-[220px]">{chunk.source_title}</span>
+      {pageLabel && (
+        <span className="shrink-0 rounded-md bg-[var(--surface)] border border-border px-1.5 py-0.5 text-[10px] leading-none text-ink-muted font-medium">
+          {pageLabel}
+        </span>
+      )}
     </button>
   );
 }
