@@ -8,29 +8,34 @@ import {
   MessageSquarePlus,
   RotateCw,
   Send,
+  Trash2,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useSession } from "@/core/auth/useSession";
 import {
   type WillAiChunkRef,
   type WillAiMessage,
   getWillAiSignedUrl,
+  useDeleteWillAiConversation,
   useResolvedChunks,
   useSendWillAiMessage,
   useWillAiConversations,
   useWillAiMessages,
 } from "@/lib/useWillAi";
 import { PdfPreview } from "@/components/PdfPreview";
+
 
 export function WillAiChat() {
   const { session } = useSession();
