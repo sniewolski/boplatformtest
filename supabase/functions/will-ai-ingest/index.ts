@@ -485,6 +485,7 @@ async function processSource(
 
     // Persist per-page progress so a hard kill loses at most one page.
     await bumpLastCompleted(supabase, sourceId, pageNumber, failedPages);
+    pagesProcessedThisInvocation++;
   }
 
   await supabase
