@@ -257,6 +257,20 @@ function detectSectionLabel(structuredJson: any): string | null {
  */
 const SOFT_DEADLINE_MS = 300_000;
 
+/**
+ * Hard cap on pages processed per invocation. mupdf's parse/rasterize work is
+ * real synchronous CPU load that accumulates across pages in a single worker,
+ * and Supabase Edge Functions enforce a CPU-time budget that only counts
+ * actual computation (not network wait). A wall-clock deadline alone doesn't
+ * catch this — a run can die well under the wall-clock number once cumulative
+ * CPU trips the separate cap. Capping pages-per-invocation to a small fixed
+ * number bounds cumulative CPU per worker regardless of Gemini latency.
+ *
+ * This means many more requeue cycles per book (426 pages / 3 ≈ 140+ ticks).
+ * That is fine — this is a one-time background job, reliability > latency.
+ */
+const MAX_PAGES_PER_INVOCATION = 3;
+
 type ProcessResult = { kind: "done" } | { kind: "defer" };
 
 async function processSource(
@@ -320,19 +334,28 @@ async function processSource(
   const lastCompleted: number = typeof src.last_completed_page === "number" ? src.last_completed_page : 0;
   const startIndex = Math.max(0, lastCompleted); // resume at (lastCompleted+1) → 0-indexed = lastCompleted
 
+  let pagesProcessedThisInvocation = 0;
+
   for (let i = startIndex; i < totalPages; i++) {
-    // Check soft deadline BEFORE starting a new page. If we're over budget and
-    // there is still work left, persist state and hand off to the next tick.
-    if (Date.now() - startedAt > SOFT_DEADLINE_MS) {
+    // Primary trigger: hard-cap pages per invocation. Bounds cumulative CPU
+    // per worker regardless of per-page latency, so we don't get killed by
+    // the Edge Function CPU-time budget mid-page.
+    // Secondary safety: wall-clock soft deadline, in case even MAX_PAGES
+    // somehow runs long (e.g. huge pages, sustained retries).
+    const hitPageCap = pagesProcessedThisInvocation >= MAX_PAGES_PER_INVOCATION;
+    const hitSoftDeadline = Date.now() - startedAt > SOFT_DEADLINE_MS;
+    if (hitPageCap || hitSoftDeadline) {
       await supabase
         .from("will_ai_sources")
         .update({ failed_pages: failedPages as any })
         .eq("id", sourceId);
-      console.log("will-ai-ingest: soft deadline reached, deferring", {
+      console.log("will-ai-ingest: batch cap reached, deferring", {
         sourceId,
         lastCompletedPage: i, // pages before i are done
         totalPages,
+        pagesThisInvocation: pagesProcessedThisInvocation,
         elapsedMs: Date.now() - startedAt,
+        trigger: hitPageCap ? "page_cap" : "soft_deadline",
       });
       return { kind: "defer" };
     }
@@ -462,6 +485,7 @@ async function processSource(
 
     // Persist per-page progress so a hard kill loses at most one page.
     await bumpLastCompleted(supabase, sourceId, pageNumber, failedPages);
+    pagesProcessedThisInvocation++;
   }
 
   await supabase
