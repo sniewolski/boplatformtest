@@ -19,10 +19,15 @@ const QUEUE = "will_ai_ingestion";
 const DLQ = "will_ai_ingestion_dlq";
 const BUCKET = "will-ai-content";
 
-// Heuristic thresholds (approved plan):
-const SKIP_TEXT_MAX = 40;
-const SKIP_VARIANCE_MAX = 25;
-const DUAL_TEXT_MIN = 100;
+// Narrow "genuinely blank page" gate — the ONLY reason we skip rasterize+caption.
+// Not a diagram heuristic: all three conditions must hold together for a page
+// to be considered truly empty (e.g. intentional spacer). Conservative on
+// purpose so borderline pages still get captioned.
+const BLANK_TEXT_MAX = 20;         // near-zero text
+const BLANK_GRAPHICS_MAX = 0;      // zero graphics ops
+const BLANK_VARIANCE_MAX = 15;     // near-flat pixels
+// Minimum text length to bother emitting a text chunk for a page.
+const TEXT_CHUNK_MIN = 40;
 const EMBEDDING_MODEL = "gemini-embedding-001";
 const CAPTION_MODEL = "gemini-3.5-flash";
 const EMBEDDING_DIMS = 768;
