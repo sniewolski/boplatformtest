@@ -226,7 +226,22 @@ export function WillAiChat() {
           <MessageRow key={m.id} message={m} onOpenPdf={openPdfAt} />
         ))}
 
-        {send.isPending && <ThinkingIndicator />}
+        {pendingUser && (
+          <MessageRow
+            key={pendingUser.id}
+            message={pendingUser}
+            onOpenPdf={openPdfAt}
+          />
+        )}
+
+        {send.isPending && (
+          <div className="flex justify-start">
+            <div className="max-w-[85%]">
+              <ThinkingIndicator />
+            </div>
+          </div>
+        )}
+
 
         {send.isError && lastFailedInput && (
           <div className="flex flex-col gap-2 rounded-lg border border-[var(--red)]/40 bg-[var(--surface-raised)] p-3 text-sm">
