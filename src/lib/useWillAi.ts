@@ -234,3 +234,31 @@ export function useSendWillAiMessage(ownerId: string | null | undefined) {
   });
 }
 
+// -------------------- delete --------------------
+
+/**
+ * Delete a conversation (messages cascade via ON DELETE CASCADE).
+ * Owner-scoped delete permitted by RLS on will_ai_conversations.
+ */
+export function useDeleteWillAiConversation(ownerId: string | null | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (conversationId: string) => {
+      const { error } = await supabase
+        .from("will_ai_conversations")
+        .delete()
+        .eq("id", conversationId);
+      if (error) throw error;
+      return conversationId;
+    },
+    onSuccess: (conversationId) => {
+      qc.setQueryData<Array<WillAiConversation & { title: string | null }>>(
+        ["will-ai-conversations", ownerId],
+        (prev) => (prev ?? []).filter((c) => c.id !== conversationId),
+      );
+      qc.removeQueries({ queryKey: ["will-ai-messages", conversationId] });
+    },
+  });
+}
+
+

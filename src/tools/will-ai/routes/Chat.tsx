@@ -8,29 +8,34 @@ import {
   MessageSquarePlus,
   RotateCw,
   Send,
+  Trash2,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useSession } from "@/core/auth/useSession";
 import {
   type WillAiChunkRef,
   type WillAiMessage,
   getWillAiSignedUrl,
+  useDeleteWillAiConversation,
   useResolvedChunks,
   useSendWillAiMessage,
   useWillAiConversations,
   useWillAiMessages,
 } from "@/lib/useWillAi";
 import { PdfPreview } from "@/components/PdfPreview";
+
 
 export function WillAiChat() {
   const { session } = useSession();
@@ -54,6 +59,11 @@ export function WillAiChat() {
 
   const messages = useWillAiMessages(activeId);
   const send = useSendWillAiMessage(ownerId);
+  const deleteConv = useDeleteWillAiConversation(ownerId);
+  const [deleteTarget, setDeleteTarget] = useState<
+    { id: string; title: string } | null
+  >(null);
+
 
   const [draft, setDraft] = useState("");
   const [lastFailedInput, setLastFailedInput] = useState<string | null>(null);
@@ -153,59 +163,77 @@ export function WillAiChat() {
 
 
   return (
-    <div className="app-content py-10 flex flex-col gap-6 min-h-[calc(100vh-8rem)]">
-      <header className="flex items-center justify-between gap-4">
-        <div className="flex flex-col gap-0.5">
-          <h1 className="text-2xl">Will AI</h1>
-          <p className="text-ink-muted text-sm">
-            Digital version of Will and his 10+ years of experience
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {conversations.data && conversations.data.length > 0 && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  Past chats
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80">
-                <DropdownMenuLabel>Your conversations</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {conversations.data.slice(0, 20).map((c) => {
-                  const title =
-                    (c.title && c.title.length > 60
-                      ? c.title.slice(0, 57) + "…"
-                      : c.title) || "New chat";
-                  const date = new Date(c.created_at).toLocaleDateString(
-                    undefined,
-                    { month: "short", day: "numeric" },
-                  );
-                  return (
-                    <DropdownMenuItem
-                      key={c.id}
-                      onSelect={() => setActiveId(c.id)}
-                      className="flex flex-col items-start gap-0.5"
-                    >
-                      <span className="text-sm truncate w-full">{title}</span>
-                      <span className="text-xs text-ink-muted">{date}</span>
-                    </DropdownMenuItem>
-                  );
-                })}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
+    <div className="flex h-full min-h-[calc(100vh-4rem)]">
+      {/* Sidebar */}
+      <aside className="w-64 shrink-0 border-r border-border bg-[var(--surface-raised)] flex flex-col h-full">
+        <div className="p-3 border-b border-border">
+          <button
+            type="button"
             onClick={startNewChat}
-            className="active:scale-[0.97] transition-transform"
+            className="w-full inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm text-ink hover:border-[var(--red)] hover:text-[var(--red)] active:scale-[0.99] transition-[transform,color,border-color]"
           >
             <MessageSquarePlus className="size-4" />
             New chat
-          </Button>
+          </button>
         </div>
-      </header>
+        <nav className="flex-1 min-h-0 overflow-y-auto p-2 flex flex-col gap-0.5">
+          {conversations.data && conversations.data.length > 0 ? (
+            conversations.data.map((c) => {
+              const title =
+                (c.title && c.title.length > 60
+                  ? c.title.slice(0, 57) + "…"
+                  : c.title) || "New chat";
+              const date = new Date(c.created_at).toLocaleDateString(
+                undefined,
+                { month: "short", day: "numeric" },
+              );
+              const isActive = activeId === c.id;
+              return (
+                <div
+                  key={c.id}
+                  className={`group relative flex items-center gap-1 rounded-md pl-2 pr-1 py-1.5 text-sm cursor-pointer transition-colors ${
+                    isActive
+                      ? "bg-background text-ink"
+                      : "text-ink hover:bg-background/60"
+                  }`}
+                  onClick={() => setActiveId(c.id)}
+                >
+                  <div className="flex-1 min-w-0 flex flex-col">
+                    <span className="truncate">{title}</span>
+                    <span className="text-[11px] text-ink-muted">{date}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteTarget({ id: c.id, title });
+                    }}
+                    aria-label="Delete conversation"
+                    className="opacity-0 group-hover:opacity-100 focus:opacity-100 shrink-0 p-1 rounded text-ink-muted hover:text-[var(--red)] transition-opacity"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                </div>
+              );
+            })
+          ) : (
+            <p className="px-2 py-2 text-xs text-ink-muted">
+              No past chats yet
+            </p>
+          )}
+        </nav>
+      </aside>
+
+      {/* Main column */}
+      <div className="flex-1 min-w-0 flex flex-col">
+        <div className="app-content py-10 flex-1 flex flex-col gap-6 min-h-0">
+          <header className="flex flex-col gap-0.5">
+            <h1 className="text-2xl">Will AI</h1>
+            <p className="text-ink-muted text-sm">
+              Digital version of Will and his 10+ years of experience
+            </p>
+          </header>
+
 
       {/* Message thread */}
       <div
@@ -321,9 +349,50 @@ export function WillAiChat() {
           )}
         </DialogContent>
       </Dialog>
+        </div>
+      </div>
+
+      {/* Delete confirmation */}
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this conversation?</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{deleteTarget?.title}" and all of its messages will be removed.
+              This can't be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteConv.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteConv.isPending || !deleteTarget}
+              onClick={(e) => {
+                e.preventDefault();
+                if (!deleteTarget) return;
+                const targetId = deleteTarget.id;
+                deleteConv.mutate(targetId, {
+                  onSuccess: () => {
+                    if (activeId === targetId) setActiveId(null);
+                    setDeleteTarget(null);
+                  },
+                });
+              }}
+              className="bg-[var(--red)] text-white hover:bg-[var(--red)]/90"
+            >
+              {deleteConv.isPending ? "Deleting…" : "Delete conversation"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
+
 
 // -------------------- message row --------------------
 
