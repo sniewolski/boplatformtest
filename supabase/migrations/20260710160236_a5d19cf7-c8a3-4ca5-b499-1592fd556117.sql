@@ -1,0 +1,1 @@
+ALTER TABLE public.will_ai_sources ADD COLUMN IF NOT EXISTS last_completed_page integer NOT NULL DEFAULT 0;

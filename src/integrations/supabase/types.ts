@@ -759,6 +759,7 @@ export type Database = {
           external_url: string | null
           failed_pages: Json
           id: string
+          last_completed_page: number
           source_type: string
           status: string
           storage_path: string | null
@@ -773,6 +774,7 @@ export type Database = {
           external_url?: string | null
           failed_pages?: Json
           id?: string
+          last_completed_page?: number
           source_type: string
           status?: string
           storage_path?: string | null
@@ -787,6 +789,7 @@ export type Database = {
           external_url?: string | null
           failed_pages?: Json
           id?: string
+          last_completed_page?: number
           source_type?: string
           status?: string
           storage_path?: string | null

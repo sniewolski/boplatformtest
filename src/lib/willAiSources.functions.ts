@@ -147,6 +147,7 @@ export const retryWillAiSource = createServerFn({ method: "POST" })
         status: "pending",
         error_message: null,
         total_pages: null,
+        last_completed_page: 0,
       })
       .eq("id", data.sourceId);
     if (uErr) throw new Error(uErr.message);
