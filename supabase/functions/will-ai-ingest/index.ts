@@ -19,10 +19,15 @@ const QUEUE = "will_ai_ingestion";
 const DLQ = "will_ai_ingestion_dlq";
 const BUCKET = "will-ai-content";
 
-// Heuristic thresholds (approved plan):
-const SKIP_TEXT_MAX = 40;
-const SKIP_VARIANCE_MAX = 25;
-const DUAL_TEXT_MIN = 100;
+// Narrow "genuinely blank page" gate — the ONLY reason we skip rasterize+caption.
+// Not a diagram heuristic: all three conditions must hold together for a page
+// to be considered truly empty (e.g. intentional spacer). Conservative on
+// purpose so borderline pages still get captioned.
+const BLANK_TEXT_MAX = 20;         // near-zero text
+const BLANK_GRAPHICS_MAX = 0;      // zero graphics ops
+const BLANK_VARIANCE_MAX = 15;     // near-flat pixels
+// Minimum text length to bother emitting a text chunk for a page.
+const TEXT_CHUNK_MIN = 40;
 const EMBEDDING_MODEL = "gemini-embedding-001";
 const CAPTION_MODEL = "gemini-3.5-flash";
 const EMBEDDING_DIMS = 768;
@@ -105,22 +110,32 @@ async function fetchGeminiEmbedding(apiKey: string, text: string): Promise<numbe
   });
 }
 
-async function captionDiagram(
+/**
+ * Sentinel returned by the model when a page has no meaningful visual content
+ * beyond the plain text we already extracted. Chosen to be short, unambiguous,
+ * and vanishingly unlikely to appear in an honest caption.
+ */
+const NO_VISUAL_SENTINEL = "NO_VISUAL_CONTENT";
+
+async function captionPage(
   apiKey: string,
   pngBase64: string,
-  pageContext: string,
-): Promise<string> {
+  pageText: string,
+): Promise<string | null> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${CAPTION_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`;
   const system =
-    "You are describing a diagram from a sales book so it can be retrieved by semantic search. " +
-    "Write 3–6 sentences that state (a) what the diagram shows, (b) the labels/axes/steps, and " +
+    "You are describing a page from a sales book so its VISUAL content can be retrieved by semantic search. " +
+    "The plain text of the page has already been extracted separately, so DO NOT describe or paraphrase the running text. " +
+    "Only describe visual elements: diagrams, illustrations, charts, tables, figures, callout boxes, or other non-text visuals. " +
+    `If the page has no meaningful visual content beyond the plain text (e.g. a normal prose page, a chapter opener, a blank spacer, a page number only), reply with EXACTLY this token and nothing else: ${NO_VISUAL_SENTINEL}. ` +
+    "Otherwise, write 3–6 sentences that state (a) what the visual shows, (b) the labels/axes/steps/rows-columns, and " +
     "(c) the point the author appears to be making with it. Do not add commentary or headings.";
   const parts: any[] = [
     { text: system },
     { inlineData: { mimeType: "image/png", data: pngBase64 } },
   ];
-  if (pageContext.trim()) {
-    parts.push({ text: `Adjacent page text (for context, do not repeat verbatim):\n${pageContext.slice(0, 1500)}` });
+  if (pageText.trim()) {
+    parts.push({ text: `Extracted page text (already indexed separately — do not repeat verbatim, use only to interpret the visuals):\n${pageText.slice(0, 1500)}` });
   }
   return withGeminiRetry("caption", async () => {
     const res = await fetch(url, {
@@ -140,6 +155,8 @@ async function captionDiagram(
       .join("")
       .trim();
     if (!caption) throw new Error("Caption response was empty");
+    const normalized = caption.replace(/[`"'.\s]/g, "").toUpperCase();
+    if (normalized === NO_VISUAL_SENTINEL) return null;
     return caption;
   });
 }
@@ -370,63 +387,20 @@ async function processSource(
       recordFailure(pageNumber, "variance_probe", err);
     }
 
-    const isSectionDivider =
-      charCount < SKIP_TEXT_MAX
-      && SECTION_DIVIDER_RE.test(cleanText)
-      && graphicsCount < 8;
+    // Narrow "genuinely blank page" skip — the ONLY reason to bypass caption.
+    // Not a diagram classifier: all three conditions must hold together, and
+    // thresholds are conservative so borderline pages still get captioned.
     const isBlank =
-      charCount < SKIP_TEXT_MAX && graphicsCount === 0 && variance < SKIP_VARIANCE_MAX;
-    if (isSectionDivider || isBlank) {
+      charCount <= BLANK_TEXT_MAX
+      && graphicsCount <= BLANK_GRAPHICS_MAX
+      && variance <= BLANK_VARIANCE_MAX;
+    if (isBlank) {
       await bumpLastCompleted(supabase, sourceId, pageNumber, failedPages);
       continue;
     }
 
-    const diagramByGraphics = graphicsCount >= 3;
-    const diagramByScribble =
-      charCount < SKIP_TEXT_MAX && variance >= SKIP_VARIANCE_MAX;
-    const isDiagramEligible = diagramByGraphics || diagramByScribble;
-    const hasSubstantialText = charCount >= DUAL_TEXT_MIN;
-
-    if (isDiagramEligible) {
-      try {
-        const rasterMatrix = mupdf.Matrix.scale(2, 2);
-        const pix = page.toPixmap(rasterMatrix, csRgb, false, true);
-        const pngBytes: Uint8Array = pix.asPNG();
-        pix.destroy();
-
-        const imagePath = `${sourceId}/pages/${pageNumber}.png`;
-        const { error: upErr } = await supabase.storage
-          .from(BUCKET)
-          .upload(imagePath, pngBytes, {
-            contentType: "image/png",
-            upsert: true,
-          });
-        if (upErr) throw new Error(`Upload page image failed: ${upErr.message}`);
-
-        const caption = await captionDiagram(
-          geminiKey,
-          bytesToBase64(pngBytes),
-          hasSubstantialText ? cleanText : "",
-        );
-        const embedding = await fetchGeminiEmbedding(geminiKey, caption);
-
-        const { error: insErr } = await supabase.from("will_ai_chunks").insert({
-          source_id: sourceId,
-          chunk_type: "diagram",
-          content: caption,
-          page_number: pageNumber,
-          image_storage_path: imagePath,
-          section_label: currentSectionLabel,
-          embedding: embedding as any,
-        });
-        if (insErr) throw new Error(`Insert diagram chunk failed: ${insErr.message}`);
-      } catch (err) {
-        recordFailure(pageNumber, "diagram_chunk", err);
-      }
-    }
-
-    const shouldEmitText = isDiagramEligible ? hasSubstantialText : charCount >= SKIP_TEXT_MAX;
-    if (shouldEmitText) {
+    // 1. Emit text chunk if the page has meaningful text.
+    if (charCount >= TEXT_CHUNK_MIN) {
       try {
         const embedding = await fetchGeminiEmbedding(geminiKey, cleanText);
         const { error: insErr } = await supabase.from("will_ai_chunks").insert({
@@ -441,6 +415,49 @@ async function processSource(
       } catch (err) {
         recordFailure(pageNumber, "text_chunk", err);
       }
+    }
+
+    // 2. Always rasterize + caption. The model returns a sentinel when the
+    //    page has no meaningful visual content beyond the already-indexed
+    //    text; in that case we skip the diagram chunk entirely (no duplicate).
+    try {
+      const rasterMatrix = mupdf.Matrix.scale(2, 2);
+      const pix = page.toPixmap(rasterMatrix, csRgb, false, true);
+      const pngBytes: Uint8Array = pix.asPNG();
+      pix.destroy();
+
+      const caption = await captionPage(
+        geminiKey,
+        bytesToBase64(pngBytes),
+        cleanText,
+      );
+
+      if (caption !== null) {
+        // Only upload the page image and emit a diagram chunk when the
+        // model found real visual content worth indexing.
+        const imagePath = `${sourceId}/pages/${pageNumber}.png`;
+        const { error: upErr } = await supabase.storage
+          .from(BUCKET)
+          .upload(imagePath, pngBytes, {
+            contentType: "image/png",
+            upsert: true,
+          });
+        if (upErr) throw new Error(`Upload page image failed: ${upErr.message}`);
+
+        const embedding = await fetchGeminiEmbedding(geminiKey, caption);
+        const { error: insErr } = await supabase.from("will_ai_chunks").insert({
+          source_id: sourceId,
+          chunk_type: "diagram",
+          content: caption,
+          page_number: pageNumber,
+          image_storage_path: imagePath,
+          section_label: currentSectionLabel,
+          embedding: embedding as any,
+        });
+        if (insErr) throw new Error(`Insert diagram chunk failed: ${insErr.message}`);
+      }
+    } catch (err) {
+      recordFailure(pageNumber, "diagram_chunk", err);
     }
 
     // Persist per-page progress so a hard kill loses at most one page.
