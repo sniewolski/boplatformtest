@@ -185,10 +185,21 @@ function detectSectionLabel(structuredJson: any): string | null {
 
 // -------------------- per-source processor --------------------
 
+/**
+ * Soft internal deadline: 75% of Supabase's paid-plan 400s wall-clock cap.
+ * At this point we stop mid-book, re-enqueue the same source, and let the
+ * next cron tick pick up the continuation from last_completed_page + 1.
+ * This is NOT an error path — retry budget and failed_pages are untouched.
+ */
+const SOFT_DEADLINE_MS = 300_000;
+
+type ProcessResult = { kind: "done" } | { kind: "defer" };
+
 async function processSource(
   supabase: SupabaseClient<any, any>,
   payload: IngestionPayload,
-): Promise<void> {
+): Promise<ProcessResult> {
+  const startedAt = Date.now();
   const sourceId = typeof payload.source_id === "string" ? payload.source_id : undefined;
   if (!sourceId) throw new Error("Payload missing source_id");
   const geminiKey = Deno.env.get("GEMINI_API_KEY");
@@ -196,7 +207,7 @@ async function processSource(
 
   const { data: src, error: sErr } = await supabase
     .from("will_ai_sources")
-    .select("id, storage_path, title, source_type")
+    .select("id, storage_path, title, source_type, total_pages, last_completed_page, failed_pages")
     .eq("id", sourceId)
     .maybeSingle();
   if (sErr) throw new Error(`Load source failed: ${sErr.message}`);
@@ -218,29 +229,57 @@ async function processSource(
   const doc = mupdf.Document.openDocument(pdfBytes, "application/pdf");
   const totalPages: number = doc.countPages();
 
-  await supabase
-    .from("will_ai_sources")
-    .update({ total_pages: totalPages })
-    .eq("id", sourceId);
+  if (src.total_pages !== totalPages) {
+    await supabase
+      .from("will_ai_sources")
+      .update({ total_pages: totalPages })
+      .eq("id", sourceId);
+  }
 
   const csGray = mupdf.ColorSpace.DeviceGray;
   const csRgb = mupdf.ColorSpace.DeviceRGB;
 
   let currentSectionLabel: string | null = null;
-  const failedPages: Array<{ page: number; stage: string; error: string }> = [];
+
+  // Load prior failed_pages so multi-invocation runs don't lose earlier entries.
+  const failedPages: Array<{ page: number; stage: string; error: string }> =
+    Array.isArray(src.failed_pages)
+      ? (src.failed_pages as Array<{ page: number; stage: string; error: string }>)
+      : [];
   const recordFailure = (page: number, stage: string, err: unknown) => {
     const msg = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? err.stack : undefined;
     failedPages.push({ page, stage, error: msg.slice(0, 500) });
-    console.warn(`will-ai-ingest: ${stage} failed`, { sourceId, page, err: msg });
+    console.warn(`will-ai-ingest: ${stage} failed`, { sourceId, page, err: msg, stack });
   };
 
-  for (let i = 0; i < totalPages; i++) {
+  const lastCompleted: number = typeof src.last_completed_page === "number" ? src.last_completed_page : 0;
+  const startIndex = Math.max(0, lastCompleted); // resume at (lastCompleted+1) → 0-indexed = lastCompleted
+
+  for (let i = startIndex; i < totalPages; i++) {
+    // Check soft deadline BEFORE starting a new page. If we're over budget and
+    // there is still work left, persist state and hand off to the next tick.
+    if (Date.now() - startedAt > SOFT_DEADLINE_MS) {
+      await supabase
+        .from("will_ai_sources")
+        .update({ failed_pages: failedPages as any })
+        .eq("id", sourceId);
+      console.log("will-ai-ingest: soft deadline reached, deferring", {
+        sourceId,
+        lastCompletedPage: i, // pages before i are done
+        totalPages,
+        elapsedMs: Date.now() - startedAt,
+      });
+      return { kind: "defer" };
+    }
+
     const pageNumber = i + 1;
     let page: any;
     try {
       page = doc.loadPage(i);
     } catch (err) {
       recordFailure(pageNumber, "load_page", err);
+      await bumpLastCompleted(supabase, sourceId, pageNumber, failedPages);
       continue;
     }
 
@@ -255,7 +294,15 @@ async function processSource(
     }
     const cleanText = text.replace(/\s+/g, " ").trim();
     const charCount = cleanText.length;
-    const graphicsCount = countGraphicsOps(mupdf, page);
+
+    let graphicsCount = 0;
+    try {
+      graphicsCount = countGraphicsOps(mupdf, page);
+    } catch (err) {
+      // Surface the real mupdf error (message + stack) instead of silently
+      // defaulting to 0. Page still falls through as text-only.
+      recordFailure(pageNumber, "graphics_probe", err);
+    }
 
     if (structured) {
       const detected = detectSectionLabel(structured);
@@ -283,6 +330,7 @@ async function processSource(
     const isBlank =
       charCount < SKIP_TEXT_MAX && graphicsCount === 0 && variance < SKIP_VARIANCE_MAX;
     if (isSectionDivider || isBlank) {
+      await bumpLastCompleted(supabase, sourceId, pageNumber, failedPages);
       continue;
     }
 
@@ -347,6 +395,9 @@ async function processSource(
         recordFailure(pageNumber, "text_chunk", err);
       }
     }
+
+    // Persist per-page progress so a hard kill loses at most one page.
+    await bumpLastCompleted(supabase, sourceId, pageNumber, failedPages);
   }
 
   await supabase
@@ -355,8 +406,32 @@ async function processSource(
       status: "completed",
       error_message: null,
       failed_pages: failedPages as any,
+      last_completed_page: totalPages,
     })
     .eq("id", sourceId);
+  return { kind: "done" };
+}
+
+async function bumpLastCompleted(
+  supabase: SupabaseClient<any, any>,
+  sourceId: string,
+  pageNumber: number,
+  failedPages: Array<{ page: number; stage: string; error: string }>,
+): Promise<void> {
+  const { error } = await supabase
+    .from("will_ai_sources")
+    .update({
+      last_completed_page: pageNumber,
+      failed_pages: failedPages as any,
+    })
+    .eq("id", sourceId);
+  if (error) {
+    console.warn("will-ai-ingest: bumpLastCompleted failed", {
+      sourceId,
+      pageNumber,
+      err: error.message,
+    });
+  }
 }
 
 // -------------------- request handler --------------------
