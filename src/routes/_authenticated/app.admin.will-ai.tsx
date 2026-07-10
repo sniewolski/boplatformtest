@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import {
   type WillAiFailedPage,
@@ -28,6 +29,11 @@ import {
   isPdfFile,
   WILL_AI_MAX_BYTES,
 } from "@/lib/useWillAiSources";
+import {
+  useSetWillAiOwnerAccess,
+  useWillAiSettings,
+} from "@/lib/useWillAiSettings";
+
 
 export const Route = createFileRoute("/_authenticated/app/admin/will-ai")({
   component: WillAiAdmin,
