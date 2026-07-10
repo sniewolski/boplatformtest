@@ -257,6 +257,20 @@ function detectSectionLabel(structuredJson: any): string | null {
  */
 const SOFT_DEADLINE_MS = 300_000;
 
+/**
+ * Hard cap on pages processed per invocation. mupdf's parse/rasterize work is
+ * real synchronous CPU load that accumulates across pages in a single worker,
+ * and Supabase Edge Functions enforce a CPU-time budget that only counts
+ * actual computation (not network wait). A wall-clock deadline alone doesn't
+ * catch this — a run can die well under the wall-clock number once cumulative
+ * CPU trips the separate cap. Capping pages-per-invocation to a small fixed
+ * number bounds cumulative CPU per worker regardless of Gemini latency.
+ *
+ * This means many more requeue cycles per book (426 pages / 3 ≈ 140+ ticks).
+ * That is fine — this is a one-time background job, reliability > latency.
+ */
+const MAX_PAGES_PER_INVOCATION = 3;
+
 type ProcessResult = { kind: "done" } | { kind: "defer" };
 
 async function processSource(
