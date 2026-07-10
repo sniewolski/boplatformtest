@@ -88,7 +88,9 @@ export function AppShell({
             : t.key === "salescode"
               ? salescodeComplete
               : undefined,
+        disabled: t.key === "will-ai" && willAiPausedForOwner,
       })),
+
     { to: "/app/book-call", label: "Book a 1:1 call", icon: CalendarDays },
   ];
 
