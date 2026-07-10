@@ -1,11 +1,12 @@
 import { useEffect, type ReactNode } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
-import { Check, LayoutDashboard, Shield, ClipboardList, FileText, LogOut, CalendarDays, MessagesSquare } from "lucide-react";
+import { Check, LayoutDashboard, Lock, Shield, ClipboardList, FileText, LogOut, CalendarDays, MessagesSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toolRegistry } from "@/tools/registry";
 import { useMyRoles } from "@/core/roles/useMyRoles";
 import { useBookingReadiness } from "@/lib/useBookingReadiness";
+import { useWillAiSettings } from "@/lib/useWillAiSettings";
 import { Button } from "@/components/ui/button";
 import logoAsset from "@/assets/logo.png.asset.json";
 
@@ -14,7 +15,9 @@ type NavItem = {
   label: string;
   icon: typeof LayoutDashboard;
   complete?: boolean;
+  disabled?: boolean;
 };
+
 
 export function AppShell({
   userId,
