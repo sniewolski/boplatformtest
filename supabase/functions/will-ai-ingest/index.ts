@@ -494,28 +494,23 @@ Deno.serve(async (request) => {
     try {
       const result = await processSource(supabase, payload);
       if (result.kind === "defer") {
-        // Time-budget stop, NOT a failure. Delete the current message so its
-        // read_ct/retry budget is not consumed, and enqueue a fresh one so
-        // the cron picks up a continuation within ~5s. status stays 'processing'.
-        const { error: delError } = await supabase.rpc("delete_email", {
+        // Time-budget stop, NOT a failure. Atomically delete the current
+        // message and enqueue a fresh continuation in ONE SECURITY DEFINER
+        // transaction, so a mid-way crash can't lose the message — the
+        // original then falls back to its VT-based retry. status stays
+        // 'processing'; retry budget is not consumed.
+        const { error: requeueErr } = await supabase.rpc("requeue_will_ai_ingestion", {
+          old_msg_id: msg.msg_id,
           queue_name: QUEUE,
-          message_id: msg.msg_id,
+          source_id: sourceId,
         });
-        if (delError) {
-          console.error("will-ai-ingest: delete deferred msg failed", {
+        if (requeueErr) {
+          console.error("will-ai-ingest: atomic requeue failed", {
             msg_id: msg.msg_id,
-            error: delError,
-          });
-        }
-        const { error: enqErr } = await supabase.rpc("enqueue_email", {
-          queue_name: QUEUE,
-          payload: { source_id: sourceId } as any,
-        });
-        if (enqErr) {
-          console.error("will-ai-ingest: re-enqueue for continuation failed", {
             source_id: sourceId,
-            error: enqErr,
+            error: requeueErr,
           });
+          // Do NOT delete the original message on failure — VT retry will pick it up.
         }
         deferred++;
         continue;
