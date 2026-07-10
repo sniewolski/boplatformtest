@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   AlertTriangle,
+  FileText,
   ImageIcon,
   MessageSquarePlus,
   RotateCw,
@@ -301,7 +304,7 @@ function MessageRow({
   if (isUser) {
     return (
       <div className="flex justify-end">
-        <div className="max-w-[80%] rounded-2xl rounded-tr-md bg-[var(--ink)] text-[var(--surface)] px-4 py-2.5 text-sm whitespace-pre-wrap break-words">
+        <div className="max-w-[80%] rounded-2xl rounded-tr-md bg-[var(--red)] text-white px-4 py-2.5 text-sm whitespace-pre-wrap break-words shadow-sm">
           {message.content}
         </div>
       </div>
@@ -310,8 +313,10 @@ function MessageRow({
   return (
     <div className="flex justify-start">
       <div className="max-w-[85%] flex flex-col gap-3">
-        <div className="text-ink text-sm whitespace-pre-wrap break-words leading-relaxed">
-          {message.content}
+        <div className="text-ink text-sm leading-relaxed break-words [&_p]:my-2 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0 [&_ul]:my-2 [&_ul]:pl-5 [&_ul]:list-disc [&_ol]:my-2 [&_ol]:pl-5 [&_ol]:list-decimal [&_li]:my-0.5 [&_strong]:font-semibold [&_strong]:text-ink [&_em]:italic [&_code]:rounded [&_code]:bg-[var(--surface-raised)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[0.85em] [&_a]:underline [&_a]:underline-offset-2 [&_h1]:text-base [&_h1]:font-semibold [&_h1]:mt-3 [&_h2]:text-sm [&_h2]:font-semibold [&_h2]:mt-3 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-2">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {message.content}
+          </ReactMarkdown>
         </div>
         {message.cited_chunk_ids.length > 0 && (
           <Citations
@@ -344,7 +349,7 @@ function Citations({
         <DiagramCitation key={c.id} chunk={c} onOpenPdf={onOpenPdf} />
       ))}
       {texts.length > 0 && (
-        <div className="flex flex-wrap gap-x-3 gap-y-1">
+        <div className="flex flex-wrap gap-1.5">
           {texts.map((c) => (
             <CitationLink key={c.id} chunk={c} onOpenPdf={onOpenPdf} />
           ))}
@@ -367,6 +372,7 @@ function CitationLink({
   onOpenPdf: (sourceTitle: string, storagePath: string, page: number) => void;
 }) {
   const disabled = !chunk.source_storage_path || chunk.page_number == null;
+  const pageLabel = chunk.page_number != null ? `p.${chunk.page_number}` : null;
   return (
     <button
       type="button"
@@ -379,9 +385,16 @@ function CitationLink({
           chunk.page_number!,
         )
       }
-      className="text-xs text-ink-muted hover:text-ink underline underline-offset-2 decoration-dotted disabled:cursor-not-allowed disabled:hover:text-ink-muted active:scale-[0.97] transition-transform"
+      title={citationLabel(chunk)}
+      className="inline-flex items-center gap-1.5 max-w-full rounded-[12px] border border-border bg-[var(--surface-raised)] px-2.5 py-1 text-xs text-ink hover:border-[var(--red)] hover:text-[var(--red)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-border disabled:hover:text-ink active:scale-[0.97] transition-[transform,color,border-color]"
     >
-      {citationLabel(chunk)}
+      <FileText className="size-3 shrink-0 opacity-70" aria-hidden />
+      <span className="truncate max-w-[220px]">{chunk.source_title}</span>
+      {pageLabel && (
+        <span className="shrink-0 rounded-md bg-[var(--surface)] border border-border px-1.5 py-0.5 text-[10px] leading-none text-ink-muted font-medium">
+          {pageLabel}
+        </span>
+      )}
     </button>
   );
 }
