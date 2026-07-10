@@ -387,63 +387,20 @@ async function processSource(
       recordFailure(pageNumber, "variance_probe", err);
     }
 
-    const isSectionDivider =
-      charCount < SKIP_TEXT_MAX
-      && SECTION_DIVIDER_RE.test(cleanText)
-      && graphicsCount < 8;
+    // Narrow "genuinely blank page" skip — the ONLY reason to bypass caption.
+    // Not a diagram classifier: all three conditions must hold together, and
+    // thresholds are conservative so borderline pages still get captioned.
     const isBlank =
-      charCount < SKIP_TEXT_MAX && graphicsCount === 0 && variance < SKIP_VARIANCE_MAX;
-    if (isSectionDivider || isBlank) {
+      charCount <= BLANK_TEXT_MAX
+      && graphicsCount <= BLANK_GRAPHICS_MAX
+      && variance <= BLANK_VARIANCE_MAX;
+    if (isBlank) {
       await bumpLastCompleted(supabase, sourceId, pageNumber, failedPages);
       continue;
     }
 
-    const diagramByGraphics = graphicsCount >= 3;
-    const diagramByScribble =
-      charCount < SKIP_TEXT_MAX && variance >= SKIP_VARIANCE_MAX;
-    const isDiagramEligible = diagramByGraphics || diagramByScribble;
-    const hasSubstantialText = charCount >= DUAL_TEXT_MIN;
-
-    if (isDiagramEligible) {
-      try {
-        const rasterMatrix = mupdf.Matrix.scale(2, 2);
-        const pix = page.toPixmap(rasterMatrix, csRgb, false, true);
-        const pngBytes: Uint8Array = pix.asPNG();
-        pix.destroy();
-
-        const imagePath = `${sourceId}/pages/${pageNumber}.png`;
-        const { error: upErr } = await supabase.storage
-          .from(BUCKET)
-          .upload(imagePath, pngBytes, {
-            contentType: "image/png",
-            upsert: true,
-          });
-        if (upErr) throw new Error(`Upload page image failed: ${upErr.message}`);
-
-        const caption = await captionDiagram(
-          geminiKey,
-          bytesToBase64(pngBytes),
-          hasSubstantialText ? cleanText : "",
-        );
-        const embedding = await fetchGeminiEmbedding(geminiKey, caption);
-
-        const { error: insErr } = await supabase.from("will_ai_chunks").insert({
-          source_id: sourceId,
-          chunk_type: "diagram",
-          content: caption,
-          page_number: pageNumber,
-          image_storage_path: imagePath,
-          section_label: currentSectionLabel,
-          embedding: embedding as any,
-        });
-        if (insErr) throw new Error(`Insert diagram chunk failed: ${insErr.message}`);
-      } catch (err) {
-        recordFailure(pageNumber, "diagram_chunk", err);
-      }
-    }
-
-    const shouldEmitText = isDiagramEligible ? hasSubstantialText : charCount >= SKIP_TEXT_MAX;
-    if (shouldEmitText) {
+    // 1. Emit text chunk if the page has meaningful text.
+    if (charCount >= TEXT_CHUNK_MIN) {
       try {
         const embedding = await fetchGeminiEmbedding(geminiKey, cleanText);
         const { error: insErr } = await supabase.from("will_ai_chunks").insert({
@@ -458,6 +415,49 @@ async function processSource(
       } catch (err) {
         recordFailure(pageNumber, "text_chunk", err);
       }
+    }
+
+    // 2. Always rasterize + caption. The model returns a sentinel when the
+    //    page has no meaningful visual content beyond the already-indexed
+    //    text; in that case we skip the diagram chunk entirely (no duplicate).
+    try {
+      const rasterMatrix = mupdf.Matrix.scale(2, 2);
+      const pix = page.toPixmap(rasterMatrix, csRgb, false, true);
+      const pngBytes: Uint8Array = pix.asPNG();
+      pix.destroy();
+
+      const caption = await captionPage(
+        geminiKey,
+        bytesToBase64(pngBytes),
+        cleanText,
+      );
+
+      if (caption !== null) {
+        // Only upload the page image and emit a diagram chunk when the
+        // model found real visual content worth indexing.
+        const imagePath = `${sourceId}/pages/${pageNumber}.png`;
+        const { error: upErr } = await supabase.storage
+          .from(BUCKET)
+          .upload(imagePath, pngBytes, {
+            contentType: "image/png",
+            upsert: true,
+          });
+        if (upErr) throw new Error(`Upload page image failed: ${upErr.message}`);
+
+        const embedding = await fetchGeminiEmbedding(geminiKey, caption);
+        const { error: insErr } = await supabase.from("will_ai_chunks").insert({
+          source_id: sourceId,
+          chunk_type: "diagram",
+          content: caption,
+          page_number: pageNumber,
+          image_storage_path: imagePath,
+          section_label: currentSectionLabel,
+          embedding: embedding as any,
+        });
+        if (insErr) throw new Error(`Insert diagram chunk failed: ${insErr.message}`);
+      }
+    } catch (err) {
+      recordFailure(pageNumber, "diagram_chunk", err);
     }
 
     // Persist per-page progress so a hard kill loses at most one page.
