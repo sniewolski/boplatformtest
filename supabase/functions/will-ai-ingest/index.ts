@@ -373,11 +373,25 @@ Deno.serve(async (request) => {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
   const token = authHeader.slice("Bearer ".length).trim();
-  if (token !== supabaseServiceKey) {
-    return Response.json({ error: "Forbidden" }, { status: 403 });
-  }
 
   const supabase: SupabaseClient<any, any> = createClient(supabaseUrl, supabaseServiceKey);
+
+  // Accept either (a) the edge-runtime service-role key, or (b) the vault-stored
+  // cron token that pg_net uses. Both grant service-role authority; they differ
+  // only in issuance format (legacy JWT vs sb_secret_*). The vault key is fetched
+  // through a service-role-only SECURITY DEFINER RPC.
+  let accepted = token === supabaseServiceKey;
+  if (!accepted) {
+    const { data: cronToken, error: tokenErr } = await supabase.rpc("get_ingest_cron_token");
+    if (tokenErr) {
+      console.error("will-ai-ingest: cron token lookup failed", tokenErr);
+      return Response.json({ error: "Forbidden" }, { status: 403 });
+    }
+    accepted = typeof cronToken === "string" && cronToken.length > 0 && token === cronToken;
+  }
+  if (!accepted) {
+    return Response.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const { data: messages, error: readError } = await supabase.rpc(
     "read_email_batch",
