@@ -57,6 +57,10 @@ export function WillAiChat() {
 
   const [draft, setDraft] = useState("");
   const [lastFailedInput, setLastFailedInput] = useState<string | null>(null);
+  // Optimistic user bubble shown immediately on submit, before the RPC
+  // resolves. Uses a temp client-side id so it can't collide with the
+  // real persisted id that comes back from the server.
+  const [pendingUser, setPendingUser] = useState<WillAiMessage | null>(null);
 
   // For preview of a source PDF at a specific page (from a citation click).
   const [pdfPreview, setPdfPreview] = useState<
@@ -87,31 +91,43 @@ export function WillAiChat() {
     const el = scrollRef.current;
     if (!el) return;
     el.scrollTop = el.scrollHeight;
-  }, [rows.length, send.isPending]);
+  }, [rows.length, send.isPending, pendingUser]);
 
   const canSend = draft.trim().length > 0 && !send.isPending && !!ownerId;
 
   const doSend = (text: string) => {
-    if (!text.trim() || !ownerId) return;
+    const trimmed = text.trim();
+    if (!trimmed || !ownerId) return;
     setLastFailedInput(null);
+    // Clear the composer + render the optimistic user bubble immediately.
+    setDraft("");
+    setPendingUser({
+      id: `optimistic-${Date.now()}`,
+      conversation_id: activeId ?? "pending",
+      owner_id: ownerId,
+      role: "user",
+      content: trimmed,
+      cited_chunk_ids: [],
+      created_at: new Date().toISOString(),
+    } as WillAiMessage);
     send.mutate(
-      { conversationId: activeId, userMessage: text.trim() },
+      { conversationId: activeId, userMessage: trimmed },
       {
         onSuccess: (res) => {
           if (!activeId) setActiveId(res.conversationId);
-          setDraft("");
+          // Cache is seeded with the real rows in the mutation's onSuccess.
+          // Drop the optimistic bubble now — the real one is in `rows`.
+          setPendingUser(null);
         },
         onError: () => {
-          setLastFailedInput(text.trim());
+          // Keep the user bubble visible; show error + retry in place of
+          // the assistant placeholder.
+          setLastFailedInput(trimmed);
         },
       },
     );
   };
 
-  const handleSubmit = () => {
-    if (!canSend) return;
-    doSend(draft);
-  };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
