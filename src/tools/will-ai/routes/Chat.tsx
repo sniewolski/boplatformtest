@@ -109,25 +109,26 @@ export function WillAiChat() {
       content: trimmed,
       cited_chunk_ids: [],
       created_at: new Date().toISOString(),
-    } as WillAiMessage);
+      used_fallback: false,
+    } as unknown as WillAiMessage);
     send.mutate(
       { conversationId: activeId, userMessage: trimmed },
       {
         onSuccess: (res) => {
           if (!activeId) setActiveId(res.conversationId);
-          // Cache is seeded with the real rows in the mutation's onSuccess.
-          // Drop the optimistic bubble now — the real one is in `rows`.
           setPendingUser(null);
         },
         onError: () => {
-          // Keep the user bubble visible; show error + retry in place of
-          // the assistant placeholder.
           setLastFailedInput(trimmed);
         },
       },
     );
   };
 
+  const handleSubmit = () => {
+    if (!canSend) return;
+    doSend(draft);
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -135,6 +136,7 @@ export function WillAiChat() {
       handleSubmit();
     }
   };
+
 
   const startNewChat = () => {
     setActiveId(null);
