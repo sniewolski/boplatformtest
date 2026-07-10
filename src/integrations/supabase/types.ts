@@ -871,6 +871,10 @@ export type Database = {
           read_ct: number
         }[]
       }
+      requeue_will_ai_ingestion: {
+        Args: { old_msg_id: number; queue_name: string; source_id: string }
+        Returns: number
+      }
       will_ai_ingestion_dispatch: { Args: never; Returns: undefined }
     }
     Enums: {
