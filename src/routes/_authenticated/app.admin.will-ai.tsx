@@ -306,84 +306,193 @@ function SourcesTab() {
   );
 }
 
+/**
+ * Turn a PDF filename into a sensible default title.
+ * Strips the extension, swaps underscores/hyphens for spaces, and collapses
+ * whitespace. Deliberately does NOT touch capitalization — "SalesCode_Book.pdf"
+ * must stay "SalesCode Book", not "Salescode Book".
+ */
+function filenameToTitle(name: string): string {
+  return name
+    .replace(/\.pdf$/i, "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+type BatchItem = {
+  key: string;
+  file: File;
+  title: string;
+};
+
+type BatchResult = {
+  filename: string;
+  ok: boolean;
+  error?: string;
+};
+
 function UploadForm() {
   const upload = useUploadWillAiSource();
-  const [title, setTitle] = useState("");
-  const [author, setAuthor] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+  const [items, setItems] = useState<BatchItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
+  const [results, setResults] = useState<BatchResult[] | null>(null);
 
-  const disabled = upload.isPending || !title.trim() || !file;
+  const isBusy = progress !== null;
+  const canSubmit =
+    !isBusy && items.length > 0 && items.every((i) => i.title.trim().length > 0);
+
+  function onFilesPicked(files: FileList | null) {
+    setError(null);
+    if (!files || files.length === 0) return;
+    const next: BatchItem[] = [];
+    const rejected: string[] = [];
+    for (const f of Array.from(files)) {
+      if (!isPdfFile(f)) {
+        rejected.push(`${f.name} (not a PDF)`);
+        continue;
+      }
+      next.push({
+        key: `${f.name}-${f.size}-${f.lastModified}-${crypto.randomUUID()}`,
+        file: f,
+        title: filenameToTitle(f.name),
+      });
+    }
+    setItems((prev) => [...prev, ...next]);
+    if (rejected.length) {
+      setError(`Skipped: ${rejected.join(", ")}`);
+    }
+    // Reset the input so re-selecting the same file re-fires onChange.
+    const el = document.getElementById(
+      "will-ai-upload-file",
+    ) as HTMLInputElement | null;
+    if (el) el.value = "";
+  }
+
+  function updateTitle(key: string, title: string) {
+    setItems((prev) => prev.map((i) => (i.key === key ? { ...i, title } : i)));
+  }
+
+  function removeItem(key: string) {
+    setItems((prev) => prev.filter((i) => i.key !== key));
+  }
+
+  async function submitBatch() {
+    setError(null);
+    setResults(null);
+    if (items.length === 0) return;
+    const batch = items;
+    const outcome: BatchResult[] = [];
+    setProgress({ current: 0, total: batch.length });
+    for (let i = 0; i < batch.length; i++) {
+      const it = batch[i];
+      setProgress({ current: i + 1, total: batch.length });
+      try {
+        await upload.mutateAsync({
+          sourceType: "book",
+          title: it.title.trim(),
+          author: null,
+          file: it.file,
+        });
+        outcome.push({ filename: it.file.name, ok: true });
+      } catch (e) {
+        outcome.push({
+          filename: it.file.name,
+          ok: false,
+          error: e instanceof Error ? e.message : "Upload failed",
+        });
+      }
+    }
+    setProgress(null);
+    setResults(outcome);
+    setItems([]);
+  }
+
+  const succeeded = results?.filter((r) => r.ok).length ?? 0;
+  const failed = results?.filter((r) => !r.ok) ?? [];
 
   return (
     <form
       className="flex flex-col gap-4"
       onSubmit={(e) => {
         e.preventDefault();
-        setError(null);
-        if (!file) return;
-        upload.mutate(
-          {
-            sourceType: "book",
-            title: title.trim(),
-            author: author.trim() || null,
-            file,
-          },
-          {
-            onSuccess: () => {
-              setTitle("");
-              setAuthor("");
-              setFile(null);
-              const el = document.getElementById(
-                "will-ai-upload-file",
-              ) as HTMLInputElement | null;
-              if (el) el.value = "";
-            },
-            onError: (err: Error) => setError(err.message),
-          },
-        );
+        void submitBatch();
       }}
     >
       <div className="flex flex-col gap-2">
-        <Label htmlFor="will-ai-title">Title</Label>
-        <Input
-          id="will-ai-title"
-          required
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g. SalesCode"
-        />
-      </div>
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="will-ai-author">Author (optional)</Label>
-        <Input
-          id="will-ai-author"
-          value={author}
-          onChange={(e) => setAuthor(e.target.value)}
-        />
-      </div>
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="will-ai-upload-file">PDF file</Label>
+        <Label htmlFor="will-ai-upload-file">PDF files</Label>
         <Input
           id="will-ai-upload-file"
           type="file"
           accept="application/pdf,.pdf"
-          required
-          onChange={(e) => {
-            const f = e.target.files?.[0] ?? null;
-            if (f && !isPdfFile(f)) {
-              setError("Only PDF files are allowed.");
-              setFile(null);
-              return;
-            }
-            setError(null);
-            setFile(f);
-          }}
+          multiple
+          disabled={isBusy}
+          onChange={(e) => onFilesPicked(e.target.files)}
         />
       </div>
+
+      {items.length > 0 && (
+        <ul className="flex flex-col divide-y divide-border border border-border rounded-xl">
+          {items.map((it) => (
+            <li key={it.key} className="flex items-center gap-3 px-3 py-2">
+              <div className="flex flex-col min-w-0 flex-1 gap-1">
+                <Input
+                  value={it.title}
+                  onChange={(e) => updateTitle(it.key, e.target.value)}
+                  disabled={isBusy}
+                  placeholder="Title"
+                />
+                <span className="text-ink-muted text-xs truncate">
+                  {it.file.name} · {(it.file.size / 1024 / 1024).toFixed(1)} MB
+                </span>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={isBusy}
+                onClick={() => removeItem(it.key)}
+                aria-label={`Remove ${it.file.name}`}
+              >
+                ×
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+
       {error && <p className="text-sm text-[var(--red)]">{error}</p>}
-      <Button type="submit" disabled={disabled} className="w-fit">
-        {upload.isPending ? "Uploading…" : "Upload & ingest"}
+
+      {progress && (
+        <p className="text-sm text-ink-muted">
+          Uploading {progress.current} of {progress.total}…
+        </p>
+      )}
+
+      {results && (
+        <div className="flex flex-col gap-1 rounded-lg border border-border bg-[var(--surface-raised)] px-3 py-2">
+          <p className="text-sm text-ink">
+            {succeeded} uploaded successfully, {failed.length} failed
+          </p>
+          {failed.length > 0 && (
+            <ul className="flex flex-col gap-0.5">
+              {failed.map((f, i) => (
+                <li key={i} className="text-xs text-[var(--red)]">
+                  {f.filename} — {f.error}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      <Button type="submit" disabled={!canSubmit} className="w-fit">
+        {isBusy
+          ? `Uploading ${progress?.current} of ${progress?.total}…`
+          : items.length > 1
+            ? `Upload & ingest all (${items.length})`
+            : "Upload & ingest"}
       </Button>
     </form>
   );
