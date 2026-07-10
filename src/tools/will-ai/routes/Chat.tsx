@@ -142,9 +142,15 @@ export function WillAiChat() {
     setActiveId(null);
     setDraft("");
     setLastFailedInput(null);
+    setPendingUser(null);
   };
 
-  const isEmpty = !messages.isLoading && rows.length === 0 && !send.isPending;
+  const isEmpty =
+    !messages.isLoading &&
+    rows.length === 0 &&
+    !send.isPending &&
+    !pendingUser;
+
 
   return (
     <div className="app-content py-10 flex flex-col gap-6 min-h-[calc(100vh-8rem)]">
