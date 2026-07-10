@@ -33,6 +33,10 @@ export function AppShell({
   const { data: roles = [] } = useMyRoles(userId);
   const isAdmin = roles.includes("admin");
   const { isLoading: readinessLoading, incomplete } = useBookingReadiness(userId);
+  const { data: willAiSettings } = useWillAiSettings();
+  const willAiPausedForOwner =
+    willAiSettings?.owner_access_enabled === false && !isAdmin;
+
 
   const AUDIT_KEYS = new Set([
     "conversion",
