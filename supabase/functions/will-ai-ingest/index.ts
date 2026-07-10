@@ -484,6 +484,7 @@ Deno.serve(async (request) => {
   if (!messages?.length) return Response.json({ processed: 0 });
 
   let processed = 0;
+  let deferred = 0;
   for (const msg of messages) {
     const payload = (msg.message ?? {}) as IngestionPayload;
     const sourceId =
@@ -491,7 +492,34 @@ Deno.serve(async (request) => {
     const attemptNumber = msg.read_ct ?? 1;
 
     try {
-      await processSource(supabase, payload);
+      const result = await processSource(supabase, payload);
+      if (result.kind === "defer") {
+        // Time-budget stop, NOT a failure. Delete the current message so its
+        // read_ct/retry budget is not consumed, and enqueue a fresh one so
+        // the cron picks up a continuation within ~5s. status stays 'processing'.
+        const { error: delError } = await supabase.rpc("delete_email", {
+          queue_name: QUEUE,
+          message_id: msg.msg_id,
+        });
+        if (delError) {
+          console.error("will-ai-ingest: delete deferred msg failed", {
+            msg_id: msg.msg_id,
+            error: delError,
+          });
+        }
+        const { error: enqErr } = await supabase.rpc("enqueue_email", {
+          queue_name: QUEUE,
+          payload: { source_id: sourceId } as any,
+        });
+        if (enqErr) {
+          console.error("will-ai-ingest: re-enqueue for continuation failed", {
+            source_id: sourceId,
+            error: enqErr,
+          });
+        }
+        deferred++;
+        continue;
+      }
       const { error: delError } = await supabase.rpc("delete_email", {
         queue_name: QUEUE,
         message_id: msg.msg_id,
@@ -531,5 +559,5 @@ Deno.serve(async (request) => {
     }
   }
 
-  return Response.json({ processed });
+  return Response.json({ processed, deferred });
 });
