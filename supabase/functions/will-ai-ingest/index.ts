@@ -120,6 +120,11 @@ function grayscaleVariance(pixels: Uint8Array | Uint8ClampedArray): number {
   return acc / pixels.length;
 }
 
+// NOTE: exceptions here are NOT swallowed. If page.run throws, we surface it
+// to the caller (which records it in failed_pages and logs) so the actual
+// mupdf error message and stack are visible — a bare catch previously hid
+// this and defaulted graphicsCount to 0, which silently disabled diagram
+// detection for every page.
 function countGraphicsOps(mupdf: any, page: any): number {
   let n = 0;
   const device = new mupdf.Device({
@@ -127,11 +132,7 @@ function countGraphicsOps(mupdf: any, page: any): number {
     strokePath: () => { n++; },
     fillImage: () => { n++; },
   });
-  try {
-    page.run(device, mupdf.Matrix.identity);
-  } catch {
-    // best-effort — return whatever accrued
-  }
+  page.run(device, mupdf.Matrix.identity);
   return n;
 }
 
