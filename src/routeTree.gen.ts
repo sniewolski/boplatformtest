@@ -28,6 +28,7 @@ import { Route as ApiPublicRSaveRouteImport } from './routes/api/public/r/save'
 import { Route as ApiPublicRCompleteRouteImport } from './routes/api/public/r/complete'
 import { Route as ApiPublicRCaptureRouteImport } from './routes/api/public/r/capture'
 import { Route as ApiPublicHooksWillAiIngestRouteImport } from './routes/api/public/hooks/will-ai-ingest'
+import { Route as ApiPublicHooksMupdfTestRouteImport } from './routes/api/public/hooks/mupdf-test'
 import { Route as AuthenticatedAppAdminWillAiRouteImport } from './routes/_authenticated/app.admin.will-ai'
 import { Route as AuthenticatedAppAdminSopsRouteImport } from './routes/_authenticated/app.admin.sops'
 import { Route as AuthenticatedAppAdminReviewRouteImport } from './routes/_authenticated/app.admin.review'
@@ -136,6 +137,11 @@ const ApiPublicHooksWillAiIngestRoute =
     path: '/api/public/hooks/will-ai-ingest',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksMupdfTestRoute = ApiPublicHooksMupdfTestRouteImport.update({
+  id: '/api/public/hooks/mupdf-test',
+  path: '/api/public/hooks/mupdf-test',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAppAdminWillAiRoute =
   AuthenticatedAppAdminWillAiRouteImport.update({
     id: '/will-ai',
@@ -203,6 +209,7 @@ export interface FileRoutesByFullPath {
   '/app/admin/review': typeof AuthenticatedAppAdminReviewRoute
   '/app/admin/sops': typeof AuthenticatedAppAdminSopsRouteWithChildren
   '/app/admin/will-ai': typeof AuthenticatedAppAdminWillAiRoute
+  '/api/public/hooks/mupdf-test': typeof ApiPublicHooksMupdfTestRoute
   '/api/public/hooks/will-ai-ingest': typeof ApiPublicHooksWillAiIngestRoute
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
@@ -229,6 +236,7 @@ export interface FileRoutesByTo {
   '/r/$token': typeof RTokenIndexRoute
   '/app/admin/review': typeof AuthenticatedAppAdminReviewRoute
   '/app/admin/will-ai': typeof AuthenticatedAppAdminWillAiRoute
+  '/api/public/hooks/mupdf-test': typeof ApiPublicHooksMupdfTestRoute
   '/api/public/hooks/will-ai-ingest': typeof ApiPublicHooksWillAiIngestRoute
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
@@ -260,6 +268,7 @@ export interface FileRoutesById {
   '/_authenticated/app/admin/review': typeof AuthenticatedAppAdminReviewRoute
   '/_authenticated/app/admin/sops': typeof AuthenticatedAppAdminSopsRouteWithChildren
   '/_authenticated/app/admin/will-ai': typeof AuthenticatedAppAdminWillAiRoute
+  '/api/public/hooks/mupdf-test': typeof ApiPublicHooksMupdfTestRoute
   '/api/public/hooks/will-ai-ingest': typeof ApiPublicHooksWillAiIngestRoute
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
@@ -291,6 +300,7 @@ export interface FileRouteTypes {
     | '/app/admin/review'
     | '/app/admin/sops'
     | '/app/admin/will-ai'
+    | '/api/public/hooks/mupdf-test'
     | '/api/public/hooks/will-ai-ingest'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
@@ -317,6 +327,7 @@ export interface FileRouteTypes {
     | '/r/$token'
     | '/app/admin/review'
     | '/app/admin/will-ai'
+    | '/api/public/hooks/mupdf-test'
     | '/api/public/hooks/will-ai-ingest'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
@@ -347,6 +358,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/admin/review'
     | '/_authenticated/app/admin/sops'
     | '/_authenticated/app/admin/will-ai'
+    | '/api/public/hooks/mupdf-test'
     | '/api/public/hooks/will-ai-ingest'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
@@ -370,6 +382,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   LoginRoute: typeof LoginRoute
   RTokenRoute: typeof RTokenRouteWithChildren
+  ApiPublicHooksMupdfTestRoute: typeof ApiPublicHooksMupdfTestRoute
   ApiPublicHooksWillAiIngestRoute: typeof ApiPublicHooksWillAiIngestRoute
   ApiPublicRCaptureRoute: typeof ApiPublicRCaptureRoute
   ApiPublicRCompleteRoute: typeof ApiPublicRCompleteRoute
@@ -514,6 +527,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/hooks/will-ai-ingest'
       fullPath: '/api/public/hooks/will-ai-ingest'
       preLoaderRoute: typeof ApiPublicHooksWillAiIngestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/mupdf-test': {
+      id: '/api/public/hooks/mupdf-test'
+      path: '/api/public/hooks/mupdf-test'
+      fullPath: '/api/public/hooks/mupdf-test'
+      preLoaderRoute: typeof ApiPublicHooksMupdfTestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app/admin/will-ai': {
@@ -661,6 +681,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   LoginRoute: LoginRoute,
   RTokenRoute: RTokenRouteWithChildren,
+  ApiPublicHooksMupdfTestRoute: ApiPublicHooksMupdfTestRoute,
   ApiPublicHooksWillAiIngestRoute: ApiPublicHooksWillAiIngestRoute,
   ApiPublicRCaptureRoute: ApiPublicRCaptureRoute,
   ApiPublicRCompleteRoute: ApiPublicRCompleteRoute,
@@ -674,13 +695,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
