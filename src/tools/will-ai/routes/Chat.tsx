@@ -59,6 +59,11 @@ export function WillAiChat() {
 
   const messages = useWillAiMessages(activeId);
   const send = useSendWillAiMessage(ownerId);
+  const deleteConv = useDeleteWillAiConversation(ownerId);
+  const [deleteTarget, setDeleteTarget] = useState<
+    { id: string; title: string } | null
+  >(null);
+
 
   const [draft, setDraft] = useState("");
   const [lastFailedInput, setLastFailedInput] = useState<string | null>(null);
