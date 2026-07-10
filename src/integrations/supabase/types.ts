@@ -733,6 +733,24 @@ export type Database = {
           },
         ]
       }
+      will_ai_settings: {
+        Row: {
+          id: number
+          owner_access_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          owner_access_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          owner_access_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       will_ai_sources: {
         Row: {
           author: string | null

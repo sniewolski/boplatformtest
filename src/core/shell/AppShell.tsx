@@ -1,11 +1,12 @@
 import { useEffect, type ReactNode } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
-import { Check, LayoutDashboard, Shield, ClipboardList, FileText, LogOut, CalendarDays, MessagesSquare } from "lucide-react";
+import { Check, LayoutDashboard, Lock, Shield, ClipboardList, FileText, LogOut, CalendarDays, MessagesSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toolRegistry } from "@/tools/registry";
 import { useMyRoles } from "@/core/roles/useMyRoles";
 import { useBookingReadiness } from "@/lib/useBookingReadiness";
+import { useWillAiSettings } from "@/lib/useWillAiSettings";
 import { Button } from "@/components/ui/button";
 import logoAsset from "@/assets/logo.png.asset.json";
 
@@ -14,7 +15,9 @@ type NavItem = {
   label: string;
   icon: typeof LayoutDashboard;
   complete?: boolean;
+  disabled?: boolean;
 };
+
 
 export function AppShell({
   userId,
@@ -30,6 +33,10 @@ export function AppShell({
   const { data: roles = [] } = useMyRoles(userId);
   const isAdmin = roles.includes("admin");
   const { isLoading: readinessLoading, incomplete } = useBookingReadiness(userId);
+  const { data: willAiSettings } = useWillAiSettings();
+  const willAiPausedForOwner =
+    willAiSettings?.owner_access_enabled === false && !isAdmin;
+
 
   const AUDIT_KEYS = new Set([
     "conversion",
@@ -81,7 +88,9 @@ export function AppShell({
             : t.key === "salescode"
               ? salescodeComplete
               : undefined,
+        disabled: t.key === "will-ai" && willAiPausedForOwner,
       })),
+
     { to: "/app/book-call", label: "Book a 1:1 call", icon: CalendarDays },
   ];
 
@@ -107,25 +116,39 @@ export function AppShell({
         </div>
 
         <nav className="flex-1 min-h-0 overflow-hidden px-3 flex flex-col gap-1">
-          {items.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-ink hover:bg-background transition-colors"
-              activeProps={{ className: "bg-background font-medium" }}
-              activeOptions={{ exact: item.to === "/app" }}
-            >
-              <item.icon className="size-4" />
-              <span className="flex-1">{item.label}</span>
-              {item.complete && (
-                <Check
-                  className="size-4 text-ink shrink-0"
-                  strokeWidth={2.5}
-                  aria-label="Complete"
-                />
-              )}
-            </Link>
-          ))}
+          {items.map((item) =>
+            item.disabled ? (
+              <div
+                key={item.to}
+                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-ink-muted cursor-not-allowed select-none"
+                aria-disabled="true"
+                title="Temporarily unavailable"
+              >
+                <item.icon className="size-4" />
+                <span className="flex-1">{item.label}</span>
+                <Lock className="size-3.5 shrink-0" aria-hidden />
+              </div>
+            ) : (
+              <Link
+                key={item.to}
+                to={item.to}
+                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-ink hover:bg-background transition-colors"
+                activeProps={{ className: "bg-background font-medium" }}
+                activeOptions={{ exact: item.to === "/app" }}
+              >
+                <item.icon className="size-4" />
+                <span className="flex-1">{item.label}</span>
+                {item.complete && (
+                  <Check
+                    className="size-4 text-ink shrink-0"
+                    strokeWidth={2.5}
+                    aria-label="Complete"
+                  />
+                )}
+              </Link>
+            ),
+          )}
+
 
           {isAdmin && (
             <>

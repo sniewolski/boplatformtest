@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import {
   type WillAiFailedPage,
@@ -28,6 +29,11 @@ import {
   isPdfFile,
   WILL_AI_MAX_BYTES,
 } from "@/lib/useWillAiSources";
+import {
+  useSetWillAiOwnerAccess,
+  useWillAiSettings,
+} from "@/lib/useWillAiSettings";
+
 
 export const Route = createFileRoute("/_authenticated/app/admin/will-ai")({
   component: WillAiAdmin,
@@ -44,6 +50,8 @@ function WillAiAdmin() {
         </p>
       </header>
 
+      <OwnerAccessToggle />
+
       <Tabs defaultValue="sources" className="flex flex-col gap-6">
         <TabsList className="self-start">
           <TabsTrigger value="sources">Sources</TabsTrigger>
@@ -59,6 +67,39 @@ function WillAiAdmin() {
     </div>
   );
 }
+
+/**
+ * Admin-only switch that pauses/resumes owner access to the Will AI tool.
+ * Does NOT affect this admin screen — admins retain full ingestion, retry,
+ * delete, and content-gap access regardless of the flag.
+ */
+function OwnerAccessToggle() {
+  const settings = useWillAiSettings();
+  const setAccess = useSetWillAiOwnerAccess();
+  const enabled = settings.data?.owner_access_enabled ?? true;
+
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-[var(--surface-raised)] px-5 py-4">
+      <div className="flex flex-col gap-0.5 min-w-0">
+        <span className="text-ink text-sm font-medium">Owner access</span>
+        <span className="text-ink-muted text-xs">
+          {settings.isLoading
+            ? "Loading…"
+            : enabled
+              ? "Enabled — owners can use Will AI."
+              : "Paused — Will AI is hidden and blocked for owners. Admins are unaffected."}
+        </span>
+      </div>
+      <Switch
+        checked={enabled}
+        disabled={settings.isLoading || setAccess.isPending}
+        onCheckedChange={(v) => setAccess.mutate(v)}
+        aria-label="Toggle owner access to Will AI"
+      />
+    </div>
+  );
+}
+
 
 function SourcesTab() {
   const sources = useWillAiSources();
