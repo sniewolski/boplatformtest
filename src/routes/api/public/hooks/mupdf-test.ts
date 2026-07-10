@@ -16,20 +16,12 @@ export const Route = createFileRoute("/api/public/hooks/mupdf-test")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        // Throwaway proof endpoint — no auth. Read-only, hardcoded source id.
         const started = Date.now();
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
         if (!supabaseUrl || !supabaseServiceKey) {
           return Response.json({ error: "Server misconfigured" }, { status: 500 });
-        }
-
-        const authHeader = request.headers.get("Authorization");
-        if (!authHeader?.startsWith("Bearer ")) {
-          return Response.json({ error: "Unauthorized" }, { status: 401 });
-        }
-        const token = authHeader.slice("Bearer ".length).trim();
-        if (token !== supabaseServiceKey) {
-          return Response.json({ error: "Forbidden" }, { status: 403 });
         }
 
         const steps: Array<{ step: string; ms: number; ok: boolean; detail?: string }> = [];
