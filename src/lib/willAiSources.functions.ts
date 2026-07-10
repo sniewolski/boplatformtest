@@ -7,8 +7,8 @@
  *   - `createWillAiSource` validates the file server-side (magic bytes +
  *     size cap), inserts a `will_ai_sources` row with status='pending',
  *     and enqueues one message on the `will_ai_ingestion` pgmq queue.
- *     The cron-fed hook route (`/api/public/hooks/will-ai-ingest`) does
- *     the actual per-page work.
+ *     The cron-fed Supabase Edge Function (`will-ai-ingest`) does the
+ *     actual per-page work.
  *   - `retryWillAiSource` wipes any existing chunks for the source and
  *     re-enqueues it from page 1. No incremental resume — deliberate.
  */
