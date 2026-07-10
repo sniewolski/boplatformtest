@@ -57,6 +57,10 @@ export function WillAiChat() {
 
   const [draft, setDraft] = useState("");
   const [lastFailedInput, setLastFailedInput] = useState<string | null>(null);
+  // Optimistic user bubble shown immediately on submit, before the RPC
+  // resolves. Uses a temp client-side id so it can't collide with the
+  // real persisted id that comes back from the server.
+  const [pendingUser, setPendingUser] = useState<WillAiMessage | null>(null);
 
   // For preview of a source PDF at a specific page (from a citation click).
   const [pdfPreview, setPdfPreview] = useState<
@@ -87,22 +91,35 @@ export function WillAiChat() {
     const el = scrollRef.current;
     if (!el) return;
     el.scrollTop = el.scrollHeight;
-  }, [rows.length, send.isPending]);
+  }, [rows.length, send.isPending, pendingUser]);
 
   const canSend = draft.trim().length > 0 && !send.isPending && !!ownerId;
 
   const doSend = (text: string) => {
-    if (!text.trim() || !ownerId) return;
+    const trimmed = text.trim();
+    if (!trimmed || !ownerId) return;
     setLastFailedInput(null);
+    // Clear the composer + render the optimistic user bubble immediately.
+    setDraft("");
+    setPendingUser({
+      id: `optimistic-${Date.now()}`,
+      conversation_id: activeId ?? "pending",
+      owner_id: ownerId,
+      role: "user",
+      content: trimmed,
+      cited_chunk_ids: [],
+      created_at: new Date().toISOString(),
+      used_fallback: false,
+    } as unknown as WillAiMessage);
     send.mutate(
-      { conversationId: activeId, userMessage: text.trim() },
+      { conversationId: activeId, userMessage: trimmed },
       {
         onSuccess: (res) => {
           if (!activeId) setActiveId(res.conversationId);
-          setDraft("");
+          setPendingUser(null);
         },
         onError: () => {
-          setLastFailedInput(text.trim());
+          setLastFailedInput(trimmed);
         },
       },
     );
@@ -120,13 +137,20 @@ export function WillAiChat() {
     }
   };
 
+
   const startNewChat = () => {
     setActiveId(null);
     setDraft("");
     setLastFailedInput(null);
+    setPendingUser(null);
   };
 
-  const isEmpty = !messages.isLoading && rows.length === 0 && !send.isPending;
+  const isEmpty =
+    !messages.isLoading &&
+    rows.length === 0 &&
+    !send.isPending &&
+    !pendingUser;
+
 
   return (
     <div className="app-content py-10 flex flex-col gap-6 min-h-[calc(100vh-8rem)]">
@@ -202,7 +226,17 @@ export function WillAiChat() {
           <MessageRow key={m.id} message={m} onOpenPdf={openPdfAt} />
         ))}
 
+        {pendingUser && (
+          <MessageRow
+            key={pendingUser.id}
+            message={pendingUser}
+            onOpenPdf={openPdfAt}
+          />
+        )}
+
         {send.isPending && <ThinkingIndicator />}
+
+
 
         {send.isError && lastFailedInput && (
           <div className="flex flex-col gap-2 rounded-lg border border-[var(--red)]/40 bg-[var(--surface-raised)] p-3 text-sm">
