@@ -234,13 +234,8 @@ export function WillAiChat() {
           />
         )}
 
-        {send.isPending && (
-          <div className="flex justify-start">
-            <div className="max-w-[85%]">
-              <ThinkingIndicator />
-            </div>
-          </div>
-        )}
+        {send.isPending && <ThinkingIndicator />}
+
 
 
         {send.isError && lastFailedInput && (
