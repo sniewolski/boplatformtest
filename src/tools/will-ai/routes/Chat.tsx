@@ -131,7 +131,7 @@ export function WillAiChat() {
         <div className="flex flex-col gap-0.5">
           <h1 className="text-2xl">Will AI</h1>
           <p className="text-ink-muted text-sm">
-            Ask Will anything from the material.
+            Digital version of Will and his 10+ years of experience
           </p>
         </div>
         <div className="flex items-center gap-2">
