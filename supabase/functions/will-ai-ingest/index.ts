@@ -105,22 +105,32 @@ async function fetchGeminiEmbedding(apiKey: string, text: string): Promise<numbe
   });
 }
 
-async function captionDiagram(
+/**
+ * Sentinel returned by the model when a page has no meaningful visual content
+ * beyond the plain text we already extracted. Chosen to be short, unambiguous,
+ * and vanishingly unlikely to appear in an honest caption.
+ */
+const NO_VISUAL_SENTINEL = "NO_VISUAL_CONTENT";
+
+async function captionPage(
   apiKey: string,
   pngBase64: string,
-  pageContext: string,
-): Promise<string> {
+  pageText: string,
+): Promise<string | null> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${CAPTION_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`;
   const system =
-    "You are describing a diagram from a sales book so it can be retrieved by semantic search. " +
-    "Write 3–6 sentences that state (a) what the diagram shows, (b) the labels/axes/steps, and " +
+    "You are describing a page from a sales book so its VISUAL content can be retrieved by semantic search. " +
+    "The plain text of the page has already been extracted separately, so DO NOT describe or paraphrase the running text. " +
+    "Only describe visual elements: diagrams, illustrations, charts, tables, figures, callout boxes, or other non-text visuals. " +
+    `If the page has no meaningful visual content beyond the plain text (e.g. a normal prose page, a chapter opener, a blank spacer, a page number only), reply with EXACTLY this token and nothing else: ${NO_VISUAL_SENTINEL}. ` +
+    "Otherwise, write 3–6 sentences that state (a) what the visual shows, (b) the labels/axes/steps/rows-columns, and " +
     "(c) the point the author appears to be making with it. Do not add commentary or headings.";
   const parts: any[] = [
     { text: system },
     { inlineData: { mimeType: "image/png", data: pngBase64 } },
   ];
-  if (pageContext.trim()) {
-    parts.push({ text: `Adjacent page text (for context, do not repeat verbatim):\n${pageContext.slice(0, 1500)}` });
+  if (pageText.trim()) {
+    parts.push({ text: `Extracted page text (already indexed separately — do not repeat verbatim, use only to interpret the visuals):\n${pageText.slice(0, 1500)}` });
   }
   return withGeminiRetry("caption", async () => {
     const res = await fetch(url, {
@@ -140,6 +150,8 @@ async function captionDiagram(
       .join("")
       .trim();
     if (!caption) throw new Error("Caption response was empty");
+    const normalized = caption.replace(/[`"'.\s]/g, "").toUpperCase();
+    if (normalized === NO_VISUAL_SENTINEL) return null;
     return caption;
   });
 }
