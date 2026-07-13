@@ -765,6 +765,7 @@ export type Database = {
           failed_pages: Json
           id: string
           last_completed_page: number
+          sop_id: string | null
           source_type: string
           status: string
           storage_path: string | null
@@ -782,6 +783,7 @@ export type Database = {
           failed_pages?: Json
           id?: string
           last_completed_page?: number
+          sop_id?: string | null
           source_type: string
           status?: string
           storage_path?: string | null
@@ -799,6 +801,7 @@ export type Database = {
           failed_pages?: Json
           id?: string
           last_completed_page?: number
+          sop_id?: string | null
           source_type?: string
           status?: string
           storage_path?: string | null
@@ -806,7 +809,15 @@ export type Database = {
           total_pages?: number | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "will_ai_sources_sop_id_fkey"
+            columns: ["sop_id"]
+            isOneToOne: false
+            referencedRelation: "sops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       will_ai_youtube_quota: {
         Row: {
