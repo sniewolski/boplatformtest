@@ -116,6 +116,16 @@ export function SentAssessmentsList() {
                     {isOpen ? "Hide" : "View"}
                   </Button>
                 ) : null}
+                {isCompleted ? (
+                  <ExportButton
+                    token={r.token}
+                    ownerName={ownerName}
+                    ownerEmail={ownerEmail}
+                    respondentName={r.respondent_name}
+                    respondentEmail={r.respondent_email}
+                    completedAt={r.completed_at}
+                  />
+                ) : null}
                 <Button
                   type="button"
                   variant="ghost"
@@ -134,6 +144,7 @@ export function SentAssessmentsList() {
           );
         })}
       </ul>
+
 
       <AlertDialog
         open={pendingDeleteId !== null}
