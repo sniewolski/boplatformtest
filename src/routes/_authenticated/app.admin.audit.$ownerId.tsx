@@ -48,6 +48,26 @@ function OwnerAuditReview() {
   const owner = owners.data?.find((o) => o.id === ownerId) ?? null;
   const [tab, setTab] = useState<TabKey>("conversion");
 
+  const fetchExport = useServerFn(getAuditExportData);
+  const exportMut = useMutation({
+    mutationFn: async () => {
+      const data = await fetchExport({ data: { ownerId } });
+      if (!hasAnySubmission(data)) {
+        throw new Error("Nothing to export yet.");
+      }
+      const md = exportToMarkdown(data);
+      const nameSource =
+        data.owner.fullName?.trim() || data.owner.email.split("@")[0];
+      const slug =
+        nameSource
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "") || "owner";
+      const today = new Date().toISOString().slice(0, 10);
+      downloadMarkdown(`audit-${slug}-${today}.md`, md);
+    },
+  });
+
   return (
     <div className="app-content py-12 flex flex-col gap-8">
       <div className="flex flex-col gap-3">
@@ -58,15 +78,39 @@ function OwnerAuditReview() {
           <ArrowLeft className="size-3.5" />
           All owners
         </Link>
-        <header className="flex flex-col gap-1">
-          <h1 className="text-2xl">
-            {owner?.fullName ?? owner?.email ?? (owners.isLoading ? "…" : "Unknown owner")}
-          </h1>
-          {owner?.fullName && (
-            <p className="text-ink-muted text-sm">{owner.email}</p>
-          )}
+        <header className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-1 min-w-0">
+            <h1 className="text-2xl">
+              {owner?.fullName ?? owner?.email ?? (owners.isLoading ? "…" : "Unknown owner")}
+            </h1>
+            {owner?.fullName && (
+              <p className="text-ink-muted text-sm">{owner.email}</p>
+            )}
+          </div>
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => exportMut.mutate()}
+              disabled={exportMut.isPending}
+            >
+              {exportMut.isPending ? (
+                <Loader2 className="size-3.5 animate-spin" aria-hidden />
+              ) : (
+                <Download className="size-3.5" aria-hidden />
+              )}
+              {exportMut.isPending ? "Exporting…" : "Export to MD"}
+            </Button>
+            {exportMut.error && (
+              <span className="text-xs text-[var(--red)]">
+                {(exportMut.error as Error).message}
+              </span>
+            )}
+          </div>
         </header>
       </div>
+
 
       <nav
         role="tablist"
