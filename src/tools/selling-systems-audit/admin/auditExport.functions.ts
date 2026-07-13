@@ -30,7 +30,7 @@ const SECTION_TABLE: Record<AuditExportSectionKey, string> = {
 
 export type AuditExportSection = {
   key: AuditExportSectionKey;
-  submittedAnswers: Record<string, unknown> | null;
+  submittedAnswers: any | null;
   submittedAt: string | null;
   summaryText: string | null;
   noteBody: string | null;
@@ -123,9 +123,7 @@ export const getAuditExportData = createServerFn({ method: "POST" })
       if (error) throw new Error(error.message);
       sections.push({
         key,
-        submittedAnswers:
-          ((row as any)?.submitted_answers as Record<string, unknown> | null) ??
-          null,
+        submittedAnswers: ((row as any)?.submitted_answers as any) ?? null,
         submittedAt: ((row as any)?.submitted_at as string | null) ?? null,
         summaryText: summaryBy.get(key) || null,
         noteBody: noteBy.get(key) || null,
