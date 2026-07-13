@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ChevronDown, ChevronRight, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Download, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -19,6 +19,13 @@ import {
 } from "@/lib/sessions.functions";
 import { SalesCodeResultView } from "./SalesCodeResultView";
 import type { SalesCodeResult } from "../lib/types";
+import { useSession } from "@/core/auth/useSession";
+import { useMyProfile } from "@/core/auth/useProfile";
+import {
+  formatSalesCodeMarkdown,
+  salesCodeExportFilename,
+} from "@/tools/salescode/admin/exportToMarkdown";
+import { downloadMarkdown } from "@/lib/download-file";
 
 /**
  * Owner-side list of respondents the owner has sent SalesCode links to.
@@ -36,6 +43,12 @@ export function SentAssessmentsList() {
 
   const [openId, setOpenId] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
+  const { session } = useSession();
+  const profile = useMyProfile(session?.user.id);
+  const ownerName = profile.data?.full_name ?? null;
+  const ownerEmail = profile.data?.email ?? session?.user.email ?? "";
+
 
   const deleteMutation = useMutation({
     mutationFn: (sessionId: string) => del({ data: { sessionId } }),
@@ -103,6 +116,16 @@ export function SentAssessmentsList() {
                     {isOpen ? "Hide" : "View"}
                   </Button>
                 ) : null}
+                {isCompleted ? (
+                  <ExportButton
+                    token={r.token}
+                    ownerName={ownerName}
+                    ownerEmail={ownerEmail}
+                    respondentName={r.respondent_name}
+                    respondentEmail={r.respondent_email}
+                    completedAt={r.completed_at}
+                  />
+                ) : null}
                 <Button
                   type="button"
                   variant="ghost"
@@ -121,6 +144,7 @@ export function SentAssessmentsList() {
           );
         })}
       </ul>
+
 
       <AlertDialog
         open={pendingDeleteId !== null}
@@ -172,6 +196,72 @@ function StatusBadge({ status }: { status: string }) {
     <span className="text-xs text-ink-muted border border-border rounded-full px-2 py-0.5">
       {label}
     </span>
+  );
+}
+
+/**
+ * Icon-only export button for a completed row. Fetches the stored result
+ * on demand via the same token-scoped public state endpoint used by the
+ * inline expander, then downloads a Markdown file client-side.
+ */
+function ExportButton({
+  token,
+  ownerName,
+  ownerEmail,
+  respondentName,
+  respondentEmail,
+  completedAt,
+}: {
+  token: string;
+  ownerName: string | null;
+  ownerEmail: string;
+  respondentName: string | null;
+  respondentEmail: string | null;
+  completedAt: string | null;
+}) {
+  const mut = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/public/r/state", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+      if (!res.ok) throw new Error("Failed to load result");
+      const json = (await res.json()) as {
+        ok: boolean;
+        result: SalesCodeResult | null;
+      };
+      const result = json.result;
+      if (!json.ok || !result || !result.type) {
+        throw new Error("No result available");
+      }
+      const input = {
+        kind: "respondent" as const,
+        ownerName,
+        ownerEmail,
+        respondentName,
+        respondentEmail,
+        completedAt,
+        result,
+      };
+      downloadMarkdown(
+        salesCodeExportFilename(input),
+        formatSalesCodeMarkdown(input),
+      );
+    },
+  });
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      aria-label="Export to MD"
+      disabled={mut.isPending}
+      onClick={() => mut.mutate()}
+      className="text-ink-muted hover:text-ink"
+    >
+      <Download className="size-4" />
+    </Button>
   );
 }
 

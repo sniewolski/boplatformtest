@@ -2,13 +2,18 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronRight, Download } from "lucide-react";
 import { listOwners } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { SalesCodeResultView } from "@/tools/salescode/components/SalesCodeResultView";
 import { scoreSalesCode } from "@/tools/salescode/lib/scoring";
 import type { AnswerMap, SalesCodeResult } from "@/tools/salescode/lib/types";
+import {
+  formatSalesCodeMarkdown,
+  salesCodeExportFilename,
+} from "@/tools/salescode/admin/exportToMarkdown";
+import { downloadMarkdown } from "@/lib/download-file";
 
 export const Route = createFileRoute(
   "/_authenticated/app/admin/salescode/$ownerId",
@@ -96,9 +101,35 @@ function OwnerSalesCodeReview() {
       </div>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-sm uppercase tracking-wide text-ink-muted">
-          Self-assessment
-        </h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm uppercase tracking-wide text-ink-muted">
+            Self-assessment
+          </h2>
+          {ownResult ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const input = {
+                  kind: "owner" as const,
+                  ownerName: owner?.fullName ?? null,
+                  ownerEmail: owner?.email ?? "",
+                  submittedAt: intake.data?.submitted_at ?? null,
+                  result: ownResult,
+                };
+                downloadMarkdown(
+                  salesCodeExportFilename(input),
+                  formatSalesCodeMarkdown(input),
+                );
+              }}
+              className="inline-flex items-center gap-1.5"
+            >
+              <Download className="size-3.5" aria-hidden />
+              Export to MD
+            </Button>
+          ) : null}
+        </div>
         {intake.isLoading ? (
           <p className="text-ink-muted text-sm">Loading…</p>
         ) : intake.error ? (
@@ -113,6 +144,7 @@ function OwnerSalesCodeReview() {
           <SalesCodeResultView result={ownResult} variant="owner" />
         )}
       </section>
+
 
       <section className="flex flex-col gap-4">
         <h2 className="text-sm uppercase tracking-wide text-ink-muted">
@@ -163,6 +195,32 @@ function OwnerSalesCodeReview() {
                         {isOpen ? "Hide" : "View"}
                       </Button>
                     ) : null}
+                    {isCompleted && r.result ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        aria-label="Export to MD"
+                        onClick={() => {
+                          const input = {
+                            kind: "respondent" as const,
+                            ownerName: owner?.fullName ?? null,
+                            ownerEmail: owner?.email ?? "",
+                            respondentName: r.respondent_name,
+                            respondentEmail: r.respondent_email,
+                            completedAt: r.completed_at,
+                            result: r.result!,
+                          };
+                          downloadMarkdown(
+                            salesCodeExportFilename(input),
+                            formatSalesCodeMarkdown(input),
+                          );
+                        }}
+                      >
+                        <Download className="size-4" aria-hidden />
+                      </Button>
+                    ) : null}
+
                   </div>
                   {isOpen && isCompleted && r.result ? (
                     <div className="px-4 pb-6 pt-2 border-t border-border bg-background">
