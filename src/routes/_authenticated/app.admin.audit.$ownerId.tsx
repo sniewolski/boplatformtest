@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { listOwners } from "@/lib/admin.functions";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Download, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { ConversionAdminTab } from "@/tools/selling-systems-audit/admin/ConversionAdminTab";
 import { SectionAdminTab } from "@/tools/selling-systems-audit/admin/SectionAdminTab";
 import { PipelineAdminReadBack } from "@/tools/selling-systems-audit/admin/PipelineAdminReadBack";
@@ -13,6 +14,12 @@ import { ActivityAdminReadBack } from "@/tools/selling-systems-audit/admin/Activ
 import { MessagingAdminReadBack } from "@/tools/selling-systems-audit/admin/MessagingAdminReadBack";
 import { AlignmentAdminReadBack } from "@/tools/selling-systems-audit/admin/AlignmentAdminReadBack";
 import { ContentAdminTab } from "@/tools/selling-systems-audit/admin/ContentAdminTab";
+import { getAuditExportData } from "@/tools/selling-systems-audit/admin/auditExport.functions";
+import {
+  exportToMarkdown,
+  hasAnySubmission,
+} from "@/tools/selling-systems-audit/admin/exportToMarkdown";
+import { downloadMarkdown } from "@/lib/download-file";
 
 const SECTION_TABS = [
   { key: "conversion", label: "Conversion" },
