@@ -273,6 +273,231 @@ const MAX_PAGES_PER_INVOCATION = 3;
 
 type ProcessResult = { kind: "done" } | { kind: "defer" };
 
+// -------------------- youtube branch --------------------
+
+/**
+ * ~60s window, advance by 45s → 15s overlap between consecutive windows.
+ * Matches the spec agreed for transcript chunking.
+ */
+const YT_WINDOW_SECONDS = 60;
+const YT_WINDOW_STRIDE_SECONDS = 45;
+
+type YtSegment = { start: number; dur: number; text: string };
+
+/**
+ * youtube-transcript.io returns raw cue segments where every other row is
+ * often just a newline (`text === "\n"`). These are useless once concatenated
+ * into a window — they inflate token counts and add noise to the embedding
+ * without adding content. Drop them (and any other purely-whitespace cue).
+ */
+function cleanTranscriptSegments(raw: any[]): YtSegment[] {
+  const out: YtSegment[] = [];
+  for (const r of raw) {
+    if (!r || typeof r !== "object") continue;
+    const text = typeof r.text === "string" ? r.text : "";
+    if (text.trim() === "") continue;
+    const start = Number(r.start);
+    const dur = Number(r.dur);
+    if (!Number.isFinite(start) || start < 0) continue;
+    const safeDur = Number.isFinite(dur) && dur > 0 ? dur : 0;
+    out.push({ start, dur: safeDur, text });
+  }
+  return out;
+}
+
+type YtWindow = { start_seconds: number; end_seconds: number; content: string };
+
+function windowSegments(segments: YtSegment[], totalSeconds: number): YtWindow[] {
+  if (segments.length === 0) return [];
+  const lastSegEnd = segments.length
+    ? segments[segments.length - 1].start + (segments[segments.length - 1].dur || 0)
+    : 0;
+  const endLimit = Math.max(totalSeconds || 0, Math.ceil(lastSegEnd));
+  const windows: YtWindow[] = [];
+  for (let cursor = 0; cursor < endLimit; cursor += YT_WINDOW_STRIDE_SECONDS) {
+    const windowStart = cursor;
+    const windowEnd = cursor + YT_WINDOW_SECONDS;
+    const parts: string[] = [];
+    for (const seg of segments) {
+      const segEnd = seg.start + (seg.dur || 0);
+      // Include any segment whose start falls inside this window. Using
+      // `start` (not overlap) keeps each segment attributable to exactly
+      // one primary window while still allowing tail overlap from the
+      // 15s stride offset.
+      if (seg.start >= windowStart && seg.start < windowEnd) {
+        parts.push(seg.text.trim());
+      }
+      if (seg.start >= windowEnd) break;
+      void segEnd;
+    }
+    if (parts.length === 0) continue;
+    const content = parts.join(" ").replace(/\s+/g, " ").trim();
+    if (!content) continue;
+    windows.push({
+      start_seconds: windowStart,
+      end_seconds: Math.min(windowEnd, endLimit),
+      content,
+    });
+    if (windowEnd >= endLimit) break;
+  }
+  return windows;
+}
+
+async function fetchYouTubeTranscript(
+  apiKey: string,
+  videoId: string,
+): Promise<{
+  title: string | null;
+  author: string | null;
+  lengthSeconds: number | null;
+  language: string | null;
+  segments: any[];
+} | { error: string }> {
+  const res = await fetch("https://www.youtube-transcript.io/api/transcripts", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ ids: [videoId] }),
+  });
+  const bodyText = await res.text();
+  let json: any = null;
+  try { json = JSON.parse(bodyText); } catch { /* keep raw */ }
+  if (!res.ok) {
+    return {
+      error: `youtube-transcript.io ${res.status}: ${bodyText.slice(0, 300)}`,
+    };
+  }
+  const entry = Array.isArray(json) ? json[0] : json;
+  if (!entry || typeof entry !== "object") {
+    return { error: "youtube-transcript.io: empty response" };
+  }
+  const micro = entry?.microformat?.playerMicroformatRenderer ?? null;
+  const title: string | null =
+    entry?.title ??
+    (micro?.title?.simpleText ?? micro?.title ?? null) ??
+    null;
+  const author: string | null =
+    entry?.author ?? micro?.ownerChannelName ?? null;
+  const lengthRaw =
+    entry?.lengthSeconds ?? entry?.duration ?? micro?.lengthSeconds ?? null;
+  const lengthSeconds =
+    lengthRaw != null && !Number.isNaN(Number(lengthRaw)) ? Number(lengthRaw) : null;
+
+  const tracks = entry?.tracks ?? entry?.transcripts ?? [];
+  const track = Array.isArray(tracks) ? tracks[0] : tracks;
+  const segments = track?.transcript ?? track?.segments ?? track?.cues ?? [];
+  if (!Array.isArray(segments) || segments.length === 0) {
+    return {
+      error: "No transcript track available (video has no captions).",
+    };
+  }
+  return {
+    title: typeof title === "string" ? title : null,
+    author: typeof author === "string" ? author : null,
+    lengthSeconds,
+    language: track?.language ?? track?.languageCode ?? null,
+    segments,
+  };
+}
+
+async function processYouTubeSource(
+  supabase: SupabaseClient<any, any>,
+  src: any,
+  geminiKey: string,
+): Promise<ProcessResult> {
+  const sourceId: string = src.id;
+  const videoId: string | null = src.external_id ?? null;
+  if (!videoId) throw new Error(`YouTube source ${sourceId} missing external_id`);
+
+  const apiKey = Deno.env.get("YOUTUBE_TRANSCRIPT_IO_API_KEY");
+  if (!apiKey) throw new Error("YOUTUBE_TRANSCRIPT_IO_API_KEY not configured");
+
+  // 1. Reserve one transcript from the monthly quota. If nothing is left
+  //    for this cycle, defer — status stays 'pending', retry budget is
+  //    NOT consumed (dispatcher uses requeue_will_ai_ingestion which
+  //    delete+resend the message, resetting read_ct).
+  const { data: reserved, error: rErr } = await supabase.rpc(
+    "reserve_youtube_quota",
+    { requested: 1 },
+  );
+  if (rErr) throw new Error(`Quota reservation failed: ${rErr.message}`);
+  const granted = typeof reserved === "number" ? reserved : 0;
+  if (granted <= 0) {
+    console.log("will-ai-ingest: youtube quota exhausted, deferring", {
+      sourceId,
+      videoId,
+    });
+    return { kind: "defer" };
+  }
+
+  await supabase
+    .from("will_ai_sources")
+    .update({ status: "processing", error_message: null })
+    .eq("id", sourceId);
+
+  // 2. Fetch the transcript.
+  const fetched = await fetchYouTubeTranscript(apiKey, videoId);
+  if ("error" in fetched) {
+    // Genuine failure (no captions / invalid id / API error). Throw so the
+    // dispatcher's retry/DLQ machinery kicks in (MAX_ATTEMPTS=2).
+    throw new Error(fetched.error);
+  }
+
+  // 3. Clean + window the transcript.
+  const cleaned = cleanTranscriptSegments(fetched.segments);
+  if (cleaned.length === 0) {
+    throw new Error("Transcript contained no non-empty segments.");
+  }
+  const totalSeconds = fetched.lengthSeconds ?? 0;
+
+  // 4. Update source metadata — do this BEFORE embedding so the admin sees
+  //    the real title while chunks are still being generated.
+  await supabase
+    .from("will_ai_sources")
+    .update({
+      title: fetched.title ?? `YouTube ${videoId}`,
+      author: fetched.author ?? null,
+      duration_seconds: totalSeconds || null,
+    })
+    .eq("id", sourceId);
+
+  const windows = windowSegments(cleaned, totalSeconds);
+  if (windows.length === 0) {
+    throw new Error("Windowing produced no chunks.");
+  }
+
+  // 5. Embed + insert one chunk per window. Serial to keep the memory and
+  //    API-rate footprint predictable — a 3-hour video is still under a
+  //    few hundred windows.
+  for (const w of windows) {
+    const embedding = await fetchGeminiEmbedding(geminiKey, w.content);
+    const { error: insErr } = await supabase.from("will_ai_chunks").insert({
+      source_id: sourceId,
+      chunk_type: "transcript",
+      content: w.content,
+      page_number: null,
+      section_label: null,
+      start_seconds: w.start_seconds,
+      end_seconds: w.end_seconds,
+      embedding: embedding as any,
+    });
+    if (insErr) throw new Error(`Insert transcript chunk failed: ${insErr.message}`);
+  }
+
+  // 6. Done.
+  await supabase
+    .from("will_ai_sources")
+    .update({ status: "completed", error_message: null })
+    .eq("id", sourceId);
+  return { kind: "done" };
+}
+
+// -------------------- per-source processor --------------------
+
+
+
 async function processSource(
   supabase: SupabaseClient<any, any>,
   payload: IngestionPayload,
@@ -285,11 +510,19 @@ async function processSource(
 
   const { data: src, error: sErr } = await supabase
     .from("will_ai_sources")
-    .select("id, storage_path, title, source_type, total_pages, last_completed_page, failed_pages")
+    .select("id, storage_path, title, source_type, external_id, total_pages, last_completed_page, failed_pages")
     .eq("id", sourceId)
     .maybeSingle();
   if (sErr) throw new Error(`Load source failed: ${sErr.message}`);
   if (!src) throw new Error(`Source ${sourceId} not found`);
+
+  // Branch by source type. YouTube uses the transcript-fetch path; PDFs
+  // (book/video/podcast/blog_post/document with a storage_path) use the
+  // existing mupdf pipeline unchanged.
+  if (src.source_type === "youtube") {
+    return await processYouTubeSource(supabase, src, geminiKey);
+  }
+
   if (!src.storage_path) throw new Error(`Source ${sourceId} has no storage_path`);
 
   await supabase
