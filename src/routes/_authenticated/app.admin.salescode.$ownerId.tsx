@@ -2,13 +2,18 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronRight, Download } from "lucide-react";
 import { listOwners } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { SalesCodeResultView } from "@/tools/salescode/components/SalesCodeResultView";
 import { scoreSalesCode } from "@/tools/salescode/lib/scoring";
 import type { AnswerMap, SalesCodeResult } from "@/tools/salescode/lib/types";
+import {
+  formatSalesCodeMarkdown,
+  salesCodeExportFilename,
+} from "@/tools/salescode/admin/exportToMarkdown";
+import { downloadMarkdown } from "@/lib/download-file";
 
 export const Route = createFileRoute(
   "/_authenticated/app/admin/salescode/$ownerId",
