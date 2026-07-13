@@ -63,6 +63,7 @@ Deno.serve(async (req) => {
       first20: Array.isArray(segments) ? segments.slice(0, 20) : null,
     },
     rawKeys: entry && typeof entry === "object" ? Object.keys(entry) : null,
-    raw: entry, // full payload so we can see actual shape
+    trackKeys: track && typeof track === "object" ? Object.keys(track) : null,
+    firstSegmentKeys: Array.isArray(segments) && segments[0] && typeof segments[0] === "object" ? Object.keys(segments[0]) : null,
   }, null, 2), { headers: { "Content-Type": "application/json", ...CORS } });
 });
