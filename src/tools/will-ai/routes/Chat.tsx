@@ -6,6 +6,7 @@ import {
   FileText,
   ImageIcon,
   MessageSquarePlus,
+  Play,
   RotateCw,
   Send,
   Trash2,
