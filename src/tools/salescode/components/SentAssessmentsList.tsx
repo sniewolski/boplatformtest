@@ -200,6 +200,72 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 /**
+ * Icon-only export button for a completed row. Fetches the stored result
+ * on demand via the same token-scoped public state endpoint used by the
+ * inline expander, then downloads a Markdown file client-side.
+ */
+function ExportButton({
+  token,
+  ownerName,
+  ownerEmail,
+  respondentName,
+  respondentEmail,
+  completedAt,
+}: {
+  token: string;
+  ownerName: string | null;
+  ownerEmail: string;
+  respondentName: string | null;
+  respondentEmail: string | null;
+  completedAt: string | null;
+}) {
+  const mut = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/public/r/state", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+      if (!res.ok) throw new Error("Failed to load result");
+      const json = (await res.json()) as {
+        ok: boolean;
+        result: SalesCodeResult | null;
+      };
+      const result = json.result;
+      if (!json.ok || !result || !result.type) {
+        throw new Error("No result available");
+      }
+      const input = {
+        kind: "respondent" as const,
+        ownerName,
+        ownerEmail,
+        respondentName,
+        respondentEmail,
+        completedAt,
+        result,
+      };
+      downloadMarkdown(
+        salesCodeExportFilename(input),
+        formatSalesCodeMarkdown(input),
+      );
+    },
+  });
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      aria-label="Export to MD"
+      disabled={mut.isPending}
+      onClick={() => mut.mutate()}
+      className="text-ink-muted hover:text-ink"
+    >
+      <Download className="size-4" />
+    </Button>
+  );
+}
+
+/**
  * Fetch the session's stored result via the public state endpoint
  * (token-scoped, owner already owns the link). We re-use the public
  * /api/public/r/state endpoint with the session token rather than adding
