@@ -45,10 +45,14 @@ export type WillAiChunkRef = {
   id: string;
   source_id: string;
   source_title: string;
-  chunk_type: "text" | "diagram" | string;
+  source_type: "book" | "video" | "podcast" | "blog_post" | "document" | "youtube" | string;
+  chunk_type: "text" | "diagram" | "transcript" | string;
   page_number: number | null;
+  start_seconds: number | null;
+  end_seconds: number | null;
   image_storage_path: string | null;
   source_storage_path: string | null;
+  external_id: string | null;
 };
 
 // -------------------- conversations --------------------
@@ -125,18 +129,31 @@ export function useResolvedChunks(chunkIds: string[]) {
     queryFn: async (): Promise<WillAiChunkRef[]> => {
       const { data: chunks, error } = await supabase
         .from("will_ai_chunks")
-        .select("id, source_id, chunk_type, page_number, image_storage_path")
+        .select("id, source_id, chunk_type, page_number, start_seconds, end_seconds, image_storage_path")
         .in("id", chunkIds);
       if (error) throw error;
       const rows = (chunks ?? []) as any[];
       const sourceIds = Array.from(new Set(rows.map((r) => r.source_id)));
       const { data: sources } = await supabase
         .from("will_ai_sources")
-        .select("id, title, storage_path")
+        .select("id, title, storage_path, source_type, external_id")
         .in("id", sourceIds);
-      const sourceMap = new Map<string, { title: string; storage_path: string | null }>();
+      const sourceMap = new Map<
+        string,
+        {
+          title: string;
+          storage_path: string | null;
+          source_type: string;
+          external_id: string | null;
+        }
+      >();
       for (const s of (sources ?? []) as any[]) {
-        sourceMap.set(s.id, { title: s.title, storage_path: s.storage_path });
+        sourceMap.set(s.id, {
+          title: s.title,
+          storage_path: s.storage_path,
+          source_type: s.source_type,
+          external_id: s.external_id ?? null,
+        });
       }
       // Preserve caller order.
       const byId = new Map(rows.map((r) => [r.id, r]));
@@ -149,10 +166,14 @@ export function useResolvedChunks(chunkIds: string[]) {
             id: r.id,
             source_id: r.source_id,
             source_title: s?.title ?? "Source",
+            source_type: s?.source_type ?? "document",
             chunk_type: r.chunk_type,
             page_number: r.page_number,
+            start_seconds: r.start_seconds,
+            end_seconds: r.end_seconds,
             image_storage_path: r.image_storage_path,
             source_storage_path: s?.storage_path ?? null,
+            external_id: s?.external_id ?? null,
           } satisfies WillAiChunkRef;
         });
     },

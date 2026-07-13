@@ -1,0 +1,1 @@
+ALTER TABLE public.will_ai_chunks DROP COLUMN timestamp_seconds;

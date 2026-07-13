@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, Check, Clock, Loader2 } from "lucide-react";
+import { AlertTriangle, Check, Clock, Loader2, Youtube } from "lucide-react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,11 @@ import {
   useSetWillAiOwnerAccess,
   useWillAiSettings,
 } from "@/lib/useWillAiSettings";
+import {
+  parseYouTubeInput,
+  useImportYouTubeSources,
+  useYouTubeQuota,
+} from "@/lib/useWillAiYoutube";
 
 
 export const Route = createFileRoute("/_authenticated/app/admin/will-ai")({
@@ -130,25 +135,42 @@ function SourcesTab() {
 
   return (
     <div className="flex flex-col gap-12">
+      <YouTubeQuotaLine />
+
       {sources.error && (
         <p className="text-sm text-[var(--red)]">
           {(sources.error as Error).message}
         </p>
       )}
 
+
       {isEmpty ? (
-        <section className="flex flex-col gap-4 max-w-xl">
-          <h2 className="text-xl">Upload the first source</h2>
-          <p className="text-ink-muted text-sm">
-            PDF only, up to {Math.round(WILL_AI_MAX_BYTES / 1024 / 1024)}MB.
-          </p>
-          <UploadForm />
+        <section className="flex flex-col gap-8">
+          <div className="grid gap-8 md:grid-cols-2">
+            <div className="flex flex-col gap-4">
+              <h2 className="text-xl">Upload the first PDF</h2>
+              <p className="text-ink-muted text-sm">
+                PDF only, up to {Math.round(WILL_AI_MAX_BYTES / 1024 / 1024)}MB.
+              </p>
+              <UploadForm />
+            </div>
+            <div className="flex flex-col gap-4">
+              <h2 className="text-xl">Import from YouTube</h2>
+              <YouTubeImportCard />
+            </div>
+          </div>
         </section>
       ) : (
         <>
-          <section className="flex flex-col gap-4 max-w-xl">
-            <h2 className="text-xl">Upload a source</h2>
-            <UploadForm />
+          <section className="grid gap-8 md:grid-cols-2">
+            <div className="flex flex-col gap-4">
+              <h2 className="text-xl">Upload a PDF</h2>
+              <UploadForm />
+            </div>
+            <div className="flex flex-col gap-4">
+              <h2 className="text-xl">Import from YouTube</h2>
+              <YouTubeImportCard />
+            </div>
           </section>
 
           <section className="flex flex-col gap-4">
@@ -497,6 +519,159 @@ function UploadForm() {
     </form>
   );
 }
+
+// -------------------- youtube import --------------------
+
+/**
+ * Simple text line above the source list showing the remaining
+ * youtube-transcript.io quota for the current billing cycle. Not a new
+ * visual pattern — matches existing admin screen typography.
+ */
+function YouTubeQuotaLine() {
+  const q = useYouTubeQuota();
+  if (q.isLoading) {
+    return <p className="text-ink-muted text-xs">Loading YouTube quota…</p>;
+  }
+  if (q.error) {
+    return (
+      <p className="text-xs text-[var(--red)]">
+        YouTube quota unavailable: {(q.error as Error).message}
+      </p>
+    );
+  }
+  const data = q.data;
+  if (!data) return null;
+  const remaining = Math.max(0, data.monthly_limit - data.used);
+  const cycleLabel = data.cycle_start
+    ? new Date(data.cycle_start).toLocaleDateString(undefined, {
+        month: "long",
+        year: "numeric",
+      })
+    : "this month";
+  return (
+    <p className="text-ink-muted text-xs">
+      YouTube transcripts: {remaining} / {data.monthly_limit} remaining for{" "}
+      {cycleLabel}.
+    </p>
+  );
+}
+
+/**
+ * One entry per line: video URL, channel URL, or playlist URL.
+ * Parsing is done client-side (`parseYouTubeInput`) so the admin sees
+ * the split into videos / channels / playlists / invalid before submitting.
+ * The server fn expands channels/playlists, de-dupes, and enqueues.
+ */
+function YouTubeImportCard() {
+  const [raw, setRaw] = useState("");
+  const importMut = useImportYouTubeSources();
+  const [lastResult, setLastResult] = useState<{
+    queued: number;
+    skipped: number;
+    errors: string[];
+  } | null>(null);
+
+  const parsed = useMemo(() => parseYouTubeInput(raw), [raw]);
+  const totalCount =
+    parsed.videoIds.length +
+    parsed.channelUrls.length +
+    parsed.playlistUrls.length;
+  const canSubmit = !importMut.isPending && totalCount > 0;
+
+  return (
+    <form
+      className="flex flex-col gap-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!canSubmit) return;
+        setLastResult(null);
+        importMut.mutate(parsed, {
+          onSuccess: (res) => {
+            setLastResult(res);
+            setRaw("");
+          },
+        });
+      }}
+    >
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="yt-import-input">
+          YouTube URLs (one per line)
+        </Label>
+        <textarea
+          id="yt-import-input"
+          value={raw}
+          onChange={(e) => setRaw(e.target.value)}
+          rows={6}
+          placeholder={
+            "https://www.youtube.com/watch?v=…\nhttps://www.youtube.com/@handle\nhttps://www.youtube.com/playlist?list=…"
+          }
+          disabled={importMut.isPending}
+          className="w-full resize-y rounded-md border border-border bg-background px-3 py-2 text-sm text-ink placeholder:text-ink-muted focus:outline-none focus:border-[var(--red)] min-h-[120px]"
+        />
+      </div>
+
+      {totalCount > 0 && (
+        <div className="text-xs text-ink-muted flex flex-wrap gap-x-3 gap-y-1">
+          {parsed.videoIds.length > 0 && (
+            <span>{parsed.videoIds.length} video URL(s)</span>
+          )}
+          {parsed.channelUrls.length > 0 && (
+            <span>{parsed.channelUrls.length} channel URL(s)</span>
+          )}
+          {parsed.playlistUrls.length > 0 && (
+            <span>{parsed.playlistUrls.length} playlist URL(s)</span>
+          )}
+          {parsed.invalid.length > 0 && (
+            <span className="text-[var(--red)]">
+              {parsed.invalid.length} unrecognised line(s) — will be ignored
+            </span>
+          )}
+        </div>
+      )}
+
+      {importMut.error && (
+        <p className="text-sm text-[var(--red)]">
+          {(importMut.error as Error).message}
+        </p>
+      )}
+
+      {lastResult && (
+        <div className="flex flex-col gap-1 rounded-lg border border-border bg-[var(--surface-raised)] px-3 py-2">
+          <p className="text-sm text-ink">
+            Queued {lastResult.queued}
+            {lastResult.skipped > 0
+              ? `, skipped ${lastResult.skipped} already-imported`
+              : ""}
+            {lastResult.errors.length > 0
+              ? `, ${lastResult.errors.length} error(s)`
+              : ""}
+            .
+          </p>
+          {lastResult.errors.length > 0 && (
+            <ul className="flex flex-col gap-0.5 mt-1">
+              {lastResult.errors.map((e, i) => (
+                <li key={i} className="text-xs text-[var(--red)] break-words">
+                  {e}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      <Button type="submit" disabled={!canSubmit} className="w-fit">
+        <Youtube className="size-4" />
+        {importMut.isPending
+          ? "Importing…"
+          : totalCount > 0
+            ? `Import (${totalCount})`
+            : "Import"}
+      </Button>
+    </form>
+  );
+}
+
+
 
 function StatusBadge({ status }: { status: WillAiSource["status"] }) {
   const base =

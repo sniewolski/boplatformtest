@@ -640,7 +640,6 @@ export type Database = {
           section_label: string | null
           source_id: string
           start_seconds: number | null
-          timestamp_seconds: number | null
         }
         Insert: {
           chunk_type: string
@@ -654,7 +653,6 @@ export type Database = {
           section_label?: string | null
           source_id: string
           start_seconds?: number | null
-          timestamp_seconds?: number | null
         }
         Update: {
           chunk_type?: string
@@ -668,7 +666,6 @@ export type Database = {
           section_label?: string | null
           source_id?: string
           start_seconds?: number | null
-          timestamp_seconds?: number | null
         }
         Relationships: [
           {

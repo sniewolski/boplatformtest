@@ -6,6 +6,7 @@ import {
   FileText,
   ImageIcon,
   MessageSquarePlus,
+  Play,
   RotateCw,
   Send,
   Trash2,
@@ -444,17 +445,23 @@ function Citations({
   const refs = useResolvedChunks(chunkIds);
   const list = refs.data ?? [];
   const diagrams = list.filter((c) => c.chunk_type === "diagram");
-  const texts = list.filter((c) => c.chunk_type !== "diagram");
+  const transcripts = list.filter((c) => c.chunk_type === "transcript");
+  const texts = list.filter(
+    (c) => c.chunk_type !== "diagram" && c.chunk_type !== "transcript",
+  );
 
   return (
     <div className="flex flex-col gap-3">
       {diagrams.map((c) => (
         <DiagramCitation key={c.id} chunk={c} onOpenPdf={onOpenPdf} />
       ))}
-      {texts.length > 0 && (
+      {(texts.length > 0 || transcripts.length > 0) && (
         <div className="flex flex-wrap gap-1.5">
           {texts.map((c) => (
             <CitationLink key={c.id} chunk={c} onOpenPdf={onOpenPdf} />
+          ))}
+          {transcripts.map((c) => (
+            <TranscriptCitationLink key={c.id} chunk={c} />
           ))}
         </div>
       )}
@@ -463,8 +470,20 @@ function Citations({
 }
 
 function citationLabel(c: WillAiChunkRef): string {
+  if (c.chunk_type === "transcript" && c.start_seconds != null) {
+    return `${c.source_title} · ${formatTimestamp(c.start_seconds)}`;
+  }
   if (c.page_number != null) return `${c.source_title}, p.${c.page_number}`;
   return c.source_title;
+}
+
+function formatTimestamp(totalSeconds: number): string {
+  const s = Math.max(0, Math.floor(totalSeconds));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  return h > 0 ? `${h}:${pad(m)}:${pad(sec)}` : `${m}:${pad(sec)}`;
 }
 
 function CitationLink({
@@ -499,6 +518,42 @@ function CitationLink({
         </span>
       )}
     </button>
+  );
+}
+
+/**
+ * YouTube transcript citation. Deep-links to the video at the chunk's
+ * `start_seconds` in a new tab. Same visual pill treatment as
+ * `CitationLink`, different icon (play button) so PDF and video sources
+ * are distinguishable at a glance.
+ */
+function TranscriptCitationLink({ chunk }: { chunk: WillAiChunkRef }) {
+  const disabled = !chunk.external_id;
+  const start = chunk.start_seconds ?? 0;
+  const href = chunk.external_id
+    ? `https://youtu.be/${chunk.external_id}?t=${Math.max(0, Math.floor(start))}`
+    : undefined;
+  const tsLabel = chunk.start_seconds != null ? formatTimestamp(chunk.start_seconds) : null;
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-disabled={disabled}
+      title={citationLabel(chunk)}
+      onClick={(e) => {
+        if (disabled) e.preventDefault();
+      }}
+      className="inline-flex items-center gap-1.5 max-w-full rounded-[12px] border border-border bg-[var(--surface-raised)] px-2.5 py-1 text-xs text-ink hover:border-[var(--red)] hover:text-[var(--red)] aria-disabled:cursor-not-allowed aria-disabled:opacity-60 aria-disabled:hover:border-border aria-disabled:hover:text-ink active:scale-[0.97] transition-[transform,color,border-color]"
+    >
+      <Play className="size-3 shrink-0 opacity-70" aria-hidden />
+      <span className="truncate max-w-[220px]">{chunk.source_title}</span>
+      {tsLabel && (
+        <span className="shrink-0 rounded-md bg-[var(--surface)] border border-border px-1.5 py-0.5 text-[10px] leading-none text-ink-muted font-medium tabular-nums">
+          {tsLabel}
+        </span>
+      )}
+    </a>
   );
 }
 
