@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ChevronDown, ChevronRight, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Download, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -19,6 +19,13 @@ import {
 } from "@/lib/sessions.functions";
 import { SalesCodeResultView } from "./SalesCodeResultView";
 import type { SalesCodeResult } from "../lib/types";
+import { useSession } from "@/core/auth/useSession";
+import { useMyProfile } from "@/core/auth/useProfile";
+import {
+  formatSalesCodeMarkdown,
+  salesCodeExportFilename,
+} from "@/tools/salescode/admin/exportToMarkdown";
+import { downloadMarkdown } from "@/lib/download-file";
 
 /**
  * Owner-side list of respondents the owner has sent SalesCode links to.
