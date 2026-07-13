@@ -885,3 +885,184 @@ function ContentGapsTab() {
   );
 }
 
+// -------------------- SOPs import --------------------
+
+/**
+ * Import an existing SOP PDF from the SOPs library into Will AI without
+ * re-uploading the file. Copy-on-import: `importSopToWillAi` service-role
+ * copies `sops/{path}` → `will-ai-content/{sourceId}/source.pdf`, so the
+ * existing ingestion worker + citation-resolution paths keep working
+ * unchanged.
+ *
+ * Dedupe via `will_ai_sources.sop_id` (unique). Re-import overwrites the
+ * copied PDF, wipes chunks + rendered pages, resets the row, re-enqueues.
+ */
+function SopsImportCard() {
+  const q = useSopsWillAiStatus();
+  const importMut = useImportSopToWillAi();
+  const [pendingSopId, setPendingSopId] = useState<string | null>(null);
+  const [lastMsg, setLastMsg] = useState<
+    | { kind: "ok"; reimport: boolean; title: string }
+    | { kind: "err"; title: string; error: string }
+    | null
+  >(null);
+
+  const rows = q.data ?? [];
+
+  const grouped = useMemo(() => {
+    const map = new Map<string, { name: string; items: SopWillAiRow[] }>();
+    for (const r of rows) {
+      const key = r.folder_id ?? "__unassigned__";
+      const name = r.folder_name ?? "Unassigned";
+      const bucket = map.get(key) ?? { name, items: [] };
+      bucket.items.push(r);
+      map.set(key, bucket);
+    }
+    return Array.from(map.values()).sort((a, b) =>
+      a.name.localeCompare(b.name),
+    );
+  }, [rows]);
+
+  function onImport(row: SopWillAiRow) {
+    setLastMsg(null);
+    setPendingSopId(row.sop_id);
+    importMut.mutate(row.sop_id, {
+      onSuccess: (res) => {
+        setLastMsg({
+          kind: "ok",
+          reimport: res.wasReimport,
+          title: row.sop_title,
+        });
+      },
+      onError: (e) => {
+        setLastMsg({
+          kind: "err",
+          title: row.sop_title,
+          error: e instanceof Error ? e.message : "Import failed",
+        });
+      },
+      onSettled: () => setPendingSopId(null),
+    });
+  }
+
+  if (q.isLoading) {
+    return <p className="text-ink-muted text-sm">Loading SOPs…</p>;
+  }
+  if (q.error) {
+    return (
+      <p className="text-sm text-[var(--red)]">
+        {(q.error as Error).message}
+      </p>
+    );
+  }
+  if (rows.length === 0) {
+    return (
+      <p className="text-ink-muted text-sm">
+        No SOPs in the library yet.
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-ink-muted text-xs">
+        PDF SOPs from the shared library. DOCX SOPs can't be ingested.
+      </p>
+
+      <div className="border border-border rounded-xl divide-y divide-border max-h-[26rem] overflow-y-auto">
+        {grouped.map((g) => (
+          <div key={g.name} className="flex flex-col">
+            <div className="px-3 py-1.5 bg-[var(--surface-raised)] text-ink-muted text-[10px] uppercase tracking-wide">
+              {g.name}
+            </div>
+            <ul className="divide-y divide-border">
+              {g.items.map((r) => {
+                const isPending =
+                  pendingSopId === r.sop_id && importMut.isPending;
+                const isProcessing =
+                  r.status === "pending" || r.status === "processing";
+                const isCompleted = r.status === "completed";
+                const isFailed = r.status === "failed";
+                const grayed = !r.is_pdf;
+
+                return (
+                  <li
+                    key={r.sop_id}
+                    className={`flex items-center gap-3 px-3 py-2 ${grayed ? "opacity-50" : ""}`}
+                  >
+                    <div className="flex flex-col min-w-0 flex-1 gap-0.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-ink text-sm truncate">
+                          {r.sop_title}
+                        </span>
+                        {r.status && (
+                          <StatusBadge status={r.status} />
+                        )}
+                        {isCompleted && (
+                          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide border bg-[var(--surface-raised)] text-ink-muted border-border">
+                            <Check className="w-3 h-3" />
+                            imported
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-ink-muted text-xs truncate">
+                        {r.file_name}
+                        {!r.is_pdf ? " · PDF only" : ""}
+                      </span>
+                      {isFailed && r.error_message && (
+                        <span className="text-[var(--red)] text-xs truncate">
+                          {r.error_message}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="shrink-0">
+                      {!r.is_pdf ? null : isProcessing ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled
+                        >
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          {r.status}
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={isPending}
+                          onClick={() => onImport(r)}
+                        >
+                          {isPending
+                            ? "Queuing…"
+                            : isFailed
+                              ? "Retry"
+                              : isCompleted
+                                ? "Re-import"
+                                : "Import"}
+                        </Button>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </div>
+
+      {lastMsg?.kind === "ok" && (
+        <p className="text-sm text-ink-muted">
+          {lastMsg.reimport ? "Re-import queued" : "Import queued"} ·{" "}
+          {lastMsg.title}
+        </p>
+      )}
+      {lastMsg?.kind === "err" && (
+        <p className="text-sm text-[var(--red)]">
+          {lastMsg.title} — {lastMsg.error}
+        </p>
+      )}
+    </div>
+  );
+}
+
