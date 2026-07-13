@@ -195,6 +195,32 @@ function OwnerSalesCodeReview() {
                         {isOpen ? "Hide" : "View"}
                       </Button>
                     ) : null}
+                    {isCompleted && r.result ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        aria-label="Export to MD"
+                        onClick={() => {
+                          const input = {
+                            kind: "respondent" as const,
+                            ownerName: owner?.fullName ?? null,
+                            ownerEmail: owner?.email ?? "",
+                            respondentName: r.respondent_name,
+                            respondentEmail: r.respondent_email,
+                            completedAt: r.completed_at,
+                            result: r.result!,
+                          };
+                          downloadMarkdown(
+                            salesCodeExportFilename(input),
+                            formatSalesCodeMarkdown(input),
+                          );
+                        }}
+                      >
+                        <Download className="size-4" aria-hidden />
+                      </Button>
+                    ) : null}
+
                   </div>
                   {isOpen && isCompleted && r.result ? (
                     <div className="px-4 pb-6 pt-2 border-t border-border bg-background">
