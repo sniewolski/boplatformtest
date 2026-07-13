@@ -37,12 +37,6 @@ export function SentAssessmentsList() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
-  const { session } = useSession();
-  const profile = useMyProfile(session?.user.id);
-  const ownerName = profile.data?.full_name ?? null;
-  const ownerEmail = profile.data?.email ?? session?.user.email ?? "";
-
-
   const deleteMutation = useMutation({
     mutationFn: (sessionId: string) => del({ data: { sessionId } }),
     onSuccess: (_data, sessionId) => {
