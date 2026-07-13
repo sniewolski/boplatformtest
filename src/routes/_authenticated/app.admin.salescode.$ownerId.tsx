@@ -101,9 +101,35 @@ function OwnerSalesCodeReview() {
       </div>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-sm uppercase tracking-wide text-ink-muted">
-          Self-assessment
-        </h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm uppercase tracking-wide text-ink-muted">
+            Self-assessment
+          </h2>
+          {ownResult ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const input = {
+                  kind: "owner" as const,
+                  ownerName: owner?.fullName ?? null,
+                  ownerEmail: owner?.email ?? "",
+                  submittedAt: intake.data?.submitted_at ?? null,
+                  result: ownResult,
+                };
+                downloadMarkdown(
+                  salesCodeExportFilename(input),
+                  formatSalesCodeMarkdown(input),
+                );
+              }}
+              className="inline-flex items-center gap-1.5"
+            >
+              <Download className="size-3.5" aria-hidden />
+              Export to MD
+            </Button>
+          ) : null}
+        </div>
         {intake.isLoading ? (
           <p className="text-ink-muted text-sm">Loading…</p>
         ) : intake.error ? (
@@ -118,6 +144,7 @@ function OwnerSalesCodeReview() {
           <SalesCodeResultView result={ownResult} variant="owner" />
         )}
       </section>
+
 
       <section className="flex flex-col gap-4">
         <h2 className="text-sm uppercase tracking-wide text-ink-muted">
