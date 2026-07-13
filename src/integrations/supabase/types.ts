@@ -633,11 +633,13 @@ export type Database = {
           content: string
           created_at: string
           embedding: string | null
+          end_seconds: number | null
           id: string
           image_storage_path: string | null
           page_number: number | null
           section_label: string | null
           source_id: string
+          start_seconds: number | null
           timestamp_seconds: number | null
         }
         Insert: {
@@ -645,11 +647,13 @@ export type Database = {
           content: string
           created_at?: string
           embedding?: string | null
+          end_seconds?: number | null
           id?: string
           image_storage_path?: string | null
           page_number?: number | null
           section_label?: string | null
           source_id: string
+          start_seconds?: number | null
           timestamp_seconds?: number | null
         }
         Update: {
@@ -657,11 +661,13 @@ export type Database = {
           content?: string
           created_at?: string
           embedding?: string | null
+          end_seconds?: number | null
           id?: string
           image_storage_path?: string | null
           page_number?: number | null
           section_label?: string | null
           source_id?: string
+          start_seconds?: number | null
           timestamp_seconds?: number | null
         }
         Relationships: [
@@ -755,7 +761,9 @@ export type Database = {
         Row: {
           author: string | null
           created_at: string
+          duration_seconds: number | null
           error_message: string | null
+          external_id: string | null
           external_url: string | null
           failed_pages: Json
           id: string
@@ -770,7 +778,9 @@ export type Database = {
         Insert: {
           author?: string | null
           created_at?: string
+          duration_seconds?: number | null
           error_message?: string | null
+          external_id?: string | null
           external_url?: string | null
           failed_pages?: Json
           id?: string
@@ -785,7 +795,9 @@ export type Database = {
         Update: {
           author?: string | null
           created_at?: string
+          duration_seconds?: number | null
           error_message?: string | null
+          external_id?: string | null
           external_url?: string | null
           failed_pages?: Json
           id?: string
@@ -796,6 +808,30 @@ export type Database = {
           title?: string
           total_pages?: number | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      will_ai_youtube_quota: {
+        Row: {
+          cycle_start: string
+          id: number
+          monthly_limit: number
+          updated_at: string
+          used: number
+        }
+        Insert: {
+          cycle_start?: string
+          id?: number
+          monthly_limit?: number
+          updated_at?: string
+          used?: number
+        }
+        Update: {
+          cycle_start?: string
+          id?: number
+          monthly_limit?: number
+          updated_at?: string
+          used?: number
         }
         Relationships: []
       }
@@ -875,6 +911,7 @@ export type Database = {
         Args: { old_msg_id: number; queue_name: string; source_id: string }
         Returns: number
       }
+      reserve_youtube_quota: { Args: { requested: number }; Returns: number }
       will_ai_ingestion_dispatch: { Args: never; Returns: undefined }
     }
     Enums: {
