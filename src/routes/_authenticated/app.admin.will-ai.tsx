@@ -146,7 +146,7 @@ function SourcesTab() {
 
       {isEmpty ? (
         <section className="flex flex-col gap-8">
-          <div className="grid gap-8 md:grid-cols-2">
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             <div className="flex flex-col gap-4">
               <h2 className="text-xl">Upload the first PDF</h2>
               <p className="text-ink-muted text-sm">
@@ -157,6 +157,10 @@ function SourcesTab() {
             <div className="flex flex-col gap-4">
               <h2 className="text-xl">Import from YouTube</h2>
               <YouTubeImportCard />
+            </div>
+            <div className="flex flex-col gap-4">
+              <h2 className="text-xl">Import from SOPs</h2>
+              <SopsImportCard />
             </div>
           </div>
         </section>
