@@ -45,7 +45,8 @@ const RETRIEVE_COUNT = 8;
 const RETRIEVAL_DISTANCE_THRESHOLD = 0.4;
 
 // Answer discipline.
-const ANSWER_MAX_TOKENS = 700; // conversational answer, not a long-form doc
+const ANSWER_MAX_TOKENS = 700; // fallback (no-retrieval) plain-text answer
+const GROUNDED_ANSWER_MAX_TOKENS = 2400; // structured JSON answer — needs headroom for JSON envelope + used_chunk_ids array so the object isn't truncated mid-string
 const ANSWER_TEMPERATURE = 0.4;
 const HISTORY_TURNS = 6; // last N messages (user+assistant interleaved)
 const HISTORY_CHAR_CAP = 4000; // rough token budget guardrail
