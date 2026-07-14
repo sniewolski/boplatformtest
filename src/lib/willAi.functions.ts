@@ -270,7 +270,7 @@ async function generateGrounded(
       contents,
       generationConfig: {
         temperature: ANSWER_TEMPERATURE,
-        maxOutputTokens: ANSWER_MAX_TOKENS,
+        maxOutputTokens: GROUNDED_ANSWER_MAX_TOKENS,
         thinkingConfig: { thinkingBudget: 0 },
         responseMimeType: "application/json",
         responseSchema: {
