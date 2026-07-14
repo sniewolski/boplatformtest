@@ -296,14 +296,60 @@ async function generateGrounded(
     .trim();
   if (!raw) throw new Error("Empty answer from model");
 
-  let parsed: { answer?: unknown; used_chunk_ids?: unknown };
+  let parsed: { answer?: unknown; used_chunk_ids?: unknown } | null = null;
   try {
     parsed = JSON.parse(raw);
   } catch {
-    // Structured mode should never emit non-JSON, but if it does, treat the
-    // whole body as the answer and record no citations rather than crashing.
-    return { answer: raw, usedChunkIds: [] };
+    // Attempt 1: strip ```json / ``` fences (Gemini occasionally emits them
+    // despite responseMimeType: application/json) and retry.
+    const fenced = raw
+      .replace(/^\s*```(?:json)?\s*/i, "")
+      .replace(/\s*```\s*$/i, "")
+      .trim();
+    if (fenced !== raw) {
+      try {
+        parsed = JSON.parse(fenced);
+      } catch {
+        parsed = null;
+      }
+    }
   }
+
+  // Attempt 2: regex-extract the "answer" string body from a truncated /
+  // malformed JSON object. Handles escaped quotes (\") inside the value.
+  // Citations are unrecoverable from a broken used_chunk_ids array, but the
+  // answer text is far more valuable to the user than nothing.
+  if (!parsed || typeof (parsed as any).answer !== "string") {
+    const m = raw.match(/"answer"\s*:\s*"((?:\\.|[^"\\])*)"/);
+    if (m) {
+      let recovered: string;
+      try {
+        recovered = JSON.parse(`"${m[1]}"`);
+      } catch {
+        recovered = m[1].replace(/\\"/g, '"').replace(/\\n/g, "\n").replace(/\\\\/g, "\\");
+      }
+      if (recovered.trim()) {
+        console.error("[WillAi] Structured answer JSON.parse failed; recovered answer via regex", {
+          rawPreview: raw.slice(0, 400),
+        });
+        return { answer: recovered.trim(), usedChunkIds: [] };
+      }
+    }
+
+    // Repair failed completely. NEVER persist `raw` as the answer — the raw
+    // response is malformed JSON (e.g. `{"answer": "...`) and would render as
+    // literal JSON in the chat UI. Surface a clean user-facing message
+    // instead, and log the raw response so this is diagnosable server-side.
+    console.error("[WillAi] Structured answer unrecoverable — persisting clean fallback", {
+      rawPreview: raw.slice(0, 800),
+    });
+    return {
+      answer:
+        "I wasn't able to generate a complete answer for that — please try asking again.",
+      usedChunkIds: [],
+    };
+  }
+
   const answer = typeof parsed.answer === "string" ? parsed.answer.trim() : "";
   const usedRaw = Array.isArray(parsed.used_chunk_ids) ? parsed.used_chunk_ids : [];
   // Only keep ids that were actually in the retrieved set (guards against
