@@ -43,6 +43,7 @@ import {
   useImportSopToWillAi,
   type SopWillAiRow,
 } from "@/lib/useSopWillAiImport";
+import { ArchivedConversationsTab } from "@/components/admin/WillAiArchiveTab";
 
 
 export const Route = createFileRoute("/_authenticated/app/admin/will-ai")({
@@ -66,12 +67,16 @@ function WillAiAdmin() {
         <TabsList className="self-start">
           <TabsTrigger value="sources">Sources</TabsTrigger>
           <TabsTrigger value="gaps">Content gaps</TabsTrigger>
+          <TabsTrigger value="conversations">Conversations</TabsTrigger>
         </TabsList>
         <TabsContent value="sources" className="mt-0">
           <SourcesTab />
         </TabsContent>
         <TabsContent value="gaps" className="mt-0">
           <ContentGapsTab />
+        </TabsContent>
+        <TabsContent value="conversations" className="mt-0">
+          <ArchivedConversationsTab />
         </TabsContent>
       </Tabs>
     </div>
