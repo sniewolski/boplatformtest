@@ -695,6 +695,33 @@ export type Database = {
         }
         Relationships: []
       }
+      will_ai_conversations_archive: {
+        Row: {
+          archived_at: string
+          created_at: string
+          id: string
+          owner_email: string | null
+          owner_id: string
+          owner_name: string | null
+        }
+        Insert: {
+          archived_at?: string
+          created_at: string
+          id: string
+          owner_email?: string | null
+          owner_id: string
+          owner_name?: string | null
+        }
+        Update: {
+          archived_at?: string
+          created_at?: string
+          id?: string
+          owner_email?: string | null
+          owner_id?: string
+          owner_name?: string | null
+        }
+        Relationships: []
+      }
       will_ai_messages: {
         Row: {
           cited_chunk_ids: Json
@@ -732,6 +759,50 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "will_ai_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      will_ai_messages_archive: {
+        Row: {
+          archived_at: string
+          cited_chunk_ids: Json
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          owner_id: string
+          role: string
+          used_fallback: boolean
+        }
+        Insert: {
+          archived_at?: string
+          cited_chunk_ids?: Json
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          owner_id: string
+          role: string
+          used_fallback?: boolean
+        }
+        Update: {
+          archived_at?: string
+          cited_chunk_ids?: Json
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          owner_id?: string
+          role?: string
+          used_fallback?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "will_ai_messages_archive_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "will_ai_conversations_archive"
             referencedColumns: ["id"]
           },
         ]
