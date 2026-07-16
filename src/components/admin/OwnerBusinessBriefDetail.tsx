@@ -30,9 +30,10 @@ export function OwnerBusinessBriefDetail({ ownerId }: { ownerId: string }) {
   }
 
   const data = brief.data;
-  if (!data || !isBriefComplete(data) === false ? false : !hasAny(data)) {
+  if (!data || !hasAny(data)) {
     return <p className="text-ink-muted text-sm">No brief submitted yet.</p>;
   }
+
 
   return (
     <div className="flex flex-col gap-6 max-w-3xl">
