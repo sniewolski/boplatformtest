@@ -110,6 +110,13 @@ function ReviewRoster() {
                         label="SalesCode"
                         done={!!s?.salescodeTaken}
                       />
+                      <StatusPill
+                        label="Brief"
+                        done={!!s?.briefFilled}
+                        doneAria="filled"
+                        notDoneAria="not filled"
+                      />
+
                       <span className="text-ink-muted text-xs">Review →</span>
                     </div>
                   </Link>
