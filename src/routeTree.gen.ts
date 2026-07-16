@@ -31,11 +31,8 @@ import { Route as AuthenticatedAppAdminWillAiRouteImport } from './routes/_authe
 import { Route as AuthenticatedAppAdminSopsRouteImport } from './routes/_authenticated/app.admin.sops'
 import { Route as AuthenticatedAppAdminReviewRouteImport } from './routes/_authenticated/app.admin.review'
 import { Route as AuthenticatedAppAdminSopsIndexRouteImport } from './routes/_authenticated/app.admin.sops.index'
-import { Route as AuthenticatedAppAdminSalescodeIndexRouteImport } from './routes/_authenticated/app.admin.salescode.index'
-import { Route as AuthenticatedAppAdminAuditIndexRouteImport } from './routes/_authenticated/app.admin.audit.index'
 import { Route as AuthenticatedAppToolsKeySplatRouteImport } from './routes/_authenticated/app.tools.$key.$'
-import { Route as AuthenticatedAppAdminSalescodeOwnerIdRouteImport } from './routes/_authenticated/app.admin.salescode.$ownerId'
-import { Route as AuthenticatedAppAdminAuditOwnerIdRouteImport } from './routes/_authenticated/app.admin.audit.$ownerId'
+import { Route as AuthenticatedAppAdminReviewOwnerIdRouteImport } from './routes/_authenticated/app.admin.review.$ownerId'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -153,35 +150,17 @@ const AuthenticatedAppAdminSopsIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedAppAdminSopsRoute,
   } as any)
-const AuthenticatedAppAdminSalescodeIndexRoute =
-  AuthenticatedAppAdminSalescodeIndexRouteImport.update({
-    id: '/salescode/',
-    path: '/salescode/',
-    getParentRoute: () => AuthenticatedAppAdminRoute,
-  } as any)
-const AuthenticatedAppAdminAuditIndexRoute =
-  AuthenticatedAppAdminAuditIndexRouteImport.update({
-    id: '/audit/',
-    path: '/audit/',
-    getParentRoute: () => AuthenticatedAppAdminRoute,
-  } as any)
 const AuthenticatedAppToolsKeySplatRoute =
   AuthenticatedAppToolsKeySplatRouteImport.update({
     id: '/app/tools/$key/$',
     path: '/app/tools/$key/$',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAppAdminSalescodeOwnerIdRoute =
-  AuthenticatedAppAdminSalescodeOwnerIdRouteImport.update({
-    id: '/salescode/$ownerId',
-    path: '/salescode/$ownerId',
-    getParentRoute: () => AuthenticatedAppAdminRoute,
-  } as any)
-const AuthenticatedAppAdminAuditOwnerIdRoute =
-  AuthenticatedAppAdminAuditOwnerIdRouteImport.update({
-    id: '/audit/$ownerId',
-    path: '/audit/$ownerId',
-    getParentRoute: () => AuthenticatedAppAdminRoute,
+const AuthenticatedAppAdminReviewOwnerIdRoute =
+  AuthenticatedAppAdminReviewOwnerIdRouteImport.update({
+    id: '/$ownerId',
+    path: '/$ownerId',
+    getParentRoute: () => AuthenticatedAppAdminReviewRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -193,7 +172,7 @@ export interface FileRoutesByFullPath {
   '/r/$token/$': typeof RTokenSplatRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/r/$token/': typeof RTokenIndexRoute
-  '/app/admin/review': typeof AuthenticatedAppAdminReviewRoute
+  '/app/admin/review': typeof AuthenticatedAppAdminReviewRouteWithChildren
   '/app/admin/sops': typeof AuthenticatedAppAdminSopsRouteWithChildren
   '/app/admin/will-ai': typeof AuthenticatedAppAdminWillAiRoute
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
@@ -205,11 +184,8 @@ export interface FileRoutesByFullPath {
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/app/admin/': typeof AuthenticatedAppAdminIndexRoute
-  '/app/admin/audit/$ownerId': typeof AuthenticatedAppAdminAuditOwnerIdRoute
-  '/app/admin/salescode/$ownerId': typeof AuthenticatedAppAdminSalescodeOwnerIdRoute
+  '/app/admin/review/$ownerId': typeof AuthenticatedAppAdminReviewOwnerIdRoute
   '/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
-  '/app/admin/audit/': typeof AuthenticatedAppAdminAuditIndexRoute
-  '/app/admin/salescode/': typeof AuthenticatedAppAdminSalescodeIndexRoute
   '/app/admin/sops/': typeof AuthenticatedAppAdminSopsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -219,7 +195,7 @@ export interface FileRoutesByTo {
   '/r/$token/$': typeof RTokenSplatRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/r/$token': typeof RTokenIndexRoute
-  '/app/admin/review': typeof AuthenticatedAppAdminReviewRoute
+  '/app/admin/review': typeof AuthenticatedAppAdminReviewRouteWithChildren
   '/app/admin/will-ai': typeof AuthenticatedAppAdminWillAiRoute
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
@@ -230,11 +206,8 @@ export interface FileRoutesByTo {
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/app/admin': typeof AuthenticatedAppAdminIndexRoute
-  '/app/admin/audit/$ownerId': typeof AuthenticatedAppAdminAuditOwnerIdRoute
-  '/app/admin/salescode/$ownerId': typeof AuthenticatedAppAdminSalescodeOwnerIdRoute
+  '/app/admin/review/$ownerId': typeof AuthenticatedAppAdminReviewOwnerIdRoute
   '/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
-  '/app/admin/audit': typeof AuthenticatedAppAdminAuditIndexRoute
-  '/app/admin/salescode': typeof AuthenticatedAppAdminSalescodeIndexRoute
   '/app/admin/sops': typeof AuthenticatedAppAdminSopsIndexRoute
 }
 export interface FileRoutesById {
@@ -248,7 +221,7 @@ export interface FileRoutesById {
   '/r/$token/$': typeof RTokenSplatRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/r/$token/': typeof RTokenIndexRoute
-  '/_authenticated/app/admin/review': typeof AuthenticatedAppAdminReviewRoute
+  '/_authenticated/app/admin/review': typeof AuthenticatedAppAdminReviewRouteWithChildren
   '/_authenticated/app/admin/sops': typeof AuthenticatedAppAdminSopsRouteWithChildren
   '/_authenticated/app/admin/will-ai': typeof AuthenticatedAppAdminWillAiRoute
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
@@ -260,11 +233,8 @@ export interface FileRoutesById {
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/_authenticated/app/admin/': typeof AuthenticatedAppAdminIndexRoute
-  '/_authenticated/app/admin/audit/$ownerId': typeof AuthenticatedAppAdminAuditOwnerIdRoute
-  '/_authenticated/app/admin/salescode/$ownerId': typeof AuthenticatedAppAdminSalescodeOwnerIdRoute
+  '/_authenticated/app/admin/review/$ownerId': typeof AuthenticatedAppAdminReviewOwnerIdRoute
   '/_authenticated/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
-  '/_authenticated/app/admin/audit/': typeof AuthenticatedAppAdminAuditIndexRoute
-  '/_authenticated/app/admin/salescode/': typeof AuthenticatedAppAdminSalescodeIndexRoute
   '/_authenticated/app/admin/sops/': typeof AuthenticatedAppAdminSopsIndexRoute
 }
 export interface FileRouteTypes {
@@ -290,11 +260,8 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
     | '/app/admin/'
-    | '/app/admin/audit/$ownerId'
-    | '/app/admin/salescode/$ownerId'
+    | '/app/admin/review/$ownerId'
     | '/app/tools/$key/$'
-    | '/app/admin/audit/'
-    | '/app/admin/salescode/'
     | '/app/admin/sops/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -315,11 +282,8 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
     | '/app/admin'
-    | '/app/admin/audit/$ownerId'
-    | '/app/admin/salescode/$ownerId'
+    | '/app/admin/review/$ownerId'
     | '/app/tools/$key/$'
-    | '/app/admin/audit'
-    | '/app/admin/salescode'
     | '/app/admin/sops'
   id:
     | '__root__'
@@ -344,11 +308,8 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
     | '/_authenticated/app/admin/'
-    | '/_authenticated/app/admin/audit/$ownerId'
-    | '/_authenticated/app/admin/salescode/$ownerId'
+    | '/_authenticated/app/admin/review/$ownerId'
     | '/_authenticated/app/tools/$key/$'
-    | '/_authenticated/app/admin/audit/'
-    | '/_authenticated/app/admin/salescode/'
     | '/_authenticated/app/admin/sops/'
   fileRoutesById: FileRoutesById
 }
@@ -523,20 +484,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAdminSopsIndexRouteImport
       parentRoute: typeof AuthenticatedAppAdminSopsRoute
     }
-    '/_authenticated/app/admin/salescode/': {
-      id: '/_authenticated/app/admin/salescode/'
-      path: '/salescode'
-      fullPath: '/app/admin/salescode/'
-      preLoaderRoute: typeof AuthenticatedAppAdminSalescodeIndexRouteImport
-      parentRoute: typeof AuthenticatedAppAdminRoute
-    }
-    '/_authenticated/app/admin/audit/': {
-      id: '/_authenticated/app/admin/audit/'
-      path: '/audit'
-      fullPath: '/app/admin/audit/'
-      preLoaderRoute: typeof AuthenticatedAppAdminAuditIndexRouteImport
-      parentRoute: typeof AuthenticatedAppAdminRoute
-    }
     '/_authenticated/app/tools/$key/$': {
       id: '/_authenticated/app/tools/$key/$'
       path: '/app/tools/$key/$'
@@ -544,22 +491,30 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppToolsKeySplatRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/app/admin/salescode/$ownerId': {
-      id: '/_authenticated/app/admin/salescode/$ownerId'
-      path: '/salescode/$ownerId'
-      fullPath: '/app/admin/salescode/$ownerId'
-      preLoaderRoute: typeof AuthenticatedAppAdminSalescodeOwnerIdRouteImport
-      parentRoute: typeof AuthenticatedAppAdminRoute
-    }
-    '/_authenticated/app/admin/audit/$ownerId': {
-      id: '/_authenticated/app/admin/audit/$ownerId'
-      path: '/audit/$ownerId'
-      fullPath: '/app/admin/audit/$ownerId'
-      preLoaderRoute: typeof AuthenticatedAppAdminAuditOwnerIdRouteImport
-      parentRoute: typeof AuthenticatedAppAdminRoute
+    '/_authenticated/app/admin/review/$ownerId': {
+      id: '/_authenticated/app/admin/review/$ownerId'
+      path: '/$ownerId'
+      fullPath: '/app/admin/review/$ownerId'
+      preLoaderRoute: typeof AuthenticatedAppAdminReviewOwnerIdRouteImport
+      parentRoute: typeof AuthenticatedAppAdminReviewRoute
     }
   }
 }
+
+interface AuthenticatedAppAdminReviewRouteChildren {
+  AuthenticatedAppAdminReviewOwnerIdRoute: typeof AuthenticatedAppAdminReviewOwnerIdRoute
+}
+
+const AuthenticatedAppAdminReviewRouteChildren: AuthenticatedAppAdminReviewRouteChildren =
+  {
+    AuthenticatedAppAdminReviewOwnerIdRoute:
+      AuthenticatedAppAdminReviewOwnerIdRoute,
+  }
+
+const AuthenticatedAppAdminReviewRouteWithChildren =
+  AuthenticatedAppAdminReviewRoute._addFileChildren(
+    AuthenticatedAppAdminReviewRouteChildren,
+  )
 
 interface AuthenticatedAppAdminSopsRouteChildren {
   AuthenticatedAppAdminSopsIndexRoute: typeof AuthenticatedAppAdminSopsIndexRoute
@@ -576,28 +531,18 @@ const AuthenticatedAppAdminSopsRouteWithChildren =
   )
 
 interface AuthenticatedAppAdminRouteChildren {
-  AuthenticatedAppAdminReviewRoute: typeof AuthenticatedAppAdminReviewRoute
+  AuthenticatedAppAdminReviewRoute: typeof AuthenticatedAppAdminReviewRouteWithChildren
   AuthenticatedAppAdminSopsRoute: typeof AuthenticatedAppAdminSopsRouteWithChildren
   AuthenticatedAppAdminWillAiRoute: typeof AuthenticatedAppAdminWillAiRoute
   AuthenticatedAppAdminIndexRoute: typeof AuthenticatedAppAdminIndexRoute
-  AuthenticatedAppAdminAuditOwnerIdRoute: typeof AuthenticatedAppAdminAuditOwnerIdRoute
-  AuthenticatedAppAdminSalescodeOwnerIdRoute: typeof AuthenticatedAppAdminSalescodeOwnerIdRoute
-  AuthenticatedAppAdminAuditIndexRoute: typeof AuthenticatedAppAdminAuditIndexRoute
-  AuthenticatedAppAdminSalescodeIndexRoute: typeof AuthenticatedAppAdminSalescodeIndexRoute
 }
 
 const AuthenticatedAppAdminRouteChildren: AuthenticatedAppAdminRouteChildren = {
-  AuthenticatedAppAdminReviewRoute: AuthenticatedAppAdminReviewRoute,
+  AuthenticatedAppAdminReviewRoute:
+    AuthenticatedAppAdminReviewRouteWithChildren,
   AuthenticatedAppAdminSopsRoute: AuthenticatedAppAdminSopsRouteWithChildren,
   AuthenticatedAppAdminWillAiRoute: AuthenticatedAppAdminWillAiRoute,
   AuthenticatedAppAdminIndexRoute: AuthenticatedAppAdminIndexRoute,
-  AuthenticatedAppAdminAuditOwnerIdRoute:
-    AuthenticatedAppAdminAuditOwnerIdRoute,
-  AuthenticatedAppAdminSalescodeOwnerIdRoute:
-    AuthenticatedAppAdminSalescodeOwnerIdRoute,
-  AuthenticatedAppAdminAuditIndexRoute: AuthenticatedAppAdminAuditIndexRoute,
-  AuthenticatedAppAdminSalescodeIndexRoute:
-    AuthenticatedAppAdminSalescodeIndexRoute,
 }
 
 const AuthenticatedAppAdminRouteWithChildren =
@@ -652,13 +597,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
