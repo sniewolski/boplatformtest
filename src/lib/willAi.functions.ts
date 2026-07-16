@@ -480,12 +480,22 @@ export const sendWillAiMessage = createServerFn({ method: "POST" })
     const useFallback = !top1 || top1.distance > RETRIEVAL_DISTANCE_THRESHOLD;
 
     // ── Step 4: generation ──
+    // Load owner Business Brief (six sales fields) for SOFT answer
+    // conditioning. Retrieval above is untouched — the brief only shapes
+    // how the model frames the answer, not what it retrieves.
+    const briefBlock = await loadOwnerBriefBlock(supabase, context.userId);
+
     let assistantAnswer: string;
     let citedChunkIds: string[];
     let usedFallback: boolean;
 
     if (useFallback) {
-      assistantAnswer = await generateFallback(apiKey, data.userMessage, priors);
+      assistantAnswer = await generateFallback(
+        apiKey,
+        data.userMessage,
+        priors,
+        briefBlock,
+      );
       citedChunkIds = [];
       usedFallback = true;
     } else {
@@ -511,6 +521,7 @@ export const sendWillAiMessage = createServerFn({ method: "POST" })
         priors,
         contextChunks,
         sourceTitles,
+        briefBlock,
       );
       assistantAnswer = grounded.answer;
       citedChunkIds = grounded.usedChunkIds;
