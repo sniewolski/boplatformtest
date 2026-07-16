@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ChevronDown, ChevronRight, Download } from "lucide-react";
+import { ChevronDown, ChevronRight, Download } from "lucide-react";
 import { listOwners } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -14,12 +13,6 @@ import {
   salesCodeExportFilename,
 } from "@/tools/salescode/admin/exportToMarkdown";
 import { downloadMarkdown } from "@/lib/download-file";
-
-export const Route = createFileRoute(
-  "/_authenticated/app/admin/salescode/$ownerId",
-)({
-  component: OwnerSalesCodeReview,
-});
 
 type IntakeRow = {
   submitted_answers: AnswerMap | null;
@@ -37,8 +30,7 @@ type SessionRow = {
   result: SalesCodeResult | null;
 };
 
-function OwnerSalesCodeReview() {
-  const { ownerId } = Route.useParams();
+export function OwnerSalesCodeDetail({ ownerId }: { ownerId: string }) {
   const list = useServerFn(listOwners);
   const owners = useQuery({
     queryKey: ["admin", "owners"],
@@ -81,25 +73,7 @@ function OwnerSalesCodeReview() {
   const ownResult = submitted ? scoreSalesCode(submitted as AnswerMap) : null;
 
   return (
-    <div className="app-content py-12 flex flex-col gap-10">
-      <div className="flex flex-col gap-3">
-        <Link
-          to="/app/admin/salescode"
-          className="inline-flex items-center gap-1.5 text-xs text-ink-muted hover:text-ink transition-colors w-fit"
-        >
-          <ArrowLeft className="size-3.5" />
-          All owners
-        </Link>
-        <header className="flex flex-col gap-1">
-          <h1 className="text-2xl">
-            {owner?.fullName ?? owner?.email ?? (owners.isLoading ? "…" : "Unknown owner")}
-          </h1>
-          {owner?.fullName && (
-            <p className="text-ink-muted text-sm">{owner.email}</p>
-          )}
-        </header>
-      </div>
-
+    <div className="flex flex-col gap-10">
       <section className="flex flex-col gap-4">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-sm uppercase tracking-wide text-ink-muted">
@@ -137,14 +111,11 @@ function OwnerSalesCodeReview() {
             {(intake.error as Error).message}
           </p>
         ) : !ownResult ? (
-          <p className="text-ink-muted text-sm">
-            Hasn't completed their self-assessment yet.
-          </p>
+          <p className="text-ink-muted text-sm">SalesCode not taken yet.</p>
         ) : (
           <SalesCodeResultView result={ownResult} variant="owner" />
         )}
       </section>
-
 
       <section className="flex flex-col gap-4">
         <h2 className="text-sm uppercase tracking-wide text-ink-muted">
@@ -220,7 +191,6 @@ function OwnerSalesCodeReview() {
                         <Download className="size-4" aria-hidden />
                       </Button>
                     ) : null}
-
                   </div>
                   {isOpen && isCompleted && r.result ? (
                     <div className="px-4 pb-6 pt-2 border-t border-border bg-background">

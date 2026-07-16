@@ -1,9 +1,7 @@
 import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { listOwners } from "@/lib/admin.functions";
-import { ArrowLeft, Download, Loader2 } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { Download, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ConversionAdminTab } from "@/tools/selling-systems-audit/admin/ConversionAdminTab";
@@ -33,19 +31,7 @@ const SECTION_TABS = [
 
 type TabKey = (typeof SECTION_TABS)[number]["key"];
 
-export const Route = createFileRoute("/_authenticated/app/admin/audit/$ownerId")({
-  component: OwnerAuditReview,
-});
-
-function OwnerAuditReview() {
-  const { ownerId } = Route.useParams();
-  const list = useServerFn(listOwners);
-  const owners = useQuery({
-    queryKey: ["admin", "owners"],
-    queryFn: () => list(),
-  });
-
-  const owner = owners.data?.find((o) => o.id === ownerId) ?? null;
+export function OwnerAuditDetail({ ownerId }: { ownerId: string }) {
   const [tab, setTab] = useState<TabKey>("conversion");
 
   const fetchExport = useServerFn(getAuditExportData);
@@ -69,48 +55,30 @@ function OwnerAuditReview() {
   });
 
   return (
-    <div className="app-content py-12 flex flex-col gap-8">
-      <div className="flex flex-col gap-3">
-        <Link
-          to="/app/admin/audit"
-          className="inline-flex items-center gap-1.5 text-xs text-ink-muted hover:text-ink transition-colors w-fit"
-        >
-          <ArrowLeft className="size-3.5" />
-          All owners
-        </Link>
-        <header className="flex items-start justify-between gap-4">
-          <div className="flex flex-col gap-1 min-w-0">
-            <h1 className="text-2xl">
-              {owner?.fullName ?? owner?.email ?? (owners.isLoading ? "…" : "Unknown owner")}
-            </h1>
-            {owner?.fullName && (
-              <p className="text-ink-muted text-sm">{owner.email}</p>
+    <div className="flex flex-col gap-6">
+      <div className="flex items-start justify-end gap-4">
+        <div className="flex flex-col items-end gap-1 shrink-0">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => exportMut.mutate()}
+            disabled={exportMut.isPending}
+          >
+            {exportMut.isPending ? (
+              <Loader2 className="size-3.5 animate-spin" aria-hidden />
+            ) : (
+              <Download className="size-3.5" aria-hidden />
             )}
-          </div>
-          <div className="flex flex-col items-end gap-1 shrink-0">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => exportMut.mutate()}
-              disabled={exportMut.isPending}
-            >
-              {exportMut.isPending ? (
-                <Loader2 className="size-3.5 animate-spin" aria-hidden />
-              ) : (
-                <Download className="size-3.5" aria-hidden />
-              )}
-              {exportMut.isPending ? "Exporting…" : "Export to MD"}
-            </Button>
-            {exportMut.error && (
-              <span className="text-xs text-[var(--red)]">
-                {(exportMut.error as Error).message}
-              </span>
-            )}
-          </div>
-        </header>
+            {exportMut.isPending ? "Exporting…" : "Export to MD"}
+          </Button>
+          {exportMut.error && (
+            <span className="text-xs text-[var(--red)]">
+              {(exportMut.error as Error).message}
+            </span>
+          )}
+        </div>
       </div>
-
 
       <nav
         role="tablist"
