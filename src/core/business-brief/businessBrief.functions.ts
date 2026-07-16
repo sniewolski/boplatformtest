@@ -70,8 +70,8 @@ export const saveMyBusinessBrief = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => BriefInput.parse(input))
   .handler(async ({ data, context }): Promise<BusinessBrief> => {
-    const { data: row, error } = await context.supabase
-      .from("business_briefs" as never)
+    const { data: row, error } = await (context.supabase as any)
+      .from("business_briefs")
       .upsert(
         { owner_id: context.userId, ...data },
         { onConflict: "owner_id" },
