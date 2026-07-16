@@ -1,4 +1,4 @@
-import { Compass } from "lucide-react";
+import { Fingerprint } from "lucide-react";
 import type { ToolManifest } from "../registry";
 import { SalesCodeApp } from "./routes/App";
 import { DashboardWidget } from "./components/DashboardWidget";
@@ -8,10 +8,10 @@ export const salescodeManifest: ToolManifest = {
   name: "SalesCode",
   description:
     "A deterministic self-assessment of how you sell — your four-letter type and trait profile.",
-  icon: Compass,
+  icon: Fingerprint,
   navEntry: {
     label: "SalesCode",
-    icon: Compass,
+    icon: Fingerprint,
   },
   dashboardWidget: {
     render: () => <DashboardWidget />,
