@@ -16,6 +16,7 @@ import { Route as RTokenRouteImport } from './routes/r.$token'
 import { Route as RTokenIndexRouteImport } from './routes/r.$token.index'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as RTokenSplatRouteImport } from './routes/r.$token.$'
+import { Route as AuthenticatedAppBusinessBriefRouteImport } from './routes/_authenticated/app.business-brief'
 import { Route as AuthenticatedAppBookCallRouteImport } from './routes/_authenticated/app.book-call'
 import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
 import { Route as AuthenticatedAppAdminIndexRouteImport } from './routes/_authenticated/app.admin.index'
@@ -68,6 +69,12 @@ const RTokenSplatRoute = RTokenSplatRouteImport.update({
   path: '/$',
   getParentRoute: () => RTokenRoute,
 } as any)
+const AuthenticatedAppBusinessBriefRoute =
+  AuthenticatedAppBusinessBriefRouteImport.update({
+    id: '/app/business-brief',
+    path: '/app/business-brief',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAppBookCallRoute =
   AuthenticatedAppBookCallRouteImport.update({
     id: '/app/book-call',
@@ -169,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/r/$token': typeof RTokenRouteWithChildren
   '/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/app/book-call': typeof AuthenticatedAppBookCallRoute
+  '/app/business-brief': typeof AuthenticatedAppBusinessBriefRoute
   '/r/$token/$': typeof RTokenSplatRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/r/$token/': typeof RTokenIndexRoute
@@ -192,6 +200,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/app/book-call': typeof AuthenticatedAppBookCallRoute
+  '/app/business-brief': typeof AuthenticatedAppBusinessBriefRoute
   '/r/$token/$': typeof RTokenSplatRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/r/$token': typeof RTokenIndexRoute
@@ -218,6 +227,7 @@ export interface FileRoutesById {
   '/r/$token': typeof RTokenRouteWithChildren
   '/_authenticated/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/_authenticated/app/book-call': typeof AuthenticatedAppBookCallRoute
+  '/_authenticated/app/business-brief': typeof AuthenticatedAppBusinessBriefRoute
   '/r/$token/$': typeof RTokenSplatRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/r/$token/': typeof RTokenIndexRoute
@@ -245,6 +255,7 @@ export interface FileRouteTypes {
     | '/r/$token'
     | '/app/admin'
     | '/app/book-call'
+    | '/app/business-brief'
     | '/r/$token/$'
     | '/app/'
     | '/r/$token/'
@@ -268,6 +279,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/app/book-call'
+    | '/app/business-brief'
     | '/r/$token/$'
     | '/app'
     | '/r/$token'
@@ -293,6 +305,7 @@ export interface FileRouteTypes {
     | '/r/$token'
     | '/_authenticated/app/admin'
     | '/_authenticated/app/book-call'
+    | '/_authenticated/app/business-brief'
     | '/r/$token/$'
     | '/_authenticated/app/'
     | '/r/$token/'
@@ -378,6 +391,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/r/$token/$'
       preLoaderRoute: typeof RTokenSplatRouteImport
       parentRoute: typeof RTokenRoute
+    }
+    '/_authenticated/app/business-brief': {
+      id: '/_authenticated/app/business-brief'
+      path: '/app/business-brief'
+      fullPath: '/app/business-brief'
+      preLoaderRoute: typeof AuthenticatedAppBusinessBriefRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/app/book-call': {
       id: '/_authenticated/app/book-call'
@@ -553,6 +573,7 @@ const AuthenticatedAppAdminRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAppAdminRoute: typeof AuthenticatedAppAdminRouteWithChildren
   AuthenticatedAppBookCallRoute: typeof AuthenticatedAppBookCallRoute
+  AuthenticatedAppBusinessBriefRoute: typeof AuthenticatedAppBusinessBriefRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
   AuthenticatedAppToolsKeySplatRoute: typeof AuthenticatedAppToolsKeySplatRoute
 }
@@ -560,6 +581,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAppAdminRoute: AuthenticatedAppAdminRouteWithChildren,
   AuthenticatedAppBookCallRoute: AuthenticatedAppBookCallRoute,
+  AuthenticatedAppBusinessBriefRoute: AuthenticatedAppBusinessBriefRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
   AuthenticatedAppToolsKeySplatRoute: AuthenticatedAppToolsKeySplatRoute,
 }
