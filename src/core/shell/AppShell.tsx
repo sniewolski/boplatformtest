@@ -81,7 +81,7 @@ export function AppShell({
       .map((t) => ({
         to: `/app/tools/${t.key}`,
         label: t.navEntry!.label,
-        icon: LayoutDashboard,
+        icon: t.icon!,
         complete:
           t.key === "selling-systems-audit"
             ? auditComplete
