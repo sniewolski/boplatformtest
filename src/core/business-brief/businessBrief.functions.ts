@@ -106,18 +106,25 @@ export const getBusinessBriefForOwner = createServerFn({ method: "GET" })
     return row as unknown as BusinessBrief;
   });
 
-/** True when the brief has never been saved (no row / all fields empty). */
-export function isBriefEmpty(brief: BusinessBrief | null | undefined): boolean {
-  if (!brief) return true;
+/**
+ * Single source of truth for "brief complete". True only when ALL EIGHT
+ * fields are non-empty after trimming whitespace. Consumed by the nav
+ * "needs attention" dot and (Phase 3) the admin roster filled/not-filled
+ * marker so both surfaces read the identical definition.
+ */
+export function isBriefComplete(
+  brief: BusinessBrief | null | undefined,
+): boolean {
+  if (!brief) return false;
   return (
-    !brief.business_name.trim() &&
-    !brief.website.trim() &&
-    !brief.your_offer.trim() &&
-    !brief.average_deal_size.trim() &&
-    !brief.ideal_client.trim() &&
-    !brief.how_you_sell.trim() &&
-    !brief.whos_selling.trim() &&
-    !brief.sales_cycle.trim()
+    brief.business_name.trim().length > 0 &&
+    brief.website.trim().length > 0 &&
+    brief.your_offer.trim().length > 0 &&
+    brief.average_deal_size.trim().length > 0 &&
+    brief.ideal_client.trim().length > 0 &&
+    brief.how_you_sell.trim().length > 0 &&
+    brief.whos_selling.trim().length > 0 &&
+    brief.sales_cycle.trim().length > 0
   );
 }
 
