@@ -292,6 +292,7 @@ async function generateGrounded(
   priors: PriorMessage[],
   chunks: MatchedChunk[],
   sourceTitles: Map<string, string>,
+  briefBlock: string,
 ): Promise<{ answer: string; usedChunkIds: string[] }> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${CHAT_MODEL}:generateContent?key=${encodeURIComponent(
     apiKey,
@@ -312,11 +313,15 @@ async function generateGrounded(
     { role: "user", parts: [{ text: userPrompt }] },
   ];
 
+  const systemInstruction = briefBlock
+    ? `${SYSTEM_PROMPT}\n\n${briefBlock}`
+    : SYSTEM_PROMPT;
+
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      systemInstruction: { parts: [{ text: systemInstruction }] },
       contents,
       generationConfig: {
         temperature: ANSWER_TEMPERATURE,
