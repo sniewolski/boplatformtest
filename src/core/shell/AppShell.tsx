@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, type ReactNode, type ComponentType } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
 import { Check, LayoutDashboard, Lock, Shield, ClipboardList, FileText, LogOut, CalendarDays, MessagesSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +13,7 @@ import logoAsset from "@/assets/logo.png.asset.json";
 type NavItem = {
   to: string;
   label: string;
-  icon: typeof LayoutDashboard;
+  icon: ComponentType<{ className?: string }>;
   complete?: boolean;
   disabled?: boolean;
 };
@@ -81,7 +81,7 @@ export function AppShell({
       .map((t) => ({
         to: `/app/tools/${t.key}`,
         label: t.navEntry!.label,
-        icon: LayoutDashboard,
+        icon: t.icon!,
         complete:
           t.key === "selling-systems-audit"
             ? auditComplete
