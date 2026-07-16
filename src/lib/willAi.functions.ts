@@ -102,6 +102,47 @@ type PriorMessage = { role: "user" | "assistant"; content: string };
 
 // -------------------- helpers --------------------
 
+/**
+ * Load the owner's Business Brief and build a compact context block of the
+ * SIX sales fields (never business_name or website). Returns "" when the
+ * brief is empty or missing — the caller then behaves exactly as before.
+ *
+ * SOFT conditioning only: this flavours the framing of grounded, cited
+ * answers so they fit the owner's offer/ICP. It does NOT license ungrounded
+ * advice. The confidence threshold and grounded-citation behaviour stay
+ * authoritative.
+ */
+async function loadOwnerBriefBlock(
+  supabase: any,
+  userId: string,
+): Promise<string> {
+  const { data, error } = await supabase
+    .from("business_briefs")
+    .select(
+      "your_offer, average_deal_size, ideal_client, how_you_sell, whos_selling, sales_cycle",
+    )
+    .eq("owner_id", userId)
+    .maybeSingle();
+  if (error || !data) return "";
+  const fields: Array<[string, string]> = [
+    ["Your offer", (data.your_offer ?? "").trim()],
+    ["Average deal size", (data.average_deal_size ?? "").trim()],
+    ["Ideal client (ICP)", (data.ideal_client ?? "").trim()],
+    ["How they sell", (data.how_you_sell ?? "").trim()],
+    ["Who's selling", (data.whos_selling ?? "").trim()],
+    ["Sales cycle", (data.sales_cycle ?? "").trim()],
+  ];
+  const lines = fields
+    .filter(([, v]) => v.length > 0)
+    .map(([k, v]) => `- ${k}: ${v}`);
+  if (lines.length === 0) return "";
+  return [
+    "About the business owner you're talking to (use this to frame your answer so it fits their offer and ICP — do NOT let it override what the retrieved passages actually say, and do NOT invent facts beyond it):",
+    ...lines,
+  ].join("\n");
+}
+
+
 async function embedQuery(apiKey: string, text: string): Promise<number[]> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${EMBEDDING_MODEL}:embedContent?key=${encodeURIComponent(
     apiKey,
