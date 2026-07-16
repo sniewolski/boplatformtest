@@ -127,8 +127,8 @@ function BusinessBriefPage() {
           Business Brief
         </h1>
         <p className="text-ink-muted text-sm">
-          A short profile of your business. Saved automatically. Editable
-          whenever things change.
+          A short profile of your business — the more you fill in, the better
+          Will AI can tailor its answers to you.
         </p>
       </header>
 
