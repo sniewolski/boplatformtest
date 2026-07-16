@@ -84,7 +84,6 @@ function OwnerReviewDetail() {
       </div>
 
       <div>
-      <div>
         {slot === "audit" && <OwnerAuditDetail ownerId={ownerId} />}
         {slot === "salescode" && <OwnerSalesCodeDetail ownerId={ownerId} />}
         {slot === "brief" && <OwnerBusinessBriefDetail ownerId={ownerId} />}
