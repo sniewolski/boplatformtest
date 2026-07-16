@@ -1,10 +1,11 @@
 /**
  * Admin-only: per-owner review status summary for the review roster.
- * Returns whether each owner has submitted the audit (any section) and
- * whether they've taken SalesCode.
+ * Returns whether each owner has submitted the audit (any section),
+ * taken SalesCode, and filled their Business Brief.
  */
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { isBriefComplete } from "@/core/business-brief/businessBrief.functions";
 
 const AUDIT_TABLES = [
   "selling_systems_audit_conversion",
@@ -28,6 +29,7 @@ export type OwnerReviewStatus = {
   ownerId: string;
   auditSubmitted: boolean;
   salescodeTaken: boolean;
+  briefFilled: boolean;
 };
 
 export const listOwnerReviewStatuses = createServerFn({ method: "GET" })
@@ -62,13 +64,28 @@ export const listOwnerReviewStatuses = createServerFn({ method: "GET" })
         .filter(Boolean),
     );
 
+    const { data: briefRows, error: bErr } = await supabaseAdmin
+      .from("business_briefs" as any)
+      .select(
+        "owner_id, business_name, website, your_offer, average_deal_size, ideal_client, how_you_sell, whos_selling, sales_cycle, updated_at",
+      );
+    if (bErr) throw new Error(bErr.message);
+    const briefOwners = new Set<string>();
+    for (const row of (briefRows ?? []) as any[]) {
+      if (row.owner_id && isBriefComplete(row)) {
+        briefOwners.add(row.owner_id as string);
+      }
+    }
+
     const owners = new Set<string>([
       ...auditOwners,
       ...salescodeOwners,
+      ...briefOwners,
     ]);
     return Array.from(owners).map((ownerId) => ({
       ownerId,
       auditSubmitted: auditOwners.has(ownerId),
       salescodeTaken: salescodeOwners.has(ownerId),
+      briefFilled: briefOwners.has(ownerId),
     }));
   });

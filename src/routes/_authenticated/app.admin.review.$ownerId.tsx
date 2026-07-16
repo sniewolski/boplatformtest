@@ -7,6 +7,7 @@ import { listOwners } from "@/lib/admin.functions";
 import { cn } from "@/lib/utils";
 import { OwnerAuditDetail } from "@/components/admin/OwnerAuditDetail";
 import { OwnerSalesCodeDetail } from "@/components/admin/OwnerSalesCodeDetail";
+import { OwnerBusinessBriefDetail } from "@/components/admin/OwnerBusinessBriefDetail";
 
 export const Route = createFileRoute(
   "/_authenticated/app/admin/review/$ownerId",
@@ -17,6 +18,7 @@ export const Route = createFileRoute(
 const SLOTS = [
   { key: "audit", label: "Selling Systems Audit" },
   { key: "salescode", label: "SalesCode" },
+  { key: "brief", label: "Business Brief" },
 ] as const;
 
 type SlotKey = (typeof SLOTS)[number]["key"];
@@ -84,6 +86,7 @@ function OwnerReviewDetail() {
       <div>
         {slot === "audit" && <OwnerAuditDetail ownerId={ownerId} />}
         {slot === "salescode" && <OwnerSalesCodeDetail ownerId={ownerId} />}
+        {slot === "brief" && <OwnerBusinessBriefDetail ownerId={ownerId} />}
       </div>
     </div>
   );

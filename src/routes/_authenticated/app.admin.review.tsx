@@ -25,11 +25,15 @@ function ReviewRoster() {
   });
 
   const statusById = useMemo(() => {
-    const map = new Map<string, { auditSubmitted: boolean; salescodeTaken: boolean }>();
+    const map = new Map<
+      string,
+      { auditSubmitted: boolean; salescodeTaken: boolean; briefFilled: boolean }
+    >();
     for (const s of statuses.data ?? []) {
       map.set(s.ownerId, {
         auditSubmitted: s.auditSubmitted,
         salescodeTaken: s.salescodeTaken,
+        briefFilled: s.briefFilled,
       });
     }
     return map;
@@ -106,6 +110,13 @@ function ReviewRoster() {
                         label="SalesCode"
                         done={!!s?.salescodeTaken}
                       />
+                      <StatusPill
+                        label="Brief"
+                        done={!!s?.briefFilled}
+                        doneAria="filled"
+                        notDoneAria="not filled"
+                      />
+
                       <span className="text-ink-muted text-xs">Review →</span>
                     </div>
                   </Link>
@@ -119,11 +130,21 @@ function ReviewRoster() {
   );
 }
 
-function StatusPill({ label, done }: { label: string; done: boolean }) {
+function StatusPill({
+  label,
+  done,
+  doneAria = "submitted",
+  notDoneAria = "not submitted",
+}: {
+  label: string;
+  done: boolean;
+  doneAria?: string;
+  notDoneAria?: string;
+}) {
   return (
     <span
       className="inline-flex items-center gap-1 text-xs text-ink-muted tabular-nums"
-      aria-label={`${label} ${done ? "submitted" : "not submitted"}`}
+      aria-label={`${label} ${done ? doneAria : notDoneAria}`}
     >
       {done ? (
         <Check className="size-3.5 text-ink" strokeWidth={2.5} aria-hidden />
