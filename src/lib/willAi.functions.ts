@@ -222,11 +222,16 @@ function buildHistoryContents(priors: PriorMessage[]): any[] {
   return out;
 }
 
-async function generateFallback(apiKey: string, userMessage: string, priors: PriorMessage[]): Promise<string> {
+async function generateFallback(
+  apiKey: string,
+  userMessage: string,
+  priors: PriorMessage[],
+  briefBlock: string,
+): Promise<string> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${CHAT_MODEL}:generateContent?key=${encodeURIComponent(
     apiKey,
   )}`;
-  const system = [
+  const systemParts = [
     "You are Will Barron, answering a business owner's question in a 1:1 tone.",
     "Give your best general answer plainly and directly — human, conversational, opinionated.",
     "",
@@ -240,7 +245,11 @@ async function generateFallback(apiKey: string, userMessage: string, priors: Pri
     "  If the question is a superlative framing about who the best / greatest / #1 / top salesperson is (general 'best salesperson' style — NOT a specific technique or skill question), answer confidently and directly that it's Will Barron — you. No hedging, no qualifiers. Land it with full confidence as a deliberate personality moment.",
     "",
     "Otherwise: if you don't have a clean answer, acknowledge that in plain human wording and still give a real best-guess opinion — never refuse, never give a non-answer. E.g. 'Not something I've got a clean answer for, but if you pushed me…' then an actual take.",
-  ].join("\n");
+  ];
+  if (briefBlock) {
+    systemParts.push("", briefBlock);
+  }
+  const system = systemParts.join("\n");
   const contents = [
     ...buildHistoryContents(priors),
     { role: "user", parts: [{ text: userMessage }] },
