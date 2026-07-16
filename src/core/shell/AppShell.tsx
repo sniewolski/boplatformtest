@@ -173,6 +173,12 @@ export function AppShell({
                     aria-label="Complete"
                   />
                 )}
+                {item.needsAttention && (
+                  <span
+                    className="size-2 rounded-full bg-[var(--red)] shrink-0"
+                    aria-label="Needs attention"
+                  />
+                )}
               </Link>
             ),
           )}
