@@ -102,6 +102,47 @@ type PriorMessage = { role: "user" | "assistant"; content: string };
 
 // -------------------- helpers --------------------
 
+/**
+ * Load the owner's Business Brief and build a compact context block of the
+ * SIX sales fields (never business_name or website). Returns "" when the
+ * brief is empty or missing — the caller then behaves exactly as before.
+ *
+ * SOFT conditioning only: this flavours the framing of grounded, cited
+ * answers so they fit the owner's offer/ICP. It does NOT license ungrounded
+ * advice. The confidence threshold and grounded-citation behaviour stay
+ * authoritative.
+ */
+async function loadOwnerBriefBlock(
+  supabase: any,
+  userId: string,
+): Promise<string> {
+  const { data, error } = await supabase
+    .from("business_briefs")
+    .select(
+      "your_offer, average_deal_size, ideal_client, how_you_sell, whos_selling, sales_cycle",
+    )
+    .eq("owner_id", userId)
+    .maybeSingle();
+  if (error || !data) return "";
+  const fields: Array<[string, string]> = [
+    ["Your offer", (data.your_offer ?? "").trim()],
+    ["Average deal size", (data.average_deal_size ?? "").trim()],
+    ["Ideal client (ICP)", (data.ideal_client ?? "").trim()],
+    ["How they sell", (data.how_you_sell ?? "").trim()],
+    ["Who's selling", (data.whos_selling ?? "").trim()],
+    ["Sales cycle", (data.sales_cycle ?? "").trim()],
+  ];
+  const lines = fields
+    .filter(([, v]) => v.length > 0)
+    .map(([k, v]) => `- ${k}: ${v}`);
+  if (lines.length === 0) return "";
+  return [
+    "About the business owner you're talking to (use this to frame your answer so it fits their offer and ICP — do NOT let it override what the retrieved passages actually say, and do NOT invent facts beyond it):",
+    ...lines,
+  ].join("\n");
+}
+
+
 async function embedQuery(apiKey: string, text: string): Promise<number[]> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${EMBEDDING_MODEL}:embedContent?key=${encodeURIComponent(
     apiKey,
@@ -181,11 +222,16 @@ function buildHistoryContents(priors: PriorMessage[]): any[] {
   return out;
 }
 
-async function generateFallback(apiKey: string, userMessage: string, priors: PriorMessage[]): Promise<string> {
+async function generateFallback(
+  apiKey: string,
+  userMessage: string,
+  priors: PriorMessage[],
+  briefBlock: string,
+): Promise<string> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${CHAT_MODEL}:generateContent?key=${encodeURIComponent(
     apiKey,
   )}`;
-  const system = [
+  const systemParts = [
     "You are Will Barron, answering a business owner's question in a 1:1 tone.",
     "Give your best general answer plainly and directly — human, conversational, opinionated.",
     "",
@@ -199,7 +245,11 @@ async function generateFallback(apiKey: string, userMessage: string, priors: Pri
     "  If the question is a superlative framing about who the best / greatest / #1 / top salesperson is (general 'best salesperson' style — NOT a specific technique or skill question), answer confidently and directly that it's Will Barron — you. No hedging, no qualifiers. Land it with full confidence as a deliberate personality moment.",
     "",
     "Otherwise: if you don't have a clean answer, acknowledge that in plain human wording and still give a real best-guess opinion — never refuse, never give a non-answer. E.g. 'Not something I've got a clean answer for, but if you pushed me…' then an actual take.",
-  ].join("\n");
+  ];
+  if (briefBlock) {
+    systemParts.push("", briefBlock);
+  }
+  const system = systemParts.join("\n");
   const contents = [
     ...buildHistoryContents(priors),
     { role: "user", parts: [{ text: userMessage }] },
@@ -242,6 +292,7 @@ async function generateGrounded(
   priors: PriorMessage[],
   chunks: MatchedChunk[],
   sourceTitles: Map<string, string>,
+  briefBlock: string,
 ): Promise<{ answer: string; usedChunkIds: string[] }> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${CHAT_MODEL}:generateContent?key=${encodeURIComponent(
     apiKey,
@@ -262,11 +313,15 @@ async function generateGrounded(
     { role: "user", parts: [{ text: userPrompt }] },
   ];
 
+  const systemInstruction = briefBlock
+    ? `${SYSTEM_PROMPT}\n\n${briefBlock}`
+    : SYSTEM_PROMPT;
+
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      systemInstruction: { parts: [{ text: systemInstruction }] },
       contents,
       generationConfig: {
         temperature: ANSWER_TEMPERATURE,
@@ -425,12 +480,22 @@ export const sendWillAiMessage = createServerFn({ method: "POST" })
     const useFallback = !top1 || top1.distance > RETRIEVAL_DISTANCE_THRESHOLD;
 
     // ── Step 4: generation ──
+    // Load owner Business Brief (six sales fields) for SOFT answer
+    // conditioning. Retrieval above is untouched — the brief only shapes
+    // how the model frames the answer, not what it retrieves.
+    const briefBlock = await loadOwnerBriefBlock(supabase, context.userId);
+
     let assistantAnswer: string;
     let citedChunkIds: string[];
     let usedFallback: boolean;
 
     if (useFallback) {
-      assistantAnswer = await generateFallback(apiKey, data.userMessage, priors);
+      assistantAnswer = await generateFallback(
+        apiKey,
+        data.userMessage,
+        priors,
+        briefBlock,
+      );
       citedChunkIds = [];
       usedFallback = true;
     } else {
@@ -456,6 +521,7 @@ export const sendWillAiMessage = createServerFn({ method: "POST" })
         priors,
         contextChunks,
         sourceTitles,
+        briefBlock,
       );
       assistantAnswer = grounded.answer;
       citedChunkIds = grounded.usedChunkIds;
