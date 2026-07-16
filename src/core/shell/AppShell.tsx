@@ -77,26 +77,50 @@ export function AppShell({
     };
   }, []);
 
+  const briefNeedsAttention = useBusinessBriefNeedsAttention();
+
+  // Nav is composed at fixed positions: Business Brief is inserted directly
+  // above Will AI. Will AI is filtered out of the registry .map, then both
+  // are appended in the fixed order [BusinessBrief, WillAi]. Do not switch
+  // this to a mid-iteration "when key === 'will-ai'" emit — it breaks if
+  // the tool key changes or the entry is disabled.
+  const willAiTool = toolRegistry.find((t) => t.key === "will-ai");
+  const toolsWithoutWillAi = toolRegistry.filter(
+    (t) => !!t.navEntry && t.key !== "will-ai",
+  );
+
   const items: NavItem[] = [
     { to: "/app", label: "Dashboard", icon: LayoutDashboard },
-    // Tool entries are data-driven from the registry. Empty in Phase 2.
-    ...toolRegistry
-      .filter((t) => !!t.navEntry)
-      .map((t) => ({
-        to: `/app/tools/${t.key}`,
-        label: t.navEntry!.label,
-        icon: t.icon!,
-        complete:
-          t.key === "selling-systems-audit"
-            ? auditComplete
-            : t.key === "salescode"
-              ? salescodeComplete
-              : undefined,
-        disabled: t.key === "will-ai" && willAiPausedForOwner,
-      })),
-
+    ...toolsWithoutWillAi.map((t) => ({
+      to: `/app/tools/${t.key}`,
+      label: t.navEntry!.label,
+      icon: t.icon!,
+      complete:
+        t.key === "selling-systems-audit"
+          ? auditComplete
+          : t.key === "salescode"
+            ? salescodeComplete
+            : undefined,
+    })),
+    {
+      to: "/app/business-brief",
+      label: "Business Brief",
+      icon: Briefcase,
+      needsAttention: briefNeedsAttention,
+    },
+    ...(willAiTool && willAiTool.navEntry
+      ? [
+          {
+            to: `/app/tools/${willAiTool.key}`,
+            label: willAiTool.navEntry.label,
+            icon: willAiTool.icon!,
+            disabled: willAiPausedForOwner,
+          },
+        ]
+      : []),
     { to: "/app/book-call", label: "Book a 1:1 call", icon: CalendarDays },
   ];
+
 
   async function handleSignOut() {
     await queryClient.cancelQueries();
