@@ -25,11 +25,15 @@ function ReviewRoster() {
   });
 
   const statusById = useMemo(() => {
-    const map = new Map<string, { auditSubmitted: boolean; salescodeTaken: boolean }>();
+    const map = new Map<
+      string,
+      { auditSubmitted: boolean; salescodeTaken: boolean; briefFilled: boolean }
+    >();
     for (const s of statuses.data ?? []) {
       map.set(s.ownerId, {
         auditSubmitted: s.auditSubmitted,
         salescodeTaken: s.salescodeTaken,
+        briefFilled: s.briefFilled,
       });
     }
     return map;
