@@ -56,6 +56,51 @@ export type Database = {
         }
         Relationships: []
       }
+      business_briefs: {
+        Row: {
+          average_deal_size: string
+          business_name: string
+          created_at: string
+          how_you_sell: string
+          id: string
+          ideal_client: string
+          owner_id: string
+          sales_cycle: string
+          updated_at: string
+          website: string
+          whos_selling: string
+          your_offer: string
+        }
+        Insert: {
+          average_deal_size?: string
+          business_name?: string
+          created_at?: string
+          how_you_sell?: string
+          id?: string
+          ideal_client?: string
+          owner_id: string
+          sales_cycle?: string
+          updated_at?: string
+          website?: string
+          whos_selling?: string
+          your_offer?: string
+        }
+        Update: {
+          average_deal_size?: string
+          business_name?: string
+          created_at?: string
+          how_you_sell?: string
+          id?: string
+          ideal_client?: string
+          owner_id?: string
+          sales_cycle?: string
+          updated_at?: string
+          website?: string
+          whos_selling?: string
+          your_offer?: string
+        }
+        Relationships: []
+      }
       content_review_assets: {
         Row: {
           body_text: string | null

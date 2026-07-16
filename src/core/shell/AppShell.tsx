@@ -1,12 +1,13 @@
 import { useEffect, type ReactNode, type ComponentType } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
-import { Check, LayoutDashboard, Lock, Shield, ClipboardList, FileText, LogOut, CalendarDays, MessagesSquare } from "lucide-react";
+import { Check, LayoutDashboard, Lock, Shield, ClipboardList, FileText, LogOut, CalendarDays, MessagesSquare, Briefcase } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toolRegistry } from "@/tools/registry";
 import { useMyRoles } from "@/core/roles/useMyRoles";
 import { useBookingReadiness } from "@/lib/useBookingReadiness";
 import { useWillAiSettings } from "@/lib/useWillAiSettings";
+import { useBusinessBriefNeedsAttention } from "@/core/business-brief/useBusinessBrief";
 import { Button } from "@/components/ui/button";
 import logoAsset from "@/assets/logo.png.asset.json";
 
@@ -15,8 +16,11 @@ type NavItem = {
   label: string;
   icon: ComponentType<{ className?: string }>;
   complete?: boolean;
+  needsAttention?: boolean;
   disabled?: boolean;
 };
+
+
 
 
 export function AppShell({
@@ -73,26 +77,50 @@ export function AppShell({
     };
   }, []);
 
+  const briefNeedsAttention = useBusinessBriefNeedsAttention();
+
+  // Nav is composed at fixed positions: Business Brief is inserted directly
+  // above Will AI. Will AI is filtered out of the registry .map, then both
+  // are appended in the fixed order [BusinessBrief, WillAi]. Do not switch
+  // this to a mid-iteration "when key === 'will-ai'" emit — it breaks if
+  // the tool key changes or the entry is disabled.
+  const willAiTool = toolRegistry.find((t) => t.key === "will-ai");
+  const toolsWithoutWillAi = toolRegistry.filter(
+    (t) => !!t.navEntry && t.key !== "will-ai",
+  );
+
   const items: NavItem[] = [
     { to: "/app", label: "Dashboard", icon: LayoutDashboard },
-    // Tool entries are data-driven from the registry. Empty in Phase 2.
-    ...toolRegistry
-      .filter((t) => !!t.navEntry)
-      .map((t) => ({
-        to: `/app/tools/${t.key}`,
-        label: t.navEntry!.label,
-        icon: t.icon!,
-        complete:
-          t.key === "selling-systems-audit"
-            ? auditComplete
-            : t.key === "salescode"
-              ? salescodeComplete
-              : undefined,
-        disabled: t.key === "will-ai" && willAiPausedForOwner,
-      })),
-
+    ...toolsWithoutWillAi.map((t) => ({
+      to: `/app/tools/${t.key}`,
+      label: t.navEntry!.label,
+      icon: t.icon!,
+      complete:
+        t.key === "selling-systems-audit"
+          ? auditComplete
+          : t.key === "salescode"
+            ? salescodeComplete
+            : undefined,
+    })),
+    {
+      to: "/app/business-brief",
+      label: "Business Brief",
+      icon: Briefcase,
+      needsAttention: briefNeedsAttention,
+    },
+    ...(willAiTool && willAiTool.navEntry
+      ? [
+          {
+            to: `/app/tools/${willAiTool.key}`,
+            label: willAiTool.navEntry.label,
+            icon: willAiTool.icon!,
+            disabled: willAiPausedForOwner,
+          },
+        ]
+      : []),
     { to: "/app/book-call", label: "Book a 1:1 call", icon: CalendarDays },
   ];
+
 
   async function handleSignOut() {
     await queryClient.cancelQueries();
@@ -143,6 +171,12 @@ export function AppShell({
                     className="size-4 text-ink shrink-0"
                     strokeWidth={2.5}
                     aria-label="Complete"
+                  />
+                )}
+                {item.needsAttention && (
+                  <span
+                    className="size-2 rounded-full bg-[var(--red)] shrink-0"
+                    aria-label="Needs attention"
                   />
                 )}
               </Link>
