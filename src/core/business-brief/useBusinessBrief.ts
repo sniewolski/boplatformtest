@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   getMyBusinessBrief,
   saveMyBusinessBrief,
-  isBriefEmpty,
+  isBriefComplete,
   type BusinessBrief,
 } from "./businessBrief.functions";
 
@@ -28,9 +28,13 @@ export function useSaveBusinessBrief() {
   });
 }
 
-/** Nav-status helper: true when brief needs attention (empty). */
+/**
+ * Nav-status helper: true when the brief needs attention (any of the eight
+ * fields is empty/whitespace-only). Reads the same `isBriefComplete`
+ * predicate that the admin roster marker uses.
+ */
 export function useBusinessBriefNeedsAttention(): boolean {
   const { data, isLoading } = useBusinessBrief();
   if (isLoading) return false;
-  return isBriefEmpty(data);
+  return !isBriefComplete(data);
 }
