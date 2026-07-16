@@ -2,7 +2,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import {
   getBusinessBriefForOwner,
-  isBriefComplete,
+  isBriefComplete as _isBriefComplete,
   type BusinessBrief,
 } from "@/core/business-brief/businessBrief.functions";
 
