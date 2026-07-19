@@ -34,6 +34,7 @@ type TabKey = (typeof SECTION_TABS)[number]["key"];
 
 export function OwnerAuditDetail({ ownerId }: { ownerId: string }) {
   const [tab, setTab] = useState<TabKey>("conversion");
+  const isAdmin = useIsAdmin();
 
   const fetchExport = useServerFn(getAuditExportData);
   const exportMut = useMutation({
