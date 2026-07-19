@@ -11,6 +11,7 @@ export const willAiManifest: ToolManifest = {
   navEntry: {
     label: "Will AI",
     icon: MessagesSquare,
+    navGroup: "resources",
   },
   dashboardWidget: {
     render: () => <DashboardWidget />,
