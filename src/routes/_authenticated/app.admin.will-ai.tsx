@@ -51,6 +51,27 @@ export const Route = createFileRoute("/_authenticated/app/admin/will-ai")({
 });
 
 function WillAiAdmin() {
+  const { user } = Route.useRouteContext();
+  const { data: roles, isLoading: rolesLoading } = useMyRoles(user.id);
+
+  if (rolesLoading) {
+    return (
+      <div className="min-h-[40vh] flex items-center justify-center">
+        <p className="text-ink-muted text-sm">Loading…</p>
+      </div>
+    );
+  }
+  if (!roles?.includes("admin")) {
+    return (
+      <div className="max-w-md mx-auto px-8 py-16 text-center flex flex-col gap-3">
+        <h1 className="text-2xl">Not authorised</h1>
+        <p className="text-ink-muted text-sm">
+          You don't have access to the admin area.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="app-content py-16 flex flex-col gap-8">
       <header className="flex flex-col gap-2">
