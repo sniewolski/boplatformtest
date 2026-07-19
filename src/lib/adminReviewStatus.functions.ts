@@ -32,7 +32,7 @@ export type OwnerReviewStatus = {
 export const listOwnerReviewStatuses = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<OwnerReviewStatus[]> => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertElevated(context.supabase, context.userId);
 
     const { supabaseAdmin } = await import(
       "@/integrations/supabase/client.server"
