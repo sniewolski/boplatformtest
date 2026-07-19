@@ -44,6 +44,7 @@ import {
   type SopWillAiRow,
 } from "@/lib/useSopWillAiImport";
 import { ArchivedConversationsTab } from "@/components/admin/WillAiArchiveTab";
+import { useMyRoles } from "@/core/roles/useMyRoles";
 
 
 export const Route = createFileRoute("/_authenticated/app/admin/will-ai")({
