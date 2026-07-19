@@ -981,6 +981,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_elevated: { Args: { _user_id: string }; Returns: boolean }
       match_will_ai_chunks: {
         Args: { match_count?: number; query_embedding: string }
         Returns: {
@@ -1039,7 +1040,7 @@ export type Database = {
       will_ai_ingestion_dispatch: { Args: never; Returns: undefined }
     }
     Enums: {
-      app_role: "owner" | "admin"
+      app_role: "owner" | "admin" | "mentor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1167,7 +1168,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["owner", "admin"],
+      app_role: ["owner", "admin", "mentor"],
     },
   },
 } as const
