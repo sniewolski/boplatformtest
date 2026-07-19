@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Download, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useIsAdmin } from "@/core/roles/useMyRoles";
 import { ConversionAdminTab } from "@/tools/selling-systems-audit/admin/ConversionAdminTab";
 import { SectionAdminTab } from "@/tools/selling-systems-audit/admin/SectionAdminTab";
 import { PipelineAdminReadBack } from "@/tools/selling-systems-audit/admin/PipelineAdminReadBack";
