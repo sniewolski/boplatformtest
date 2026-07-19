@@ -318,10 +318,12 @@ function NoteRow({
   note,
   onSave,
   onDelete,
+  readOnly = false,
 }: {
   note: { id: string; body: string; source: string };
   onSave: (body: string) => Promise<void>;
   onDelete: () => Promise<void>;
+  readOnly?: boolean;
 }) {
   const [body, setBody] = useState(note.body);
   const [busy, setBusy] = useState(false);
@@ -344,22 +346,26 @@ function NoteRow({
     <li className="border border-border rounded-xl p-4 flex flex-col gap-2 bg-[var(--surface-raised)]">
       <div className="flex items-center justify-between text-xs text-ink-muted">
         <span>{isAi ? "AI draft" : "Coach"}</span>
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={busy}
-          onClick={() => run(onDelete)}
-          className="text-ink-muted hover:text-[var(--red)] h-7 px-2"
-        >
-          <Trash2 className="size-3.5" />
-        </Button>
+        {!readOnly && (
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={busy}
+            onClick={() => run(onDelete)}
+            className="text-ink-muted hover:text-[var(--red)] h-7 px-2"
+          >
+            <Trash2 className="size-3.5" />
+          </Button>
+        )}
       </div>
       <Textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
         className="min-h-[100px] bg-background"
+        readOnly={readOnly}
+        disabled={readOnly}
       />
-      {dirty && (
+      {!readOnly && dirty && (
         <div className="flex justify-end">
           <Button
             size="sm"
