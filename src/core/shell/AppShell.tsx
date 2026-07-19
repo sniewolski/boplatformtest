@@ -186,7 +186,7 @@ export function AppShell({
           )}
 
 
-          {isAdmin && (
+          {showAdminSection && (
             <>
               <div className="h-px bg-border mx-6" />
               <div className="px-6 py-6">
@@ -197,15 +197,17 @@ export function AppShell({
                   Admin
                 </span>
               </div>
-              <Link
-                to="/app/admin"
-                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-ink hover:bg-background transition-colors"
-                activeProps={{ className: "bg-background font-medium" }}
-                activeOptions={{ exact: true }}
-              >
-                <Shield className="size-4" />
-                Admin
-              </Link>
+              {isAdmin && (
+                <Link
+                  to="/app/admin"
+                  className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-ink hover:bg-background transition-colors"
+                  activeProps={{ className: "bg-background font-medium" }}
+                  activeOptions={{ exact: true }}
+                >
+                  <Shield className="size-4" />
+                  Admin
+                </Link>
+              )}
               <Link
                 to="/app/admin/review"
                 className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-ink hover:bg-background transition-colors"
@@ -222,14 +224,16 @@ export function AppShell({
                 <FileText className="size-4" />
                 SOPs
               </Link>
-              <Link
-                to="/app/admin/will-ai"
-                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-ink hover:bg-background transition-colors"
-                activeProps={{ className: "bg-background font-medium" }}
-              >
-                <MessagesSquare className="size-4" />
-                Will AI
-              </Link>
+              {isAdmin && (
+                <Link
+                  to="/app/admin/will-ai"
+                  className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-ink hover:bg-background transition-colors"
+                  activeProps={{ className: "bg-background font-medium" }}
+                >
+                  <MessagesSquare className="size-4" />
+                  Will AI
+                </Link>
+              )}
             </>
           )}
         </nav>
