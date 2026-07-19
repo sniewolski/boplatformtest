@@ -30,11 +30,30 @@ export const Route = createFileRoute("/_authenticated/app/admin/")({
 function AdminHome() {
   const queryClient = useQueryClient();
   const { user } = Route.useRouteContext();
+  const { data: roles, isLoading: rolesLoading } = useMyRoles(user.id);
   const list = useServerFn(listOwners);
   const provision = useServerFn(provisionOwner);
   const setStatus = useServerFn(setAccountStatus);
   const setAdmin = useServerFn(setAdminRole);
   const del = useServerFn(deleteUser);
+
+  if (rolesLoading) {
+    return (
+      <div className="min-h-[40vh] flex items-center justify-center">
+        <p className="text-ink-muted text-sm">Loading…</p>
+      </div>
+    );
+  }
+  if (!roles?.includes("admin")) {
+    return (
+      <div className="max-w-md mx-auto px-8 py-16 text-center flex flex-col gap-3">
+        <h1 className="text-2xl">Not authorised</h1>
+        <p className="text-ink-muted text-sm">
+          You don't have access to the admin area.
+        </p>
+      </div>
+    );
+  }
 
   const owners = useQuery({
     queryKey: ["admin", "owners"],
