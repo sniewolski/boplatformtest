@@ -154,6 +154,7 @@ export const setAdminRole = createServerFn({ method: "POST" })
     z
       .object({
         userId: z.string().uuid(),
+        role: z.enum(["admin", "mentor"]),
         grant: z.boolean(),
       })
       .parse(input),
@@ -161,7 +162,7 @@ export const setAdminRole = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
 
-    if (!data.grant && data.userId === context.userId) {
+    if (!data.grant && data.role === "admin" && data.userId === context.userId) {
       throw new Error("You can't revoke your own admin role.");
     }
 
@@ -170,7 +171,7 @@ export const setAdminRole = createServerFn({ method: "POST" })
     if (data.grant) {
       const { error } = await supabaseAdmin
         .from("user_roles")
-        .insert({ user_id: data.userId, role: "admin" });
+        .insert({ user_id: data.userId, role: data.role });
       // Ignore unique-violation: role already granted.
       if (error && !/duplicate key|unique/i.test(error.message)) {
         throw new Error(error.message);
@@ -180,7 +181,7 @@ export const setAdminRole = createServerFn({ method: "POST" })
         .from("user_roles")
         .delete()
         .eq("user_id", data.userId)
-        .eq("role", "admin");
+        .eq("role", data.role);
       if (error) throw new Error(error.message);
     }
 
