@@ -29,6 +29,7 @@ export function SectionSummaryPanel({
   const summaryQ = useSectionSummary(ownerId, sectionKey);
   const generate = useServerFn(generateSectionSummary);
   const qc = useQueryClient();
+  const isAdmin = useIsAdmin();
 
   const generateMut = useMutation({
     mutationFn: () =>
