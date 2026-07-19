@@ -12,6 +12,7 @@ export const sellingSystemsAuditManifest: ToolManifest = {
   navEntry: {
     label: "Selling Systems Audit",
     icon: ClipboardCheck,
+    navGroup: "coaching",
   },
   dashboardWidget: {
     render: () => <DashboardWidget />,
