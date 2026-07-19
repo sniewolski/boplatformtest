@@ -72,7 +72,7 @@ export const createSop = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertElevated(context.supabase, context.userId);
     await assertPdfOrDocxAtPath(data.filePath);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -109,7 +109,7 @@ export const replaceSopFile = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertElevated(context.supabase, context.userId);
     await assertPdfOrDocxAtPath(data.filePath);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -147,7 +147,7 @@ export const deleteSop = createServerFn({ method: "POST" })
     z.object({ sopId: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertElevated(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: existing } = await supabaseAdmin
