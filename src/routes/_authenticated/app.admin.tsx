@@ -17,7 +17,8 @@ function AdminLayout() {
     );
   }
 
-  if (!roles?.includes("admin")) {
+  const elevated = roles?.includes("admin") || roles?.includes("mentor");
+  if (!elevated) {
     return (
       <div className="max-w-md mx-auto px-8 py-16 text-center flex flex-col gap-3">
         <h1 className="text-2xl">Not authorised</h1>
