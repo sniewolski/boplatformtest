@@ -24,6 +24,12 @@ async function assertAdmin(supabase: any, userId: string) {
   if (!data) throw new Error("Forbidden");
 }
 
+async function assertElevated(supabase: any, userId: string) {
+  const { data, error } = await supabase.rpc("is_elevated", { _user_id: userId });
+  if (error) throw new Error("Failed to verify role");
+  if (!data) throw new Error("Forbidden");
+}
+
 // notify() seam — actual email send lives outside Phase 2.
 async function notify(_payload: { kind: string; to: string; data?: unknown }) {
   // Intentionally a no-op stub. Phase 3+ wires a real provider here.
@@ -191,7 +197,7 @@ export const setAdminRole = createServerFn({ method: "POST" })
 export const listOwners = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertElevated(context.supabase, context.userId);
 
     // profiles ↔ user_roles have no direct FK (both reference auth.users),
     // so PostgREST cannot embed them. Fetch separately and merge in JS.
