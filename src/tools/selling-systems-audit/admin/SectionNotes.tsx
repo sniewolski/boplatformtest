@@ -20,6 +20,7 @@ export function SectionNotes({
 }) {
   const noteQ = useSectionNote(ownerId, sectionKey);
   const saveMut = useSaveSectionNote(ownerId, sectionKey);
+  const isAdmin = useIsAdmin();
 
   const [value, setValue] = useState("");
   const hydrated = useRef(false);
