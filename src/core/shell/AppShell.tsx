@@ -18,7 +18,13 @@ type NavItem = {
   complete?: boolean;
   needsAttention?: boolean;
   disabled?: boolean;
+  navGroup?: string;
 };
+
+const NAV_GROUPS: { key: string; label: string }[] = [
+  { key: "coaching", label: "Coaching" },
+  { key: "resources", label: "Resources" },
+];
 
 
 
@@ -81,54 +87,123 @@ export function AppShell({
 
   const briefNeedsAttention = useBusinessBriefNeedsAttention();
 
-  // Nav is composed at fixed positions: Business Brief is inserted directly
-  // above Will AI. Will AI is filtered out of the registry .map, then both
-  // are appended in the fixed order [BusinessBrief, WillAi]. Do not switch
-  // this to a mid-iteration "when key === 'will-ai'" emit — it breaks if
-  // the tool key changes or the entry is disabled.
-  const willAiTool = toolRegistry.find((t) => t.key === "will-ai");
-  const toolsWithoutWillAi = toolRegistry.filter(
-    (t) => !!t.navEntry && t.key !== "will-ai",
-  );
-
-  const items: NavItem[] = [
-    { to: "/app", label: "Dashboard", icon: LayoutDashboard },
-    ...toolsWithoutWillAi.map((t) => ({
+  // Build items from the registry; grouping is driven by navEntry.navGroup.
+  // Business Brief and Book a 1:1 call are not registry tools — they are
+  // assigned to groups explicitly below. Dashboard is always first, ungrouped.
+  const registryItems: NavItem[] = toolRegistry
+    .filter((t) => !!t.navEntry)
+    .map((t) => ({
       to: `/app/tools/${t.key}`,
       label: t.navEntry!.label,
       icon: t.icon!,
+      navGroup: t.navEntry!.navGroup,
       complete:
         t.key === "selling-systems-audit"
           ? auditComplete
           : t.key === "salescode"
             ? salescodeComplete
             : undefined,
-    })),
-    {
-      to: "/app/business-brief",
-      label: "Business Brief",
-      icon: Briefcase,
-      needsAttention: briefNeedsAttention,
-    },
-    ...(willAiTool && willAiTool.navEntry
-      ? [
-          {
-            to: `/app/tools/${willAiTool.key}`,
-            label: willAiTool.navEntry.label,
-            icon: willAiTool.icon!,
-            disabled: willAiPausedForOwner,
-          },
-        ]
-      : []),
-    { to: "/app/book-call", label: "Book a 1:1 call", icon: CalendarDays },
-  ];
+      disabled: t.key === "will-ai" ? willAiPausedForOwner : undefined,
+    }));
 
+  const businessBriefItem: NavItem = {
+    to: "/app/business-brief",
+    label: "Business Brief",
+    icon: Briefcase,
+    navGroup: "resources",
+    needsAttention: briefNeedsAttention,
+  };
+
+  const bookCallItem: NavItem = {
+    to: "/app/book-call",
+    label: "Book a 1:1 call",
+    icon: CalendarDays,
+    navGroup: "coaching",
+  };
+
+  const dashboardItem: NavItem = {
+    to: "/app",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+  };
+
+  const allGrouped: NavItem[] = [...registryItems, businessBriefItem, bookCallItem];
+
+  // Preserve registry order within each group; Business Brief lands at the
+  // top of "resources" and Book a 1:1 call at the bottom of "coaching".
+  const groupBuckets = new Map<string, NavItem[]>();
+  for (const g of NAV_GROUPS) groupBuckets.set(g.key, []);
+  const ungroupedItems: NavItem[] = [];
+  for (const item of allGrouped) {
+    if (item.navGroup && groupBuckets.has(item.navGroup)) {
+      groupBuckets.get(item.navGroup)!.push(item);
+    } else {
+      ungroupedItems.push(item);
+    }
+  }
+  // Position book-call last in coaching; business-brief first in resources.
+  const coaching = groupBuckets.get("coaching") ?? [];
+  const coachingOrdered = [
+    ...coaching.filter((i) => i.to !== "/app/book-call"),
+    ...coaching.filter((i) => i.to === "/app/book-call"),
+  ];
+  groupBuckets.set("coaching", coachingOrdered);
+  const resources = groupBuckets.get("resources") ?? [];
+  const resourcesOrdered = [
+    ...resources.filter((i) => i.to === "/app/business-brief"),
+    ...resources.filter((i) => i.to !== "/app/business-brief"),
+  ];
+  groupBuckets.set("resources", resourcesOrdered);
 
   async function handleSignOut() {
     await queryClient.cancelQueries();
     queryClient.clear();
     await supabase.auth.signOut();
     router.navigate({ to: "/login", replace: true });
+  }
+
+  function renderItem(item: NavItem) {
+    if (item.disabled) {
+      return (
+        <li key={item.to} className="list-none">
+          <div
+            className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-ink-muted cursor-not-allowed select-none"
+            aria-disabled="true"
+            title="Temporarily unavailable"
+          >
+            <item.icon className="size-4" />
+            <span className="flex-1">{item.label}</span>
+            <Lock className="size-3.5 shrink-0" aria-hidden />
+          </div>
+        </li>
+      );
+    }
+    return (
+      <li key={item.to} className="list-none">
+        <Link
+          to={item.to}
+          className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-ink hover:bg-background transition-colors"
+          activeProps={{ className: "bg-background font-medium" }}
+          activeOptions={{ exact: item.to === "/app" }}
+        >
+          <item.icon className="size-4" />
+          <span className="flex-1">{item.label}</span>
+          {item.complete && (
+            <Check
+              className="size-4 text-ink shrink-0"
+              strokeWidth={2.5}
+              aria-label="Complete"
+            />
+          )}
+          {item.needsAttention && (
+            <span
+              className="size-2 rounded-full bg-[var(--red)] shrink-0"
+              aria-label="Needs attention"
+            />
+          )}
+        </Link>
+      </li>
+    );
   }
 
   return (
@@ -145,45 +220,40 @@ export function AppShell({
           </Link>
         </div>
 
-        <nav className="flex-1 min-h-0 overflow-hidden px-3 flex flex-col gap-1">
-          {items.map((item) =>
-            item.disabled ? (
-              <div
-                key={item.to}
-                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-ink-muted cursor-not-allowed select-none"
-                aria-disabled="true"
-                title="Temporarily unavailable"
-              >
-                <item.icon className="size-4" />
-                <span className="flex-1">{item.label}</span>
-                <Lock className="size-3.5 shrink-0" aria-hidden />
+        <nav className="flex-1 min-h-0 overflow-hidden px-3 flex flex-col">
+          <ul className="flex flex-col gap-1 list-none">
+            {renderItem(dashboardItem)}
+          </ul>
+
+          {NAV_GROUPS.map((group) => {
+            const groupItems = groupBuckets.get(group.key) ?? [];
+            if (groupItems.length === 0) return null;
+            const labelId = `nav-group-${group.key}`;
+            return (
+              <div key={group.key} className="mt-5">
+                <div
+                  id={labelId}
+                  className="px-3 pb-1 text-xs font-medium text-ink-muted"
+                >
+                  {group.label}
+                </div>
+                <ul
+                  aria-labelledby={labelId}
+                  className="flex flex-col gap-1 list-none"
+                >
+                  {groupItems.map(renderItem)}
+                </ul>
               </div>
-            ) : (
-              <Link
-                key={item.to}
-                to={item.to}
-                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-ink hover:bg-background transition-colors"
-                activeProps={{ className: "bg-background font-medium" }}
-                activeOptions={{ exact: item.to === "/app" }}
-              >
-                <item.icon className="size-4" />
-                <span className="flex-1">{item.label}</span>
-                {item.complete && (
-                  <Check
-                    className="size-4 text-ink shrink-0"
-                    strokeWidth={2.5}
-                    aria-label="Complete"
-                  />
-                )}
-                {item.needsAttention && (
-                  <span
-                    className="size-2 rounded-full bg-[var(--red)] shrink-0"
-                    aria-label="Needs attention"
-                  />
-                )}
-              </Link>
-            ),
+            );
+          })}
+
+          {ungroupedItems.length > 0 && (
+            <ul className="mt-5 flex flex-col gap-1 list-none">
+              {ungroupedItems.map(renderItem)}
+            </ul>
           )}
+
+
 
 
           {showAdminSection && (

@@ -22,6 +22,8 @@ import { willAiManifest } from "./will-ai/manifest";
 export type ToolNavEntry = {
   label: string;
   icon?: ComponentType<{ className?: string }>;
+  /** Optional sidebar group key; ungrouped if omitted. */
+  navGroup?: string;
 };
 
 export type ToolDashboardWidget = {

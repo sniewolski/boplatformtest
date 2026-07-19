@@ -10,6 +10,7 @@ export const sopsManifest: ToolManifest = {
   navEntry: {
     label: "SOPs",
     icon: BookOpen,
+    navGroup: "resources",
   },
   Component: SopsApp,
 };
