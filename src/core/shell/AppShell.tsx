@@ -36,6 +36,8 @@ export function AppShell({
   const queryClient = useQueryClient();
   const { data: roles = [] } = useMyRoles(userId);
   const isAdmin = roles.includes("admin");
+  const isMentor = roles.includes("mentor");
+  const showAdminSection = isAdmin || isMentor;
   const { isLoading: readinessLoading, incomplete } = useBookingReadiness(userId);
   const { data: willAiSettings } = useWillAiSettings();
   const willAiPausedForOwner =
