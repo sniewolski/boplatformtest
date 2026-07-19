@@ -16,12 +16,11 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const BUCKET = "sops";
 const MAX_BYTES = 20 * 1024 * 1024;
 
-async function assertAdmin(supabase: any, userId: string) {
-  const { data, error } = await supabase.rpc("has_role", {
+async function assertElevated(supabase: any, userId: string) {
+  const { data, error } = await supabase.rpc("is_elevated", {
     _user_id: userId,
-    _role: "admin",
   });
-  if (error) throw new Error("Failed to verify admin role");
+  if (error) throw new Error("Failed to verify role");
   if (!data) throw new Error("Forbidden");
 }
 
@@ -64,7 +63,7 @@ export const createSop = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertElevated(context.supabase, context.userId);
     await assertPdfOrDocxAtPath(data.filePath);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -101,7 +100,7 @@ export const replaceSopFile = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertElevated(context.supabase, context.userId);
     await assertPdfOrDocxAtPath(data.filePath);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -139,7 +138,7 @@ export const deleteSop = createServerFn({ method: "POST" })
     z.object({ sopId: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertElevated(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: existing } = await supabaseAdmin
