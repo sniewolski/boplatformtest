@@ -1039,7 +1039,7 @@ export type Database = {
       will_ai_ingestion_dispatch: { Args: never; Returns: undefined }
     }
     Enums: {
-      app_role: "owner" | "admin"
+      app_role: "owner" | "admin" | "mentor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1167,7 +1167,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["owner", "admin"],
+      app_role: ["owner", "admin", "mentor"],
     },
   },
 } as const
