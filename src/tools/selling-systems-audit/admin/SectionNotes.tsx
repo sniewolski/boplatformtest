@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
+import { useIsAdmin } from "@/core/roles/useMyRoles";
 import {
   type AdminSectionKey,
   useSaveSectionNote,
