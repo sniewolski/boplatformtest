@@ -197,7 +197,7 @@ export const setAdminRole = createServerFn({ method: "POST" })
 export const listOwners = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertElevated(context.supabase, context.userId);
 
     // profiles ↔ user_roles have no direct FK (both reference auth.users),
     // so PostgREST cannot embed them. Fetch separately and merge in JS.
