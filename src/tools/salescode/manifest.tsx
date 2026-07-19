@@ -12,6 +12,7 @@ export const salescodeManifest: ToolManifest = {
   navEntry: {
     label: "SalesCode",
     icon: Fingerprint,
+    navGroup: "coaching",
   },
   dashboardWidget: {
     render: () => <DashboardWidget />,
