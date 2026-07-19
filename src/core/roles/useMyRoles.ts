@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export type AppRole = "owner" | "admin";
+export type AppRole = "owner" | "admin" | "mentor";
 
 /**
  * Reads the signed-in user's roles. RLS allows self-read on user_roles.
