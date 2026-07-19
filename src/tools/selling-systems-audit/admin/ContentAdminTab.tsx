@@ -243,17 +243,19 @@ function AssetDetail({
               <h3 className="text-sm font-medium text-ink">
                 Notes {q.data.notes.length > 0 && `(${q.data.notes.length})`}
               </h3>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => aiMut.mutate()}
-                disabled={aiMut.isPending}
-              >
-                <Sparkles className="size-4 mr-2" />
-                {aiMut.isPending ? "Drafting…" : "AI draft"}
-              </Button>
+              {isAdmin && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => aiMut.mutate()}
+                  disabled={aiMut.isPending}
+                >
+                  <Sparkles className="size-4 mr-2" />
+                  {aiMut.isPending ? "Drafting…" : "AI draft"}
+                </Button>
+              )}
             </div>
-            {aiMut.error && (
+            {isAdmin && aiMut.error && (
               <p className="text-sm text-[var(--red)]">
                 {(aiMut.error as Error).message}
               </p>
@@ -267,6 +269,7 @@ function AssetDetail({
                 <NoteRow
                   key={n.id}
                   note={n}
+                  readOnly={!isAdmin}
                   onSave={async (body) => {
                     await update({ data: { noteId: n.id, body } });
                     invalidate();
@@ -279,29 +282,31 @@ function AssetDetail({
               ))}
             </ul>
 
-            <div className="flex flex-col gap-2 border-t border-border pt-4">
-              <label className="text-xs text-ink-muted">New note</label>
-              <Textarea
-                value={newNote}
-                onChange={(e) => setNewNote(e.target.value)}
-                placeholder="Short, tight, concrete. Point to the problem and the fix."
-                className="min-h-[120px]"
-              />
-              <div className="flex justify-end">
-                <Button
-                  size="sm"
-                  disabled={!newNote.trim() || createMut.isPending}
-                  onClick={() => createMut.mutate(newNote.trim())}
-                >
-                  Save
-                </Button>
+            {isAdmin && (
+              <div className="flex flex-col gap-2 border-t border-border pt-4">
+                <label className="text-xs text-ink-muted">New note</label>
+                <Textarea
+                  value={newNote}
+                  onChange={(e) => setNewNote(e.target.value)}
+                  placeholder="Short, tight, concrete. Point to the problem and the fix."
+                  className="min-h-[120px]"
+                />
+                <div className="flex justify-end">
+                  <Button
+                    size="sm"
+                    disabled={!newNote.trim() || createMut.isPending}
+                    onClick={() => createMut.mutate(newNote.trim())}
+                  >
+                    Save
+                  </Button>
+                </div>
+                {createMut.error && (
+                  <p className="text-sm text-[var(--red)]">
+                    {(createMut.error as Error).message}
+                  </p>
+                )}
               </div>
-              {createMut.error && (
-                <p className="text-sm text-[var(--red)]">
-                  {(createMut.error as Error).message}
-                </p>
-              )}
-            </div>
+            )}
           </section>
         </>
       )}
