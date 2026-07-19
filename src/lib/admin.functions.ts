@@ -204,7 +204,7 @@ export const listOwners = createServerFn({ method: "GET" })
     if (profilesErr) throw new Error(profilesErr.message);
 
     const ids = (profiles ?? []).map((p: any) => p.id as string);
-    let rolesByUser = new Map<string, ("owner" | "admin")[]>();
+    let rolesByUser = new Map<string, ("owner" | "admin" | "mentor")[]>();
     if (ids.length > 0) {
       const { data: roles, error: rolesErr } = await supabaseAdmin
         .from("user_roles")
@@ -213,7 +213,7 @@ export const listOwners = createServerFn({ method: "GET" })
       if (rolesErr) throw new Error(rolesErr.message);
       for (const r of roles ?? []) {
         const uid = (r as any).user_id as string;
-        const role = (r as any).role as "owner" | "admin";
+        const role = (r as any).role as "owner" | "admin" | "mentor";
         const arr = rolesByUser.get(uid) ?? [];
         arr.push(role);
         rolesByUser.set(uid, arr);
