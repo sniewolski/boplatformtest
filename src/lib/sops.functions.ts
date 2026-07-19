@@ -16,15 +16,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const BUCKET = "sops";
 const MAX_BYTES = 20 * 1024 * 1024;
 
-async function assertAdmin(supabase: any, userId: string) {
-  const { data, error } = await supabase.rpc("has_role", {
-    _user_id: userId,
-    _role: "admin",
-  });
-  if (error) throw new Error("Failed to verify admin role");
-  if (!data) throw new Error("Forbidden");
-}
-
 async function assertElevated(supabase: any, userId: string) {
   const { data, error } = await supabase.rpc("is_elevated", {
     _user_id: userId,
