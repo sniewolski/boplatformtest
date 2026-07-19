@@ -165,7 +165,7 @@ function AdminHome() {
       <section className="flex flex-col gap-4">
         <h2 className="text-xl">Accounts</h2>
         <p className="text-ink-muted text-sm">
-          Grant admin to let someone else review submitted content.
+          Grant admin for full access, or mentor for review and SOPs only.
         </p>
         {owners.isLoading && (
           <p className="text-ink-muted text-sm">Loading…</p>
