@@ -58,29 +58,31 @@ export function OwnerAuditDetail({ ownerId }: { ownerId: string }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-start justify-end gap-4">
-        <div className="flex flex-col items-end gap-1 shrink-0">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => exportMut.mutate()}
-            disabled={exportMut.isPending}
-          >
-            {exportMut.isPending ? (
-              <Loader2 className="size-3.5 animate-spin" aria-hidden />
-            ) : (
-              <Download className="size-3.5" aria-hidden />
+      {isAdmin && (
+        <div className="flex items-start justify-end gap-4">
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => exportMut.mutate()}
+              disabled={exportMut.isPending}
+            >
+              {exportMut.isPending ? (
+                <Loader2 className="size-3.5 animate-spin" aria-hidden />
+              ) : (
+                <Download className="size-3.5" aria-hidden />
+              )}
+              {exportMut.isPending ? "Exporting…" : "Export to MD"}
+            </Button>
+            {exportMut.error && (
+              <span className="text-xs text-[var(--red)]">
+                {(exportMut.error as Error).message}
+              </span>
             )}
-            {exportMut.isPending ? "Exporting…" : "Export to MD"}
-          </Button>
-          {exportMut.error && (
-            <span className="text-xs text-[var(--red)]">
-              {(exportMut.error as Error).message}
-            </span>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
       <nav
         role="tablist"
