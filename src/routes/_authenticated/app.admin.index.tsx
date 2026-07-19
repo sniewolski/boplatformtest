@@ -89,7 +89,7 @@ function AdminHome() {
   });
 
   const adminMut = useMutation({
-    mutationFn: (vars: { userId: string; grant: boolean }) =>
+    mutationFn: (vars: { userId: string; role: "admin" | "mentor"; grant: boolean }) =>
       setAdmin({ data: vars }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "owners"] });
