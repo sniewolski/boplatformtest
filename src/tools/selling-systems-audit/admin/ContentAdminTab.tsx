@@ -172,6 +172,7 @@ function AssetDetail({
   const update = useServerFn(updateReviewNote);
   const del = useServerFn(deleteReviewNote);
   const ai = useServerFn(generateAiDraftNote);
+  const isAdmin = useIsAdmin();
 
   const q = useQuery({
     queryKey: ["admin-content-asset", assetId],
