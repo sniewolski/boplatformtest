@@ -23,3 +23,23 @@ export function useMyRoles(userId: string | undefined) {
     },
   });
 }
+
+/**
+ * Convenience: returns true only if the current signed-in user has the
+ * `admin` role. Used to gate write controls in review UIs shared with
+ * mentors (who inherit read access via the widened layout guard).
+ */
+export function useIsAdmin(): boolean {
+  const [userId, setUserId] = useState<string | undefined>();
+  useEffect(() => {
+    let cancelled = false;
+    supabase.auth.getUser().then((r) => {
+      if (!cancelled) setUserId(r.data.user?.id);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const { data } = useMyRoles(userId);
+  return !!data?.includes("admin");
+}
