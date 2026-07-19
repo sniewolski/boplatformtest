@@ -981,6 +981,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_elevated: { Args: { _user_id: string }; Returns: boolean }
       match_will_ai_chunks: {
         Args: { match_count?: number; query_embedding: string }
         Returns: {
