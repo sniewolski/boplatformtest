@@ -42,7 +42,7 @@ export const getReviewAsset = createServerFn({ method: "GET" })
     z.object({ assetId: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertElevated(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: asset, error } = await supabaseAdmin
