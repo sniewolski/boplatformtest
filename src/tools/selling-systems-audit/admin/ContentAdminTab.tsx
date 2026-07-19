@@ -14,6 +14,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useIsAdmin } from "@/core/roles/useMyRoles";
 import { CONTENT_CATEGORIES } from "../content/config";
 import {
   createReviewNote,
