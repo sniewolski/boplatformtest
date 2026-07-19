@@ -18,7 +18,13 @@ type NavItem = {
   complete?: boolean;
   needsAttention?: boolean;
   disabled?: boolean;
+  navGroup?: string;
 };
+
+const NAV_GROUPS: { key: string; label: string }[] = [
+  { key: "coaching", label: "Coaching" },
+  { key: "resources", label: "Resources" },
+];
 
 
 
