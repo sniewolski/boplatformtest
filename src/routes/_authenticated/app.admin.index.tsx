@@ -3,6 +3,7 @@ import { useMyRoles } from "@/core/roles/useMyRoles";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { MoreHorizontal } from "lucide-react";
 import {
   deleteUser,
   listOwners,
@@ -11,6 +12,13 @@ import {
   setAdminRole,
 } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -157,7 +165,7 @@ function AdminHome() {
       <section className="flex flex-col gap-4">
         <h2 className="text-xl">Accounts</h2>
         <p className="text-ink-muted text-sm">
-          Grant admin to let someone else review submitted content.
+          Grant admin for full access, or mentor for review and SOPs only.
         </p>
         {owners.isLoading && (
           <p className="text-ink-muted text-sm">Loading…</p>
@@ -191,60 +199,64 @@ function AdminHome() {
                       </span>
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={adminMut.isPending || isSelf}
-                      title={isSelf ? "You can't change your own admin role." : undefined}
-                      onClick={() => {
-                        setFeedback(null);
-                        if (isAdmin && !confirm(`Revoke admin from ${row.email}?`)) return;
-                        adminMut.mutate({ userId: row.id, role: "admin", grant: !isAdmin });
-                      }}
-                    >
-                      {isAdmin ? "Revoke admin" : "Make admin"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={adminMut.isPending}
-                      onClick={() => {
-                        setFeedback(null);
-                        if (isMentor && !confirm(`Revoke mentor from ${row.email}?`)) return;
-                        adminMut.mutate({ userId: row.id, role: "mentor", grant: !isMentor });
-                      }}
-                    >
-                      {isMentor ? "Revoke mentor" : "Make mentor"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={statusMut.isPending || isSelf}
-                      title={isSelf ? "You can't suspend your own account." : undefined}
-                      onClick={() =>
-                        statusMut.mutate({
-                          userId: row.id,
-                          status: suspended ? "active" : "suspended",
-                        })
-                      }
-                    >
-                      {suspended ? "Reinstate" : "Suspend"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={isSelf}
-                      title={isSelf ? "You can't delete your own account." : undefined}
-                      className="text-[var(--red)] hover:text-[var(--red)]"
-                      onClick={() => {
-                        setDeleteError(null);
-                        setDeleteTarget({ id: row.id, email: row.email });
-                      }}
-                    >
-                      Delete
-                    </Button>
-                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        aria-label="Account actions"
+                      >
+                        <MoreHorizontal className="size-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        disabled={adminMut.isPending || isSelf}
+                        title={isSelf ? "You can't change your own admin role." : undefined}
+                        onClick={() => {
+                          setFeedback(null);
+                          if (isAdmin && !confirm(`Revoke admin from ${row.email}?`)) return;
+                          adminMut.mutate({ userId: row.id, role: "admin", grant: !isAdmin });
+                        }}
+                      >
+                        {isAdmin ? "Revoke admin" : "Make admin"}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        disabled={adminMut.isPending}
+                        onClick={() => {
+                          setFeedback(null);
+                          if (isMentor && !confirm(`Revoke mentor from ${row.email}?`)) return;
+                          adminMut.mutate({ userId: row.id, role: "mentor", grant: !isMentor });
+                        }}
+                      >
+                        {isMentor ? "Revoke mentor" : "Make mentor"}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        disabled={statusMut.isPending || isSelf}
+                        title={isSelf ? "You can't suspend your own account." : undefined}
+                        onClick={() =>
+                          statusMut.mutate({
+                            userId: row.id,
+                            status: suspended ? "active" : "suspended",
+                          })
+                        }
+                      >
+                        {suspended ? "Reactivate" : "Suspend"}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        disabled={isSelf}
+                        title={isSelf ? "You can't delete your own account." : undefined}
+                        className="text-[var(--red)] focus:text-[var(--red)]"
+                        onClick={() => {
+                          setDeleteError(null);
+                          setDeleteTarget({ id: row.id, email: row.email });
+                        }}
+                      >
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </li>
               );
             })}
