@@ -14,6 +14,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useIsAdmin } from "@/core/roles/useMyRoles";
 import { CONTENT_CATEGORIES } from "../content/config";
 import {
   createReviewNote,
@@ -171,6 +172,7 @@ function AssetDetail({
   const update = useServerFn(updateReviewNote);
   const del = useServerFn(deleteReviewNote);
   const ai = useServerFn(generateAiDraftNote);
+  const isAdmin = useIsAdmin();
 
   const q = useQuery({
     queryKey: ["admin-content-asset", assetId],
@@ -241,17 +243,19 @@ function AssetDetail({
               <h3 className="text-sm font-medium text-ink">
                 Notes {q.data.notes.length > 0 && `(${q.data.notes.length})`}
               </h3>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => aiMut.mutate()}
-                disabled={aiMut.isPending}
-              >
-                <Sparkles className="size-4 mr-2" />
-                {aiMut.isPending ? "Drafting…" : "AI draft"}
-              </Button>
+              {isAdmin && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => aiMut.mutate()}
+                  disabled={aiMut.isPending}
+                >
+                  <Sparkles className="size-4 mr-2" />
+                  {aiMut.isPending ? "Drafting…" : "AI draft"}
+                </Button>
+              )}
             </div>
-            {aiMut.error && (
+            {isAdmin && aiMut.error && (
               <p className="text-sm text-[var(--red)]">
                 {(aiMut.error as Error).message}
               </p>
@@ -265,6 +269,7 @@ function AssetDetail({
                 <NoteRow
                   key={n.id}
                   note={n}
+                  readOnly={!isAdmin}
                   onSave={async (body) => {
                     await update({ data: { noteId: n.id, body } });
                     invalidate();
@@ -277,29 +282,31 @@ function AssetDetail({
               ))}
             </ul>
 
-            <div className="flex flex-col gap-2 border-t border-border pt-4">
-              <label className="text-xs text-ink-muted">New note</label>
-              <Textarea
-                value={newNote}
-                onChange={(e) => setNewNote(e.target.value)}
-                placeholder="Short, tight, concrete. Point to the problem and the fix."
-                className="min-h-[120px]"
-              />
-              <div className="flex justify-end">
-                <Button
-                  size="sm"
-                  disabled={!newNote.trim() || createMut.isPending}
-                  onClick={() => createMut.mutate(newNote.trim())}
-                >
-                  Save
-                </Button>
+            {isAdmin && (
+              <div className="flex flex-col gap-2 border-t border-border pt-4">
+                <label className="text-xs text-ink-muted">New note</label>
+                <Textarea
+                  value={newNote}
+                  onChange={(e) => setNewNote(e.target.value)}
+                  placeholder="Short, tight, concrete. Point to the problem and the fix."
+                  className="min-h-[120px]"
+                />
+                <div className="flex justify-end">
+                  <Button
+                    size="sm"
+                    disabled={!newNote.trim() || createMut.isPending}
+                    onClick={() => createMut.mutate(newNote.trim())}
+                  >
+                    Save
+                  </Button>
+                </div>
+                {createMut.error && (
+                  <p className="text-sm text-[var(--red)]">
+                    {(createMut.error as Error).message}
+                  </p>
+                )}
               </div>
-              {createMut.error && (
-                <p className="text-sm text-[var(--red)]">
-                  {(createMut.error as Error).message}
-                </p>
-              )}
-            </div>
+            )}
           </section>
         </>
       )}
@@ -311,10 +318,12 @@ function NoteRow({
   note,
   onSave,
   onDelete,
+  readOnly = false,
 }: {
   note: { id: string; body: string; source: string };
   onSave: (body: string) => Promise<void>;
   onDelete: () => Promise<void>;
+  readOnly?: boolean;
 }) {
   const [body, setBody] = useState(note.body);
   const [busy, setBusy] = useState(false);
@@ -337,22 +346,26 @@ function NoteRow({
     <li className="border border-border rounded-xl p-4 flex flex-col gap-2 bg-[var(--surface-raised)]">
       <div className="flex items-center justify-between text-xs text-ink-muted">
         <span>{isAi ? "AI draft" : "Coach"}</span>
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={busy}
-          onClick={() => run(onDelete)}
-          className="text-ink-muted hover:text-[var(--red)] h-7 px-2"
-        >
-          <Trash2 className="size-3.5" />
-        </Button>
+        {!readOnly && (
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={busy}
+            onClick={() => run(onDelete)}
+            className="text-ink-muted hover:text-[var(--red)] h-7 px-2"
+          >
+            <Trash2 className="size-3.5" />
+          </Button>
+        )}
       </div>
       <Textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
         className="min-h-[100px] bg-background"
+        readOnly={readOnly}
+        disabled={readOnly}
       />
-      {dirty && (
+      {!readOnly && dirty && (
         <div className="flex justify-end">
           <Button
             size="sm"

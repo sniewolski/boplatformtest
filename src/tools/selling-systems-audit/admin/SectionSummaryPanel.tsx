@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, Sparkles, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useIsAdmin } from "@/core/roles/useMyRoles";
 import {
   type AdminSectionKey,
   useSectionSummary,
@@ -28,6 +29,7 @@ export function SectionSummaryPanel({
   const summaryQ = useSectionSummary(ownerId, sectionKey);
   const generate = useServerFn(generateSectionSummary);
   const qc = useQueryClient();
+  const isAdmin = useIsAdmin();
 
   const generateMut = useMutation({
     mutationFn: () =>
@@ -104,32 +106,34 @@ export function SectionSummaryPanel({
             <p className="text-xs text-[var(--red)]">{errorMsg}</p>
           )}
 
-          <div>
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => generateMut.mutate()}
-              disabled={!hasSubmitted || generateMut.isPending}
-              className="active:scale-[0.97] transition-transform"
-            >
-              {generateMut.isPending ? (
-                <>
-                  <Loader2 className="size-3.5 animate-spin" aria-hidden />
-                  Generating…
-                </>
-              ) : hasSummary ? (
-                <>
-                  <RefreshCw className="size-3.5" aria-hidden />
-                  Regenerate
-                </>
-              ) : (
-                <>
-                  <Sparkles className="size-3.5" aria-hidden />
-                  Generate
-                </>
-              )}
-            </Button>
-          </div>
+          {isAdmin && (
+            <div>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => generateMut.mutate()}
+                disabled={!hasSubmitted || generateMut.isPending}
+                className="active:scale-[0.97] transition-transform"
+              >
+                {generateMut.isPending ? (
+                  <>
+                    <Loader2 className="size-3.5 animate-spin" aria-hidden />
+                    Generating…
+                  </>
+                ) : hasSummary ? (
+                  <>
+                    <RefreshCw className="size-3.5" aria-hidden />
+                    Regenerate
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="size-3.5" aria-hidden />
+                    Generate
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </section>

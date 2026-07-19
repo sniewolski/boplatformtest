@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
+import { useIsAdmin } from "@/core/roles/useMyRoles";
 import {
   type AdminSectionKey,
   useSaveSectionNote,
@@ -19,6 +20,7 @@ export function SectionNotes({
 }) {
   const noteQ = useSectionNote(ownerId, sectionKey);
   const saveMut = useSaveSectionNote(ownerId, sectionKey);
+  const isAdmin = useIsAdmin();
 
   const [value, setValue] = useState("");
   const hydrated = useRef(false);
@@ -49,25 +51,32 @@ export function SectionNotes({
       <div className="flex items-baseline justify-between gap-3">
         <h3 className="text-sm font-medium text-ink">Private notes</h3>
         <span className="text-xs text-ink-muted">
-          {saveMut.isPending
-            ? "Saving…"
-            : saveMut.isError
-              ? "Save failed"
-              : noteQ.data?.updated_at
-                ? "Saved"
-                : "Admin-only"}
+          {!isAdmin
+            ? "Read-only"
+            : saveMut.isPending
+              ? "Saving…"
+              : saveMut.isError
+                ? "Save failed"
+                : noteQ.data?.updated_at
+                  ? "Saved"
+                  : "Admin-only"}
         </span>
       </div>
       <Textarea
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        onBlur={handleBlur}
-        placeholder="Things to ask, follow up on, or remember about this section. Saved on blur."
+        onBlur={isAdmin ? handleBlur : undefined}
+        placeholder={
+          isAdmin
+            ? "Things to ask, follow up on, or remember about this section. Saved on blur."
+            : "No notes yet."
+        }
         rows={5}
         className="resize-y"
-        disabled={noteQ.isLoading}
+        disabled={noteQ.isLoading || !isAdmin}
+        readOnly={!isAdmin}
       />
-      {saveMut.isError && (
+      {isAdmin && saveMut.isError && (
         <p className="text-xs text-[var(--red)]">
           {(saveMut.error as Error).message}
         </p>
