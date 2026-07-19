@@ -16,12 +16,9 @@ const AUDIT_TABLES = [
   "selling_systems_audit_alignment",
 ] as const;
 
-async function assertAdmin(supabase: any, userId: string) {
-  const { data, error } = await supabase.rpc("has_role", {
-    _user_id: userId,
-    _role: "admin",
-  });
-  if (error) throw new Error("Failed to verify admin role");
+async function assertElevated(supabase: any, userId: string) {
+  const { data, error } = await supabase.rpc("is_elevated", { _user_id: userId });
+  if (error) throw new Error("Failed to verify role");
   if (!data) throw new Error("Forbidden");
 }
 
