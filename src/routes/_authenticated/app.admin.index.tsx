@@ -175,6 +175,7 @@ function AdminHome() {
             {owners.data.map((row) => {
               const suspended = row.accountStatus === "suspended";
               const isAdmin = row.roles.includes("admin");
+              const isMentor = row.roles.includes("mentor");
               const isSelf = row.id === user.id;
               return (
                 <li
@@ -199,10 +200,22 @@ function AdminHome() {
                       onClick={() => {
                         setFeedback(null);
                         if (isAdmin && !confirm(`Revoke admin from ${row.email}?`)) return;
-                        adminMut.mutate({ userId: row.id, grant: !isAdmin });
+                        adminMut.mutate({ userId: row.id, role: "admin", grant: !isAdmin });
                       }}
                     >
                       {isAdmin ? "Revoke admin" : "Make admin"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={adminMut.isPending}
+                      onClick={() => {
+                        setFeedback(null);
+                        if (isMentor && !confirm(`Revoke mentor from ${row.email}?`)) return;
+                        adminMut.mutate({ userId: row.id, role: "mentor", grant: !isMentor });
+                      }}
+                    >
+                      {isMentor ? "Revoke mentor" : "Make mentor"}
                     </Button>
                     <Button
                       variant="outline"
