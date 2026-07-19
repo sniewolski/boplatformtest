@@ -25,6 +25,14 @@ async function assertAdmin(supabase: any, userId: string) {
   if (!data) throw new Error("Forbidden");
 }
 
+async function assertElevated(supabase: any, userId: string) {
+  const { data, error } = await supabase.rpc("is_elevated", {
+    _user_id: userId,
+  });
+  if (error) throw new Error("Failed to verify role");
+  if (!data) throw new Error("Forbidden");
+}
+
 async function assertPdfOrDocxAtPath(storagePath: string): Promise<void> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin.storage.from(BUCKET).download(storagePath);
