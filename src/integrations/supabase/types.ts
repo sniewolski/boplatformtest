@@ -672,6 +672,39 @@ export type Database = {
         }
         Relationships: []
       }
+      will_ai_canonical_facts: {
+        Row: {
+          created_at: string
+          fact_key: string
+          fact_text: string
+          id: string
+          is_active: boolean
+          label: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fact_key: string
+          fact_text: string
+          id?: string
+          is_active?: boolean
+          label: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fact_key?: string
+          fact_text?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       will_ai_chunks: {
         Row: {
           chunk_type: string
@@ -972,6 +1005,13 @@ export type Database = {
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
+      }
+      get_active_canonical_facts: {
+        Args: never
+        Returns: {
+          fact_key: string
+          fact_text: string
+        }[]
       }
       get_ingest_cron_token: { Args: never; Returns: string }
       has_role: {

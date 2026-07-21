@@ -43,6 +43,14 @@ import {
   useImportSopToWillAi,
   type SopWillAiRow,
 } from "@/lib/useSopWillAiImport";
+import {
+  type WillAiCanonicalFact,
+  useCreateWillAiCanonicalFact,
+  useDeleteWillAiCanonicalFact,
+  useUpdateWillAiCanonicalFact,
+  useWillAiCanonicalFacts,
+} from "@/lib/useWillAiCanonicalFacts";
+import { Textarea } from "@/components/ui/textarea";
 import { ArchivedConversationsTab } from "@/components/admin/WillAiArchiveTab";
 import { useMyRoles } from "@/core/roles/useMyRoles";
 
@@ -89,6 +97,7 @@ function WillAiAdmin() {
         <TabsList className="self-start">
           <TabsTrigger value="sources">Sources</TabsTrigger>
           <TabsTrigger value="gaps">Content gaps</TabsTrigger>
+          <TabsTrigger value="facts">Facts</TabsTrigger>
           <TabsTrigger value="conversations">Conversations</TabsTrigger>
         </TabsList>
         <TabsContent value="sources" className="mt-0">
@@ -96,6 +105,9 @@ function WillAiAdmin() {
         </TabsContent>
         <TabsContent value="gaps" className="mt-0">
           <ContentGapsTab />
+        </TabsContent>
+        <TabsContent value="facts" className="mt-0">
+          <CanonicalFactsTab />
         </TabsContent>
         <TabsContent value="conversations" className="mt-0">
           <ArchivedConversationsTab />
@@ -1093,3 +1105,341 @@ function SopsImportCard() {
   );
 }
 
+
+// -------------------- canonical facts --------------------
+
+/**
+ * Admin CRUD for authoritative facts injected into every Will AI chat.
+ * Facts override retrieved passages and the model's general knowledge for
+ * the topics they cover.
+ */
+function CanonicalFactsTab() {
+  const q = useWillAiCanonicalFacts();
+  const createMut = useCreateWillAiCanonicalFact();
+  const updateMut = useUpdateWillAiCanonicalFact();
+  const deleteMut = useDeleteWillAiCanonicalFact();
+
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<WillAiCanonicalFact | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<WillAiCanonicalFact | null>(
+    null,
+  );
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const rows = q.data ?? [];
+
+  function truncate(s: string, n = 160) {
+    return s.length > n ? `${s.slice(0, n)}…` : s;
+  }
+
+  async function onSubmitCreate(input: {
+    fact_key: string;
+    label: string;
+    fact_text: string;
+    sort_order: number;
+  }) {
+    setFormError(null);
+    try {
+      await createMut.mutateAsync(input);
+      setCreateOpen(false);
+    } catch (e) {
+      setFormError(e instanceof Error ? e.message : "Create failed");
+    }
+  }
+
+  async function onSubmitEdit(input: {
+    fact_key: string;
+    label: string;
+    fact_text: string;
+    sort_order: number;
+  }) {
+    if (!editTarget) return;
+    setFormError(null);
+    try {
+      await updateMut.mutateAsync({ id: editTarget.id, patch: input });
+      setEditTarget(null);
+    } catch (e) {
+      setFormError(e instanceof Error ? e.message : "Update failed");
+    }
+  }
+
+  return (
+    <section className="flex flex-col gap-4">
+      <div className="flex items-baseline justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-xl">Canonical facts</h2>
+          <p className="text-ink-muted text-xs max-w-prose">
+            Authoritative statements injected into every Will AI chat. Facts
+            override retrieved passages and the model's general knowledge on
+            the topics they cover.
+          </p>
+        </div>
+        <Button
+          onClick={() => {
+            setFormError(null);
+            setCreateOpen(true);
+          }}
+        >
+          New fact
+        </Button>
+      </div>
+
+      {q.isLoading && <p className="text-ink-muted text-sm">Loading…</p>}
+      {q.error && (
+        <p className="text-sm text-[var(--red)]">
+          {(q.error as Error).message}
+        </p>
+      )}
+
+      {!q.isLoading && rows.length === 0 && (
+        <p className="text-ink-muted text-sm">No facts yet.</p>
+      )}
+
+      {rows.length > 0 && (
+        <ul className="flex flex-col divide-y divide-border border border-border rounded-xl">
+          {rows.map((f) => (
+            <li
+              key={f.id}
+              className="flex items-start justify-between gap-4 px-5 py-4"
+            >
+              <div className="flex flex-col min-w-0 gap-1 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-ink text-sm font-medium">
+                    {f.label}
+                  </span>
+                  <code className="text-[10px] text-ink-muted bg-[var(--surface-raised)] rounded px-1.5 py-0.5">
+                    {f.fact_key}
+                  </code>
+                  {!f.is_active && (
+                    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide border bg-[var(--surface-raised)] text-ink-muted border-border">
+                      inactive
+                    </span>
+                  )}
+                </div>
+                <p className="text-ink-muted text-xs whitespace-pre-wrap break-words">
+                  {truncate(f.fact_text)}
+                </p>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={f.is_active}
+                    disabled={updateMut.isPending}
+                    onCheckedChange={(v) =>
+                      updateMut.mutate({ id: f.id, patch: { is_active: v } })
+                    }
+                    aria-label={`Toggle ${f.label} active`}
+                  />
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setFormError(null);
+                    setEditTarget(f);
+                  }}
+                >
+                  Edit
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-[var(--red)] hover:text-[var(--red)]"
+                  onClick={() => setDeleteTarget(f)}
+                >
+                  Delete
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <CanonicalFactDialog
+        open={createOpen}
+        onOpenChange={(o) => {
+          if (!o) setFormError(null);
+          setCreateOpen(o);
+        }}
+        title="New fact"
+        submitLabel={createMut.isPending ? "Creating…" : "Create"}
+        submitting={createMut.isPending}
+        error={formError}
+        initial={null}
+        onSubmit={onSubmitCreate}
+      />
+
+      <CanonicalFactDialog
+        open={!!editTarget}
+        onOpenChange={(o) => {
+          if (!o) {
+            setFormError(null);
+            setEditTarget(null);
+          }
+        }}
+        title="Edit fact"
+        submitLabel={updateMut.isPending ? "Saving…" : "Save"}
+        submitting={updateMut.isPending}
+        error={formError}
+        initial={editTarget}
+        onSubmit={onSubmitEdit}
+      />
+
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete "{deleteTarget?.label}"?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the fact. Will AI will no longer inject
+              it into chat responses.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMut.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteMut.isPending || !deleteTarget}
+              onClick={(e) => {
+                e.preventDefault();
+                if (!deleteTarget) return;
+                deleteMut.mutate(deleteTarget.id, {
+                  onSuccess: () => setDeleteTarget(null),
+                });
+              }}
+              className="bg-[var(--red)] text-white hover:bg-[var(--red)]/90"
+            >
+              {deleteMut.isPending ? "Deleting…" : "Delete fact"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </section>
+  );
+}
+
+function CanonicalFactDialog(props: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  title: string;
+  submitLabel: string;
+  submitting: boolean;
+  error: string | null;
+  initial: WillAiCanonicalFact | null;
+  onSubmit: (input: {
+    fact_key: string;
+    label: string;
+    fact_text: string;
+    sort_order: number;
+  }) => void;
+}) {
+  const { open, onOpenChange, title, submitLabel, submitting, error, initial } =
+    props;
+  const [factKey, setFactKey] = useState("");
+  const [label, setLabel] = useState("");
+  const [factText, setFactText] = useState("");
+  const [sortOrder, setSortOrder] = useState("0");
+
+  useMemo(() => {
+    if (open) {
+      setFactKey(initial?.fact_key ?? "");
+      setLabel(initial?.label ?? "");
+      setFactText(initial?.fact_text ?? "");
+      setSortOrder(String(initial?.sort_order ?? 0));
+    }
+  }, [open, initial]);
+
+  const canSubmit =
+    !submitting &&
+    factKey.trim().length > 0 &&
+    label.trim().length > 0 &&
+    factText.trim().length > 0;
+
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>
+            Facts are injected verbatim into the Will AI system prompt.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!canSubmit) return;
+            const parsed = Number.parseInt(sortOrder, 10);
+            props.onSubmit({
+              fact_key: factKey.trim(),
+              label: label.trim(),
+              fact_text: factText.trim(),
+              sort_order: Number.isFinite(parsed) ? parsed : 0,
+            });
+          }}
+        >
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="fact-key">Key</Label>
+            <Input
+              id="fact-key"
+              value={factKey}
+              onChange={(e) => setFactKey(e.target.value)}
+              placeholder="skool-community"
+              disabled={submitting}
+            />
+            <p className="text-ink-muted text-xs">
+              Stable slug. Must be unique.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="fact-label">Label</Label>
+            <Input
+              id="fact-label"
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              placeholder="Skool community"
+              disabled={submitting}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="fact-text">Fact</Label>
+            <Textarea
+              id="fact-text"
+              value={factText}
+              onChange={(e) => setFactText(e.target.value)}
+              rows={5}
+              disabled={submitting}
+              placeholder="The authoritative statement, injected verbatim."
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="fact-sort">Sort order</Label>
+            <Input
+              id="fact-sort"
+              type="number"
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              disabled={submitting}
+            />
+          </div>
+          {error && <p className="text-sm text-[var(--red)]">{error}</p>}
+
+          <AlertDialogFooter>
+            <AlertDialogCancel type="button" disabled={submitting}>
+              Cancel
+            </AlertDialogCancel>
+            <Button type="submit" disabled={!canSubmit}>
+              {submitLabel}
+            </Button>
+          </AlertDialogFooter>
+        </form>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
