@@ -792,21 +792,40 @@ function useContentGaps() {
   return useQuery({
     queryKey: ["will-ai-content-gaps", CONTENT_GAPS_LIMIT],
     queryFn: async (): Promise<ContentGap[]> => {
-      const { data: fallbacks, error: fbErr } = await supabase
-        .from("will_ai_messages")
-        .select("id, conversation_id, owner_id, created_at")
-        .eq("role", "assistant")
-        .eq("used_fallback", true)
-        .or("used_fact_keys.is.null,used_fact_keys.eq.{}")
-        .order("created_at", { ascending: false })
-        .limit(CONTENT_GAPS_LIMIT);
+      const [
+        { data: fbLive, error: fbErr },
+        { data: fbArch, error: fbArchErr },
+      ] = await Promise.all([
+        supabase
+          .from("will_ai_messages")
+          .select("id, conversation_id, owner_id, created_at")
+          .eq("role", "assistant")
+          .eq("used_fallback", true)
+          .or("used_fact_keys.is.null,used_fact_keys.eq.{}")
+          .order("created_at", { ascending: false })
+          .limit(CONTENT_GAPS_LIMIT),
+        supabase
+          .from("will_ai_messages_archive")
+          .select("id, conversation_id, owner_id, created_at")
+          .eq("role", "assistant")
+          .eq("used_fallback", true)
+          .or("used_fact_keys.is.null,used_fact_keys.eq.{}")
+          .order("created_at", { ascending: false })
+          .limit(CONTENT_GAPS_LIMIT),
+      ]);
       if (fbErr) throw fbErr;
-      const rows = (fallbacks ?? []) as Array<{
-        id: string;
-        conversation_id: string;
-        owner_id: string;
-        created_at: string;
-      }>;
+      if (fbArchErr) throw fbArchErr;
+
+      const byId = new Map<
+        string,
+        { id: string; conversation_id: string; owner_id: string; created_at: string }
+      >();
+      for (const r of [...(fbLive ?? []), ...(fbArch ?? [])] as any[]) {
+        if (!byId.has(r.id)) byId.set(r.id, r);
+      }
+      const rows = Array.from(byId.values())
+        .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
+        .slice(0, CONTENT_GAPS_LIMIT);
       if (rows.length === 0) return [];
 
       const conversationIds = Array.from(
@@ -814,26 +833,53 @@ function useContentGaps() {
       );
       const ownerIds = Array.from(new Set(rows.map((r) => r.owner_id)));
 
-      const [{ data: users, error: uErr }, { data: profiles }] =
-        await Promise.all([
-          supabase
-            .from("will_ai_messages")
-            .select("conversation_id, content, created_at")
-            .eq("role", "user")
-            .in("conversation_id", conversationIds)
-            .order("created_at", { ascending: true }),
-          supabase
-            .from("profiles")
-            .select("id, email")
-            .in("id", ownerIds),
-        ]);
+      const [
+        { data: usersLive, error: uErr },
+        { data: usersArch, error: uArchErr },
+        { data: profiles },
+      ] = await Promise.all([
+        supabase
+          .from("will_ai_messages")
+          .select("id, conversation_id, content, created_at")
+          .eq("role", "user")
+          .in("conversation_id", conversationIds)
+          .order("created_at", { ascending: true }),
+        supabase
+          .from("will_ai_messages_archive")
+          .select("id, conversation_id, content, created_at")
+          .eq("role", "user")
+          .in("conversation_id", conversationIds)
+          .order("created_at", { ascending: true }),
+        supabase
+          .from("profiles")
+          .select("id, email")
+          .in("id", ownerIds),
+      ]);
       if (uErr) throw uErr;
+      if (uArchErr) throw uArchErr;
+
+      const seenUser = new Set<string>();
+      const mergedUsers: Array<{
+        conversation_id: string;
+        content: string;
+        created_at: string;
+      }> = [];
+      for (const u of [...(usersLive ?? []), ...(usersArch ?? [])] as any[]) {
+        if (seenUser.has(u.id)) continue;
+        seenUser.add(u.id);
+        mergedUsers.push({
+          conversation_id: u.conversation_id,
+          content: u.content,
+          created_at: u.created_at,
+        });
+      }
+      mergedUsers.sort((a, b) => (a.created_at < b.created_at ? -1 : 1));
 
       const userMsgsByConv = new Map<
         string,
         Array<{ content: string; created_at: string }>
       >();
-      for (const u of (users ?? []) as any[]) {
+      for (const u of mergedUsers) {
         const list = userMsgsByConv.get(u.conversation_id) ?? [];
         list.push({ content: u.content, created_at: u.created_at });
         userMsgsByConv.set(u.conversation_id, list);
@@ -844,12 +890,14 @@ function useContentGaps() {
       return rows.map((r) => {
         const priors = userMsgsByConv.get(r.conversation_id) ?? [];
         // The triggering question is the last user message with created_at
-        // strictly before the fallback's created_at.
+        // at or before the fallback's created_at (tied timestamps within
+        // a single persist_will_ai_turn transaction are the same turn).
         let question: string | null = null;
         for (const u of priors) {
-          if (u.created_at < r.created_at) question = u.content;
+          if (u.created_at <= r.created_at) question = u.content;
           else break;
         }
+
         return {
           fallbackId: r.id,
           ownerId: r.owner_id,
