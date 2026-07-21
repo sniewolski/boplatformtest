@@ -36,6 +36,16 @@ export type ArchivedConversationSummary = {
   messageCount: number;
 };
 
+export type ArchivedConversationMeta = {
+  id: string;
+  ownerId: string;
+  ownerName: string | null;
+  ownerEmail: string | null;
+  title: string | null;
+  createdAt: string;
+  archivedAt: string;
+};
+
 export type ArchivedMessage = {
   id: string;
   conversation_id: string;
@@ -168,4 +178,52 @@ export const getArchivedConversationThread = createServerFn({ method: "GET" })
       used_fallback: !!r.used_fallback,
       created_at: r.created_at,
     }));
+  });
+
+/**
+ * Look up a single archived conversation by id, returning owner identity +
+ * derived title (matching listArchivedConversationsForOwner's derivation:
+ * first user message, truncated to 60 chars). Used to hydrate the archive
+ * thread view when the admin lands via a direct URL and doesn't have the
+ * owner metadata / title in hand. Returns null if the conversation is not
+ * in the archive.
+ */
+export const getArchivedConversationById = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({ conversationId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }): Promise<ArchivedConversationMeta | null> => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: conv, error } = await supabaseAdmin
+      .from("will_ai_conversations_archive")
+      .select("id, owner_id, owner_name, owner_email, created_at, archived_at")
+      .eq("id", data.conversationId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!conv) return null;
+
+    const { data: firstUser, error: mErr } = await supabaseAdmin
+      .from("will_ai_messages_archive")
+      .select("content")
+      .eq("conversation_id", data.conversationId)
+      .eq("role", "user")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (mErr) throw new Error(mErr.message);
+
+    const truncate = (s: string) => (s.length > 60 ? s.slice(0, 57) + "…" : s);
+
+    return {
+      id: conv.id as string,
+      ownerId: conv.owner_id as string,
+      ownerName: (conv.owner_name as string | null) ?? null,
+      ownerEmail: (conv.owner_email as string | null) ?? null,
+      title: firstUser?.content ? truncate(firstUser.content as string) : null,
+      createdAt: conv.created_at as string,
+      archivedAt: conv.archived_at as string,
+    };
   });

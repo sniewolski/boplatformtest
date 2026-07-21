@@ -2,8 +2,14 @@
  * Admin-only, read-only view of the permanent Will AI conversation archive.
  * Same visual language as the owner-facing Chat.tsx (markdown + citation
  * pills), but no composer, no delete, no reply — display only.
+ *
+ * Drill state (which owner / conversation is open, and which message to
+ * scroll to) is driven entirely by URL search params passed in from the
+ * parent route: `owner`, `conversation`, `message`. This makes archive
+ * views addressable and lets Content Gaps rows deep-link directly into
+ * the message they came from.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useQuery } from "@tanstack/react-query";
@@ -18,75 +24,86 @@ import {
 } from "@/lib/useWillAi";
 import {
   type ArchivedMessage,
+  type ArchivedConversationMeta,
+  getArchivedConversationById,
   getArchivedConversationThread,
   listArchivedConversationsForOwner,
   listArchivedOwnersSummary,
 } from "@/lib/willAiArchive.functions";
 
-type View =
-  | { kind: "owners" }
-  | {
-      kind: "conversations";
-      ownerId: string;
-      ownerName: string | null;
-      ownerEmail: string | null;
-    }
-  | {
-      kind: "thread";
-      ownerId: string;
-      ownerName: string | null;
-      ownerEmail: string | null;
-      conversationId: string;
-      conversationTitle: string | null;
-    };
+export type ArchiveNavPatch = {
+  owner?: string | undefined;
+  conversation?: string | undefined;
+  message?: string | undefined;
+};
 
-export function ArchivedConversationsTab() {
-  const [view, setView] = useState<View>({ kind: "owners" });
+type ArchiveProps = {
+  owner: string | null;
+  conversation: string | null;
+  message: string | null;
+  onNavigate: (patch: ArchiveNavPatch) => void;
+};
+
+/**
+ * A row an owners/conversations click can carry along so we don't have to
+ * refetch metadata we just displayed. Direct URL entry has no such context.
+ */
+type HeaderHint = {
+  ownerName?: string | null;
+  ownerEmail?: string | null;
+  conversationTitle?: string | null;
+};
+
+export function ArchivedConversationsTab({
+  owner,
+  conversation,
+  message,
+  onNavigate,
+}: ArchiveProps) {
+  // Metadata for the currently-open row — populated by clicks (fast path),
+  // or hydrated from the server on direct URL entry (fallback path).
+  const [hint, setHint] = useState<HeaderHint>({});
+
+  // Reset the hint whenever the URL points at a different conversation.
+  useEffect(() => {
+    setHint({});
+  }, [conversation]);
 
   return (
     <div className="flex flex-col gap-4">
-      {view.kind === "owners" && (
+      {!owner && !conversation && (
         <OwnersList
-          onOpen={(o) =>
-            setView({
-              kind: "conversations",
-              ownerId: o.ownerId,
-              ownerName: o.ownerName,
-              ownerEmail: o.ownerEmail,
-            })
-          }
+          onOpen={(o) => {
+            setHint({ ownerName: o.ownerName, ownerEmail: o.ownerEmail });
+            onNavigate({ owner: o.ownerId });
+          }}
         />
       )}
-      {view.kind === "conversations" && (
+      {owner && !conversation && (
         <ConversationsList
-          ownerId={view.ownerId}
-          ownerName={view.ownerName}
-          ownerEmail={view.ownerEmail}
-          onBack={() => setView({ kind: "owners" })}
-          onOpen={(c) =>
-            setView({
-              kind: "thread",
-              ownerId: view.ownerId,
-              ownerName: view.ownerName,
-              ownerEmail: view.ownerEmail,
-              conversationId: c.id,
-              conversationTitle: c.title,
-            })
-          }
+          ownerId={owner}
+          ownerName={hint.ownerName ?? null}
+          ownerEmail={hint.ownerEmail ?? null}
+          onBack={() => onNavigate({ owner: undefined, message: undefined })}
+          onOpen={(c) => {
+            setHint((prev) => ({ ...prev, conversationTitle: c.title }));
+            onNavigate({ conversation: c.id });
+          }}
         />
       )}
-      {view.kind === "thread" && (
+      {conversation && (
         <ThreadView
-          ownerName={view.ownerName}
-          ownerEmail={view.ownerEmail}
-          conversationId={view.conversationId}
-          conversationTitle={view.conversationTitle}
+          conversationId={conversation}
+          highlightMessageId={message}
+          hint={hint}
           onBack={() =>
-            setView({
-              kind: "conversations",
-              ownerId: view.ownerId,
-              ownerName: view.ownerName,
-              ownerEmail: view.ownerEmail,
+            onNavigate({ conversation: undefined, message: undefined })
+          }
+          onHydrated={(meta) =>
+            setHint({
+              ownerName: meta.ownerName,
+              ownerEmail: meta.ownerEmail,
+              conversationTitle: meta.title,
             })
           }
         />
@@ -239,23 +256,45 @@ function ConversationsList({
 // -------------------- thread --------------------
 
 function ThreadView({
-  ownerName,
-  ownerEmail,
   conversationId,
-  conversationTitle,
+  highlightMessageId,
+  hint,
   onBack,
+  onHydrated,
 }: {
-  ownerName: string | null;
-  ownerEmail: string | null;
   conversationId: string;
-  conversationTitle: string | null;
+  highlightMessageId: string | null;
+  hint: HeaderHint;
   onBack: () => void;
+  onHydrated: (meta: ArchivedConversationMeta) => void;
 }) {
   const getThread = useServerFn(getArchivedConversationThread);
-  const q = useQuery({
+  const getMeta = useServerFn(getArchivedConversationById);
+
+  const threadQ = useQuery({
     queryKey: ["will-ai-archive", "thread", conversationId],
     queryFn: () => getThread({ data: { conversationId } }),
   });
+
+  // Only hit the metadata endpoint when the parent hasn't already handed us
+  // owner/title from a click. On direct URL entry `hint` is empty.
+  const needsMeta =
+    !hint.ownerName && !hint.ownerEmail && !hint.conversationTitle;
+  const metaQ = useQuery({
+    queryKey: ["will-ai-archive", "conversation-meta", conversationId],
+    queryFn: () => getMeta({ data: { conversationId } }),
+    enabled: needsMeta,
+  });
+
+  // Feed hydrated metadata back up to the parent so the header stops
+  // saying "Conversation" and back-nav shows the right owner name.
+  const hydratedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!metaQ.data) return;
+    if (hydratedRef.current === conversationId) return;
+    hydratedRef.current = conversationId;
+    onHydrated(metaQ.data);
+  }, [metaQ.data, conversationId, onHydrated]);
 
   const [pdfPreview, setPdfPreview] = useState<
     | { sourceTitle: string; storagePath: string; page: number; url?: string | null }
@@ -276,31 +315,68 @@ function ThreadView({
   const openPdfAt = (sourceTitle: string, storagePath: string, page: number) =>
     setPdfPreview({ sourceTitle, storagePath, page });
 
+  // Direct URL entry: metadata not yet hydrated → generic placeholders.
+  const displayTitle =
+    hint.conversationTitle ?? metaQ.data?.title ?? "Conversation";
+  const displayOwnerName = hint.ownerName ?? metaQ.data?.ownerName ?? null;
+  const displayOwnerEmail = hint.ownerEmail ?? metaQ.data?.ownerEmail ?? null;
   const subtitle = useMemo(
     () =>
-      [ownerName, ownerEmail].filter(Boolean).join(" · ") || null,
-    [ownerName, ownerEmail],
+      [displayOwnerName, displayOwnerEmail].filter(Boolean).join(" · ") || null,
+    [displayOwnerName, displayOwnerEmail],
   );
+
+  // Scroll to and briefly ring the requested message, once the thread has
+  // rendered. Honour prefers-reduced-motion: skip smooth scrolling, keep
+  // the highlight. Silently no-op if the id isn't in the thread.
+  const [highlightNode, setHighlightNode] = useState<string | null>(null);
+  useEffect(() => {
+    if (!highlightMessageId) return;
+    if (!threadQ.data) return;
+    const el = document.getElementById(`msg-${highlightMessageId}`);
+    if (!el) return;
+    const reduce =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({
+      behavior: reduce ? "auto" : "smooth",
+      block: "center",
+    });
+    setHighlightNode(highlightMessageId);
+    const t = window.setTimeout(() => setHighlightNode(null), 2000);
+    return () => window.clearTimeout(t);
+  }, [highlightMessageId, threadQ.data]);
+
+  const notFound = needsMeta && !metaQ.isLoading && metaQ.data === null;
 
   return (
     <div className="flex flex-col gap-4">
-      <BackHeader
-        onBack={onBack}
-        title={conversationTitle || "Conversation"}
-        subtitle={subtitle}
-      />
-      {q.isLoading ? (
+      <BackHeader onBack={onBack} title={displayTitle} subtitle={subtitle} />
+      {notFound ? (
+        <div className="rounded-xl border border-border bg-[var(--surface-raised)] p-6">
+          <p className="text-sm text-ink">Conversation not found.</p>
+          <p className="text-xs text-ink-muted mt-1">
+            This conversation is not in the archive. It may never have been
+            created, or the id in the link is wrong.
+          </p>
+        </div>
+      ) : threadQ.isLoading || (needsMeta && metaQ.isLoading) ? (
         <p className="text-sm text-ink-muted">Loading…</p>
-      ) : q.error ? (
+      ) : threadQ.error ? (
         <p className="text-sm text-[var(--red)]">
-          {(q.error as Error).message}
+          {(threadQ.error as Error).message}
         </p>
       ) : (
         <div className="flex flex-col gap-6 rounded-xl border border-border bg-[var(--surface-raised)] p-6">
-          {(q.data ?? []).map((m) => (
-            <MessageRow key={m.id} message={m} onOpenPdf={openPdfAt} />
+          {(threadQ.data ?? []).map((m) => (
+            <MessageRow
+              key={m.id}
+              message={m}
+              highlighted={highlightNode === m.id}
+              onOpenPdf={openPdfAt}
+            />
           ))}
-          {(q.data ?? []).length === 0 && (
+          {(threadQ.data ?? []).length === 0 && (
             <p className="text-sm text-ink-muted">No messages in this conversation.</p>
           )}
         </div>
@@ -372,15 +448,21 @@ function BackHeader({
 
 function MessageRow({
   message,
+  highlighted,
   onOpenPdf,
 }: {
   message: ArchivedMessage;
+  highlighted: boolean;
   onOpenPdf: (sourceTitle: string, storagePath: string, page: number) => void;
 }) {
   const isUser = message.role === "user";
+  // Ring in --red, cleared after ~2s. Rounded to match message bubbles.
+  const highlightCls = highlighted
+    ? "ring-2 ring-[var(--red)] ring-offset-2 ring-offset-[var(--surface-raised)] rounded-2xl transition-shadow"
+    : "transition-shadow";
   if (isUser) {
     return (
-      <div className="flex justify-end">
+      <div id={`msg-${message.id}`} className={`flex justify-end ${highlightCls}`}>
         <div className="max-w-[80%] rounded-2xl rounded-tr-md bg-[var(--red)] text-white px-4 py-2.5 text-sm whitespace-pre-wrap break-words shadow-sm">
           {message.content}
         </div>
@@ -388,7 +470,7 @@ function MessageRow({
     );
   }
   return (
-    <div className="flex justify-start">
+    <div id={`msg-${message.id}`} className={`flex justify-start ${highlightCls}`}>
       <div className="max-w-[85%] flex flex-col gap-3">
         <div className="text-ink text-sm leading-relaxed break-words [&_p]:my-2 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0 [&_ul]:my-2 [&_ul]:pl-5 [&_ul]:list-disc [&_ol]:my-2 [&_ol]:pl-5 [&_ol]:list-decimal [&_li]:my-0.5 [&_strong]:font-semibold [&_strong]:text-ink [&_em]:italic [&_code]:rounded [&_code]:bg-[var(--surface-raised)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[0.85em] [&_a]:underline [&_a]:underline-offset-2 [&_h1]:text-base [&_h1]:font-semibold [&_h1]:mt-3 [&_h2]:text-sm [&_h2]:font-semibold [&_h2]:mt-3 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-2">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>

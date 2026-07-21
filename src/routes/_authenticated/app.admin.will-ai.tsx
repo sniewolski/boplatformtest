@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { AlertTriangle, Check, Clock, Loader2, Youtube } from "lucide-react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,13 +55,49 @@ import { ArchivedConversationsTab } from "@/components/admin/WillAiArchiveTab";
 import { useMyRoles } from "@/core/roles/useMyRoles";
 
 
+const ADMIN_WILL_AI_TABS = ["sources", "gaps", "facts", "conversations"] as const;
+type AdminWillAiTab = (typeof ADMIN_WILL_AI_TABS)[number];
+
+type AdminWillAiSearch = {
+  tab?: AdminWillAiTab;
+  owner?: string;
+  conversation?: string;
+  message?: string;
+};
+
+function parseTab(v: unknown): AdminWillAiTab | undefined {
+  return typeof v === "string" && (ADMIN_WILL_AI_TABS as readonly string[]).includes(v)
+    ? (v as AdminWillAiTab)
+    : undefined;
+}
+function parseStr(v: unknown): string | undefined {
+  return typeof v === "string" && v.length > 0 && v.length < 200 ? v : undefined;
+}
+
 export const Route = createFileRoute("/_authenticated/app/admin/will-ai")({
+  // All params optional; unknown/malformed values fall back to defaults so
+  // a bad deep-link lands on the Sources tab, never in an error boundary.
+  validateSearch: (raw: Record<string, unknown>): AdminWillAiSearch => {
+    const out: AdminWillAiSearch = {};
+    const tab = parseTab(raw.tab);
+    if (tab) out.tab = tab;
+    const owner = parseStr(raw.owner);
+    if (owner) out.owner = owner;
+    const conversation = parseStr(raw.conversation);
+    if (conversation) out.conversation = conversation;
+    const message = parseStr(raw.message);
+    if (message) out.message = message;
+    return out;
+  },
   component: WillAiAdmin,
 });
 
 function WillAiAdmin() {
   const { user } = Route.useRouteContext();
   const { data: roles, isLoading: rolesLoading } = useMyRoles(user.id);
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const activeTab: AdminWillAiTab = search.tab ?? "sources";
 
   if (rolesLoading) {
     return (
@@ -93,7 +129,25 @@ function WillAiAdmin() {
 
       <OwnerAccessToggle />
 
-      <Tabs defaultValue="sources" className="flex flex-col gap-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => {
+          const next = parseTab(v) ?? "sources";
+          // replace: don't flood history with tab flips
+          navigate({
+            search: (prev: AdminWillAiSearch) => ({
+              ...prev,
+              tab: next === "sources" ? undefined : next,
+              // Clear drill state whenever the tab actually changes.
+              ...(next === "conversations"
+                ? {}
+                : { owner: undefined, conversation: undefined, message: undefined }),
+            }),
+            replace: true,
+          });
+        }}
+        className="flex flex-col gap-6"
+      >
         <TabsList className="self-start">
           <TabsTrigger value="sources">Sources</TabsTrigger>
           <TabsTrigger value="gaps">Content gaps</TabsTrigger>
@@ -110,7 +164,16 @@ function WillAiAdmin() {
           <CanonicalFactsTab />
         </TabsContent>
         <TabsContent value="conversations" className="mt-0">
-          <ArchivedConversationsTab />
+          <ArchivedConversationsTab
+            owner={search.owner ?? null}
+            conversation={search.conversation ?? null}
+            message={search.message ?? null}
+            onNavigate={(patch) =>
+              navigate({
+                search: (prev: AdminWillAiSearch) => ({ ...prev, ...patch }),
+              })
+            }
+          />
         </TabsContent>
       </Tabs>
     </div>
