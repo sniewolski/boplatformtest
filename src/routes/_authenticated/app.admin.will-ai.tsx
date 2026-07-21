@@ -170,7 +170,7 @@ function WillAiAdmin() {
             message={search.message ?? null}
             onNavigate={(patch) =>
               navigate({
-                search: (prev) => ({ ...prev, ...patch }),
+                search: (prev: AdminWillAiSearch) => ({ ...prev, ...patch }),
               })
             }
           />
