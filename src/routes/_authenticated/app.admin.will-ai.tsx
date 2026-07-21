@@ -964,6 +964,7 @@ function useContentGaps() {
 
         return {
           fallbackId: r.id,
+          conversationId: r.conversation_id,
           ownerId: r.owner_id,
           ownerEmail: emailById.get(r.owner_id) ?? null,
           question,
