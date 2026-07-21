@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { AlertTriangle, Check, Clock, Loader2, Youtube } from "lucide-react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
