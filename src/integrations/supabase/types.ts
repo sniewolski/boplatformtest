@@ -809,6 +809,7 @@ export type Database = {
           id: string
           owner_id: string
           role: string
+          used_fact_keys: string[]
           used_fallback: boolean
         }
         Insert: {
@@ -819,6 +820,7 @@ export type Database = {
           id?: string
           owner_id: string
           role: string
+          used_fact_keys?: string[]
           used_fallback?: boolean
         }
         Update: {
@@ -829,6 +831,7 @@ export type Database = {
           id?: string
           owner_id?: string
           role?: string
+          used_fact_keys?: string[]
           used_fallback?: boolean
         }
         Relationships: [
@@ -851,6 +854,7 @@ export type Database = {
           id: string
           owner_id: string
           role: string
+          used_fact_keys: string[]
           used_fallback: boolean
         }
         Insert: {
@@ -862,6 +866,7 @@ export type Database = {
           id: string
           owner_id: string
           role: string
+          used_fact_keys?: string[]
           used_fallback?: boolean
         }
         Update: {
@@ -873,6 +878,7 @@ export type Database = {
           id?: string
           owner_id?: string
           role?: string
+          used_fact_keys?: string[]
           used_fallback?: boolean
         }
         Relationships: [
@@ -1050,6 +1056,7 @@ export type Database = {
           p_cited_chunk_ids: string[]
           p_conversation_id: string
           p_owner_id: string
+          p_used_fact_keys?: string[]
           p_used_fallback: boolean
           p_user_message: string
         }
@@ -1058,6 +1065,7 @@ export type Database = {
           assistant_content: string
           assistant_created_at: string
           assistant_id: string
+          assistant_used_fact_keys: string[]
           assistant_used_fallback: boolean
           conversation_id: string
           user_created_at: string
