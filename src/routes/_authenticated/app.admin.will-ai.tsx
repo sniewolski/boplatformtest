@@ -129,7 +129,25 @@ function WillAiAdmin() {
 
       <OwnerAccessToggle />
 
-      <Tabs defaultValue="sources" className="flex flex-col gap-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => {
+          const next = parseTab(v) ?? "sources";
+          // replace: don't flood history with tab flips
+          navigate({
+            search: (prev) => ({
+              ...prev,
+              tab: next === "sources" ? undefined : next,
+              // Clear drill state whenever the tab actually changes.
+              ...(next === "conversations"
+                ? {}
+                : { owner: undefined, conversation: undefined, message: undefined }),
+            }),
+            replace: true,
+          });
+        }}
+        className="flex flex-col gap-6"
+      >
         <TabsList className="self-start">
           <TabsTrigger value="sources">Sources</TabsTrigger>
           <TabsTrigger value="gaps">Content gaps</TabsTrigger>
@@ -146,7 +164,16 @@ function WillAiAdmin() {
           <CanonicalFactsTab />
         </TabsContent>
         <TabsContent value="conversations" className="mt-0">
-          <ArchivedConversationsTab />
+          <ArchivedConversationsTab
+            owner={search.owner ?? null}
+            conversation={search.conversation ?? null}
+            message={search.message ?? null}
+            onNavigate={(patch) =>
+              navigate({
+                search: (prev) => ({ ...prev, ...patch }),
+              })
+            }
+          />
         </TabsContent>
       </Tabs>
     </div>
