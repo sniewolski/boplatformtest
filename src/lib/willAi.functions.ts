@@ -629,6 +629,7 @@ export const sendWillAiMessage = createServerFn({ method: "POST" })
         p_assistant_message: assistantAnswer,
         p_cited_chunk_ids: citedChunkIds as any,
         p_used_fallback: usedFallback,
+        p_used_fact_keys: usedFactKeys as any,
       },
     );
     if (persistErr) throw new Error(`Failed to persist turn: ${persistErr.message}`);
