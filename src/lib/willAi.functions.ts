@@ -559,21 +559,26 @@ export const sendWillAiMessage = createServerFn({ method: "POST" })
     // conditioning. Retrieval above is untouched — the brief only shapes
     // how the model frames the answer, not what it retrieves.
     const briefBlock = await loadOwnerBriefBlock(supabase, context.userId);
-    const factsBlock = await loadCanonicalFactsBlock(supabase);
+    const { block: factsBlock, keys: activeFactKeys } =
+      await loadCanonicalFactsBlock(supabase);
 
     let assistantAnswer: string;
     let citedChunkIds: string[];
+    let usedFactKeys: string[];
     let usedFallback: boolean;
 
     if (useFallback) {
-      assistantAnswer = await generateFallback(
+      const fb = await generateFallback(
         apiKey,
         data.userMessage,
         priors,
         briefBlock,
         factsBlock,
+        activeFactKeys,
       );
+      assistantAnswer = fb.answer;
       citedChunkIds = [];
+      usedFactKeys = fb.usedFactKeys;
       usedFallback = true;
     } else {
       // Filter to only chunks that also clear the threshold — don't force
@@ -600,9 +605,11 @@ export const sendWillAiMessage = createServerFn({ method: "POST" })
         sourceTitles,
         briefBlock,
         factsBlock,
+        activeFactKeys,
       );
       assistantAnswer = grounded.answer;
       citedChunkIds = grounded.usedChunkIds;
+      usedFactKeys = grounded.usedFactKeys;
       usedFallback = false;
     }
 
