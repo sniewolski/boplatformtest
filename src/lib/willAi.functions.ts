@@ -142,6 +142,26 @@ async function loadOwnerBriefBlock(
   ].join("\n");
 }
 
+/**
+ * Load the admin-managed active canonical facts and build a compact block
+ * that gets injected into the system prompt on EVERY chat request. These
+ * are authoritative statements (e.g. community URL, booking link) that must
+ * override anything retrieval returns. Returns "" when no active facts.
+ */
+async function loadCanonicalFactsBlock(supabase: any): Promise<string> {
+  const { data, error } = await supabase.rpc("get_active_canonical_facts" as any);
+  if (error || !data) return "";
+  const rows = (data ?? []) as Array<{ fact_key: string; fact_text: string }>;
+  const lines = rows
+    .map((r) => (r.fact_text ?? "").trim())
+    .filter((t) => t.length > 0)
+    .map((t) => `- ${t}`);
+  if (lines.length === 0) return "";
+  return [
+    "AUTHORITATIVE FACTS (these are the ground truth — if the question touches any of these, use these exact facts verbatim and do NOT contradict them, even if retrieved passages say something different):",
+    ...lines,
+  ].join("\n");
+}
 
 async function embedQuery(apiKey: string, text: string): Promise<number[]> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${EMBEDDING_MODEL}:embedContent?key=${encodeURIComponent(
