@@ -97,6 +97,7 @@ function WillAiAdmin() {
         <TabsList className="self-start">
           <TabsTrigger value="sources">Sources</TabsTrigger>
           <TabsTrigger value="gaps">Content gaps</TabsTrigger>
+          <TabsTrigger value="facts">Facts</TabsTrigger>
           <TabsTrigger value="conversations">Conversations</TabsTrigger>
         </TabsList>
         <TabsContent value="sources" className="mt-0">
@@ -104,6 +105,9 @@ function WillAiAdmin() {
         </TabsContent>
         <TabsContent value="gaps" className="mt-0">
           <ContentGapsTab />
+        </TabsContent>
+        <TabsContent value="facts" className="mt-0">
+          <CanonicalFactsTab />
         </TabsContent>
         <TabsContent value="conversations" className="mt-0">
           <ArchivedConversationsTab />
