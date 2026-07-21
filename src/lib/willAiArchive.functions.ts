@@ -36,6 +36,16 @@ export type ArchivedConversationSummary = {
   messageCount: number;
 };
 
+export type ArchivedConversationMeta = {
+  id: string;
+  ownerId: string;
+  ownerName: string | null;
+  ownerEmail: string | null;
+  title: string | null;
+  createdAt: string;
+  archivedAt: string;
+};
+
 export type ArchivedMessage = {
   id: string;
   conversation_id: string;
