@@ -551,6 +551,7 @@ export const sendWillAiMessage = createServerFn({ method: "POST" })
         contextChunks,
         sourceTitles,
         briefBlock,
+        factsBlock,
       );
       assistantAnswer = grounded.answer;
       citedChunkIds = grounded.usedChunkIds;
