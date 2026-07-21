@@ -95,6 +95,9 @@ export const Route = createFileRoute("/_authenticated/app/admin/will-ai")({
 function WillAiAdmin() {
   const { user } = Route.useRouteContext();
   const { data: roles, isLoading: rolesLoading } = useMyRoles(user.id);
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const activeTab: AdminWillAiTab = search.tab ?? "sources";
 
   if (rolesLoading) {
     return (
