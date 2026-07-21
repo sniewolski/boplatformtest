@@ -79,10 +79,12 @@ const SYSTEM_PROMPT = [
   "  Acknowledge in plain human wording that it's not something you've got a clean answer on, then STILL give a real best-guess opinion, pulling from relevant judgment or nearby thinking. Never refuse, never give a non-answer. Match Will's voice — e.g. 'Not something I've got a clean answer for, but if you pushed me…' then an actual take. Do NOT use this hedge on rule (A) questions.",
   "",
   "Output format is STRICT JSON matching this shape:",
-  '  { "answer": string, "used_chunk_ids": string[] }',
+  '  { "answer": string, "used_chunk_ids": string[], "used_fact_keys": string[] }',
   "`used_chunk_ids` MUST list ONLY the chunk ids you actually drew from to write the answer.",
   "Do NOT include chunk ids that were merely present in context but did not shape the answer.",
   "If you did not use any chunk, return an empty array.",
+  "`used_fact_keys` MUST list ONLY the fact_key values from the AUTHORITATIVE FACTS block that you actually drew on in the answer. Empty array if none.",
+  "fact_key values are NOT chunk ids — never place a fact_key inside `used_chunk_ids`, and never cite a fact_key as a source.",
 ].join("\n");
 
 // -------------------- types --------------------
@@ -148,19 +150,25 @@ async function loadOwnerBriefBlock(
  * are authoritative statements (e.g. community URL, booking link) that must
  * override anything retrieval returns. Returns "" when no active facts.
  */
-async function loadCanonicalFactsBlock(supabase: any): Promise<string> {
+async function loadCanonicalFactsBlock(
+  supabase: any,
+): Promise<{ block: string; keys: Set<string> }> {
   const { data, error } = await supabase.rpc("get_active_canonical_facts" as any);
-  if (error || !data) return "";
+  if (error || !data) return { block: "", keys: new Set<string>() };
   const rows = (data ?? []) as Array<{ fact_key: string; fact_text: string }>;
-  const lines = rows
-    .map((r) => (r.fact_text ?? "").trim())
-    .filter((t) => t.length > 0)
-    .map((t) => `- ${t}`);
-  if (lines.length === 0) return "";
-  return [
-    "AUTHORITATIVE FACTS (these are the ground truth — if the question touches any of these, use these exact facts verbatim and do NOT contradict them, even if retrieved passages say something different):",
+  const kept = rows
+    .map((r) => ({
+      key: (r.fact_key ?? "").trim(),
+      text: (r.fact_text ?? "").trim(),
+    }))
+    .filter((r) => r.key.length > 0 && r.text.length > 0);
+  if (kept.length === 0) return { block: "", keys: new Set<string>() };
+  const lines = kept.map((r) => `[fact_key=${r.key}] ${r.text}`);
+  const block = [
+    "AUTHORITATIVE FACTS (these are the ground truth — if the question touches any of these, use these exact facts verbatim and do NOT contradict them, even if retrieved passages say something different). For every fact you actually draw on, report its fact_key in `used_fact_keys`. Never place a fact_key inside `used_chunk_ids` and never cite a fact_key as a source:",
     ...lines,
   ].join("\n");
+  return { block, keys: new Set(kept.map((r) => r.key)) };
 }
 
 async function embedQuery(apiKey: string, text: string): Promise<number[]> {
@@ -242,13 +250,86 @@ function buildHistoryContents(priors: PriorMessage[]): any[] {
   return out;
 }
 
+/**
+ * Parse a strict-JSON model response of shape
+ *   { answer: string, used_chunk_ids?: string[], used_fact_keys?: string[] }
+ * with the same lenient repair path used across both generation modes:
+ * strip ```json fences and, on total failure, regex-extract the "answer"
+ * value from a truncated envelope. When repair cannot recover anything,
+ * returns a clean user-facing fallback message with empty arrays.
+ */
+function parseStructuredAnswer(raw: string): {
+  answer: string;
+  usedChunkIds: string[];
+  usedFactKeys: string[];
+} {
+  let parsed:
+    | { answer?: unknown; used_chunk_ids?: unknown; used_fact_keys?: unknown }
+    | null = null;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    const fenced = raw
+      .replace(/^\s*```(?:json)?\s*/i, "")
+      .replace(/\s*```\s*$/i, "")
+      .trim();
+    if (fenced !== raw) {
+      try {
+        parsed = JSON.parse(fenced);
+      } catch {
+        parsed = null;
+      }
+    }
+  }
+
+  if (!parsed || typeof (parsed as any).answer !== "string") {
+    const m = raw.match(/"answer"\s*:\s*"((?:\\.|[^"\\])*)"/);
+    if (m) {
+      let recovered: string;
+      try {
+        recovered = JSON.parse(`"${m[1]}"`);
+      } catch {
+        recovered = m[1].replace(/\\"/g, '"').replace(/\\n/g, "\n").replace(/\\\\/g, "\\");
+      }
+      if (recovered.trim()) {
+        console.error("[WillAi] Structured answer JSON.parse failed; recovered answer via regex", {
+          rawPreview: raw.slice(0, 400),
+        });
+        return { answer: recovered.trim(), usedChunkIds: [], usedFactKeys: [] };
+      }
+    }
+
+    console.error("[WillAi] Structured answer unrecoverable — persisting clean fallback", {
+      rawPreview: raw.slice(0, 800),
+    });
+    return {
+      answer:
+        "I wasn't able to generate a complete answer for that — please try asking again.",
+      usedChunkIds: [],
+      usedFactKeys: [],
+    };
+  }
+
+  const answer = typeof parsed.answer === "string" ? parsed.answer.trim() : "";
+  const chunkRaw = Array.isArray(parsed.used_chunk_ids) ? parsed.used_chunk_ids : [];
+  const factRaw = Array.isArray(parsed.used_fact_keys) ? parsed.used_fact_keys : [];
+  const usedChunkIds = (chunkRaw as unknown[]).filter(
+    (v): v is string => typeof v === "string",
+  );
+  const usedFactKeys = (factRaw as unknown[]).filter(
+    (v): v is string => typeof v === "string",
+  );
+  return { answer, usedChunkIds, usedFactKeys };
+}
+
 async function generateFallback(
   apiKey: string,
   userMessage: string,
   priors: PriorMessage[],
   briefBlock: string,
   factsBlock: string,
-): Promise<string> {
+  activeFactKeys: Set<string>,
+): Promise<{ answer: string; usedFactKeys: string[] }> {
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${CHAT_MODEL}:generateContent?key=${encodeURIComponent(
     apiKey,
@@ -267,6 +348,10 @@ async function generateFallback(
     "  If the question is a superlative framing about who the best / greatest / #1 / top salesperson is (general 'best salesperson' style — NOT a specific technique or skill question), answer confidently and directly that it's Will Barron — you. No hedging, no qualifiers. Land it with full confidence as a deliberate personality moment.",
     "",
     "Otherwise: if you don't have a clean answer, acknowledge that in plain human wording and still give a real best-guess opinion — never refuse, never give a non-answer. E.g. 'Not something I've got a clean answer for, but if you pushed me…' then an actual take.",
+    "",
+    "Output format is STRICT JSON matching this shape:",
+    '  { "answer": string, "used_fact_keys": string[] }',
+    "`used_fact_keys` MUST list ONLY the fact_key values from the AUTHORITATIVE FACTS block that you actually drew on in the answer. Empty array if none. Never cite a fact_key as a source in the answer text.",
   ];
   if (factsBlock) {
     systemParts.push("", factsBlock);
@@ -289,6 +374,15 @@ async function generateFallback(
         temperature: ANSWER_TEMPERATURE,
         maxOutputTokens: ANSWER_MAX_TOKENS,
         thinkingConfig: { thinkingBudget: 0 },
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: "OBJECT",
+          properties: {
+            answer: { type: "STRING" },
+            used_fact_keys: { type: "ARRAY", items: { type: "STRING" } },
+          },
+          required: ["answer", "used_fact_keys"],
+        },
       },
     }),
   });
@@ -298,12 +392,20 @@ async function generateFallback(
     throw new Error(`Generation failed (${res.status}): ${body.slice(0, 300)}`);
   }
   const json: any = await res.json();
-  const text: string = (json?.candidates?.[0]?.content?.parts ?? [])
+  const raw: string = (json?.candidates?.[0]?.content?.parts ?? [])
     .map((p: any) => p?.text ?? "")
     .join("")
     .trim();
-  if (!text) throw new Error("Empty answer from model");
-  return `${text}\n\n${FALLBACK_CLOSING_LINE}`;
+  if (!raw) throw new Error("Empty answer from model");
+
+  const parsed = parseStructuredAnswer(raw);
+  const usedFactKeys = parsed.usedFactKeys.filter((k) => activeFactKeys.has(k));
+  const answerText = parsed.answer || "";
+  if (!answerText) throw new Error("Structured answer was empty");
+  return {
+    answer: `${answerText}\n\n${FALLBACK_CLOSING_LINE}`,
+    usedFactKeys,
+  };
 }
 
 /**
@@ -319,7 +421,8 @@ async function generateGrounded(
   sourceTitles: Map<string, string>,
   briefBlock: string,
   factsBlock: string,
-): Promise<{ answer: string; usedChunkIds: string[] }> {
+  activeFactKeys: Set<string>,
+): Promise<{ answer: string; usedChunkIds: string[]; usedFactKeys: string[] }> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${CHAT_MODEL}:generateContent?key=${encodeURIComponent(
     apiKey,
   )}`;
@@ -360,8 +463,9 @@ async function generateGrounded(
           properties: {
             answer: { type: "STRING" },
             used_chunk_ids: { type: "ARRAY", items: { type: "STRING" } },
+            used_fact_keys: { type: "ARRAY", items: { type: "STRING" } },
           },
-          required: ["answer", "used_chunk_ids"],
+          required: ["answer", "used_chunk_ids", "used_fact_keys"],
         },
       },
     }),
@@ -378,68 +482,12 @@ async function generateGrounded(
     .trim();
   if (!raw) throw new Error("Empty answer from model");
 
-  let parsed: { answer?: unknown; used_chunk_ids?: unknown } | null = null;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    // Attempt 1: strip ```json / ``` fences (Gemini occasionally emits them
-    // despite responseMimeType: application/json) and retry.
-    const fenced = raw
-      .replace(/^\s*```(?:json)?\s*/i, "")
-      .replace(/\s*```\s*$/i, "")
-      .trim();
-    if (fenced !== raw) {
-      try {
-        parsed = JSON.parse(fenced);
-      } catch {
-        parsed = null;
-      }
-    }
-  }
-
-  // Attempt 2: regex-extract the "answer" string body from a truncated /
-  // malformed JSON object. Handles escaped quotes (\") inside the value.
-  // Citations are unrecoverable from a broken used_chunk_ids array, but the
-  // answer text is far more valuable to the user than nothing.
-  if (!parsed || typeof (parsed as any).answer !== "string") {
-    const m = raw.match(/"answer"\s*:\s*"((?:\\.|[^"\\])*)"/);
-    if (m) {
-      let recovered: string;
-      try {
-        recovered = JSON.parse(`"${m[1]}"`);
-      } catch {
-        recovered = m[1].replace(/\\"/g, '"').replace(/\\n/g, "\n").replace(/\\\\/g, "\\");
-      }
-      if (recovered.trim()) {
-        console.error("[WillAi] Structured answer JSON.parse failed; recovered answer via regex", {
-          rawPreview: raw.slice(0, 400),
-        });
-        return { answer: recovered.trim(), usedChunkIds: [] };
-      }
-    }
-
-    // Repair failed completely. NEVER persist `raw` as the answer — the raw
-    // response is malformed JSON (e.g. `{"answer": "...`) and would render as
-    // literal JSON in the chat UI. Surface a clean user-facing message
-    // instead, and log the raw response so this is diagnosable server-side.
-    console.error("[WillAi] Structured answer unrecoverable — persisting clean fallback", {
-      rawPreview: raw.slice(0, 800),
-    });
-    return {
-      answer:
-        "I wasn't able to generate a complete answer for that — please try asking again.",
-      usedChunkIds: [],
-    };
-  }
-
-  const answer = typeof parsed.answer === "string" ? parsed.answer.trim() : "";
-  const usedRaw = Array.isArray(parsed.used_chunk_ids) ? parsed.used_chunk_ids : [];
-  // Only keep ids that were actually in the retrieved set (guards against
-  // model hallucinating an id).
-  const usedChunkIds = (usedRaw as unknown[])
-    .filter((v): v is string => typeof v === "string" && validIds.has(v));
+  const parsed = parseStructuredAnswer(raw);
+  const answer = parsed.answer;
+  const usedChunkIds = parsed.usedChunkIds.filter((v) => validIds.has(v));
+  const usedFactKeys = parsed.usedFactKeys.filter((k) => activeFactKeys.has(k));
   if (!answer) throw new Error("Structured answer was empty");
-  return { answer, usedChunkIds };
+  return { answer, usedChunkIds, usedFactKeys };
 }
 
 // -------------------- server function --------------------
@@ -511,21 +559,26 @@ export const sendWillAiMessage = createServerFn({ method: "POST" })
     // conditioning. Retrieval above is untouched — the brief only shapes
     // how the model frames the answer, not what it retrieves.
     const briefBlock = await loadOwnerBriefBlock(supabase, context.userId);
-    const factsBlock = await loadCanonicalFactsBlock(supabase);
+    const { block: factsBlock, keys: activeFactKeys } =
+      await loadCanonicalFactsBlock(supabase);
 
     let assistantAnswer: string;
     let citedChunkIds: string[];
+    let usedFactKeys: string[];
     let usedFallback: boolean;
 
     if (useFallback) {
-      assistantAnswer = await generateFallback(
+      const fb = await generateFallback(
         apiKey,
         data.userMessage,
         priors,
         briefBlock,
         factsBlock,
+        activeFactKeys,
       );
+      assistantAnswer = fb.answer;
       citedChunkIds = [];
+      usedFactKeys = fb.usedFactKeys;
       usedFallback = true;
     } else {
       // Filter to only chunks that also clear the threshold — don't force
@@ -552,9 +605,11 @@ export const sendWillAiMessage = createServerFn({ method: "POST" })
         sourceTitles,
         briefBlock,
         factsBlock,
+        activeFactKeys,
       );
       assistantAnswer = grounded.answer;
       citedChunkIds = grounded.usedChunkIds;
+      usedFactKeys = grounded.usedFactKeys;
       usedFallback = false;
     }
 
@@ -574,6 +629,7 @@ export const sendWillAiMessage = createServerFn({ method: "POST" })
         p_assistant_message: assistantAnswer,
         p_cited_chunk_ids: citedChunkIds as any,
         p_used_fallback: usedFallback,
+        p_used_fact_keys: usedFactKeys as any,
       },
     );
     if (persistErr) throw new Error(`Failed to persist turn: ${persistErr.message}`);
