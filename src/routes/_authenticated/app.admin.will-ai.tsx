@@ -135,7 +135,7 @@ function WillAiAdmin() {
           const next = parseTab(v) ?? "sources";
           // replace: don't flood history with tab flips
           navigate({
-            search: (prev) => ({
+            search: (prev: AdminWillAiSearch) => ({
               ...prev,
               tab: next === "sources" ? undefined : next,
               // Clear drill state whenever the tab actually changes.
