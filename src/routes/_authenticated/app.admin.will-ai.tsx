@@ -43,6 +43,14 @@ import {
   useImportSopToWillAi,
   type SopWillAiRow,
 } from "@/lib/useSopWillAiImport";
+import {
+  type WillAiCanonicalFact,
+  useCreateWillAiCanonicalFact,
+  useDeleteWillAiCanonicalFact,
+  useUpdateWillAiCanonicalFact,
+  useWillAiCanonicalFacts,
+} from "@/lib/useWillAiCanonicalFacts";
+import { Textarea } from "@/components/ui/textarea";
 import { ArchivedConversationsTab } from "@/components/admin/WillAiArchiveTab";
 import { useMyRoles } from "@/core/roles/useMyRoles";
 
