@@ -797,6 +797,7 @@ function useContentGaps() {
         .select("id, conversation_id, owner_id, created_at")
         .eq("role", "assistant")
         .eq("used_fallback", true)
+        .or("used_fact_keys.is.null,used_fact_keys.eq.{}")
         .order("created_at", { ascending: false })
         .limit(CONTENT_GAPS_LIMIT);
       if (fbErr) throw fbErr;
