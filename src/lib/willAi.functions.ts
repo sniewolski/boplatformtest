@@ -511,6 +511,7 @@ export const sendWillAiMessage = createServerFn({ method: "POST" })
     // conditioning. Retrieval above is untouched — the brief only shapes
     // how the model frames the answer, not what it retrieves.
     const briefBlock = await loadOwnerBriefBlock(supabase, context.userId);
+    const factsBlock = await loadCanonicalFactsBlock(supabase);
 
     let assistantAnswer: string;
     let citedChunkIds: string[];
