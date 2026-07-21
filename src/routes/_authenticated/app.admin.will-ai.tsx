@@ -830,6 +830,7 @@ function StatusBadge({ status }: { status: WillAiSource["status"] }) {
 
 type ContentGap = {
   fallbackId: string;
+  conversationId: string;
   ownerId: string;
   ownerEmail: string | null;
   question: string | null;
