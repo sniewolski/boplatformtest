@@ -523,6 +523,7 @@ export const sendWillAiMessage = createServerFn({ method: "POST" })
         data.userMessage,
         priors,
         briefBlock,
+        factsBlock,
       );
       citedChunkIds = [];
       usedFallback = true;
