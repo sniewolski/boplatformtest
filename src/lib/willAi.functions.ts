@@ -142,6 +142,26 @@ async function loadOwnerBriefBlock(
   ].join("\n");
 }
 
+/**
+ * Load the admin-managed active canonical facts and build a compact block
+ * that gets injected into the system prompt on EVERY chat request. These
+ * are authoritative statements (e.g. community URL, booking link) that must
+ * override anything retrieval returns. Returns "" when no active facts.
+ */
+async function loadCanonicalFactsBlock(supabase: any): Promise<string> {
+  const { data, error } = await supabase.rpc("get_active_canonical_facts" as any);
+  if (error || !data) return "";
+  const rows = (data ?? []) as Array<{ fact_key: string; fact_text: string }>;
+  const lines = rows
+    .map((r) => (r.fact_text ?? "").trim())
+    .filter((t) => t.length > 0)
+    .map((t) => `- ${t}`);
+  if (lines.length === 0) return "";
+  return [
+    "AUTHORITATIVE FACTS (these are the ground truth — if the question touches any of these, use these exact facts verbatim and do NOT contradict them, even if retrieved passages say something different):",
+    ...lines,
+  ].join("\n");
+}
 
 async function embedQuery(apiKey: string, text: string): Promise<number[]> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${EMBEDDING_MODEL}:embedContent?key=${encodeURIComponent(
@@ -227,7 +247,9 @@ async function generateFallback(
   userMessage: string,
   priors: PriorMessage[],
   briefBlock: string,
+  factsBlock: string,
 ): Promise<string> {
+
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${CHAT_MODEL}:generateContent?key=${encodeURIComponent(
     apiKey,
   )}`;
@@ -246,6 +268,9 @@ async function generateFallback(
     "",
     "Otherwise: if you don't have a clean answer, acknowledge that in plain human wording and still give a real best-guess opinion — never refuse, never give a non-answer. E.g. 'Not something I've got a clean answer for, but if you pushed me…' then an actual take.",
   ];
+  if (factsBlock) {
+    systemParts.push("", factsBlock);
+  }
   if (briefBlock) {
     systemParts.push("", briefBlock);
   }
@@ -293,6 +318,7 @@ async function generateGrounded(
   chunks: MatchedChunk[],
   sourceTitles: Map<string, string>,
   briefBlock: string,
+  factsBlock: string,
 ): Promise<{ answer: string; usedChunkIds: string[] }> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${CHAT_MODEL}:generateContent?key=${encodeURIComponent(
     apiKey,
@@ -313,9 +339,10 @@ async function generateGrounded(
     { role: "user", parts: [{ text: userPrompt }] },
   ];
 
-  const systemInstruction = briefBlock
-    ? `${SYSTEM_PROMPT}\n\n${briefBlock}`
-    : SYSTEM_PROMPT;
+  const systemInstruction = [SYSTEM_PROMPT, factsBlock, briefBlock]
+    .filter((s) => s && s.length > 0)
+    .join("\n\n");
+
 
   const res = await fetch(url, {
     method: "POST",
@@ -484,6 +511,7 @@ export const sendWillAiMessage = createServerFn({ method: "POST" })
     // conditioning. Retrieval above is untouched — the brief only shapes
     // how the model frames the answer, not what it retrieves.
     const briefBlock = await loadOwnerBriefBlock(supabase, context.userId);
+    const factsBlock = await loadCanonicalFactsBlock(supabase);
 
     let assistantAnswer: string;
     let citedChunkIds: string[];
@@ -495,6 +523,7 @@ export const sendWillAiMessage = createServerFn({ method: "POST" })
         data.userMessage,
         priors,
         briefBlock,
+        factsBlock,
       );
       citedChunkIds = [];
       usedFallback = true;
@@ -522,6 +551,7 @@ export const sendWillAiMessage = createServerFn({ method: "POST" })
         contextChunks,
         sourceTitles,
         briefBlock,
+        factsBlock,
       );
       assistantAnswer = grounded.answer;
       citedChunkIds = grounded.usedChunkIds;
