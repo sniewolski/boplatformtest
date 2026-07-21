@@ -318,6 +318,7 @@ async function generateGrounded(
   chunks: MatchedChunk[],
   sourceTitles: Map<string, string>,
   briefBlock: string,
+  factsBlock: string,
 ): Promise<{ answer: string; usedChunkIds: string[] }> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${CHAT_MODEL}:generateContent?key=${encodeURIComponent(
     apiKey,
@@ -338,9 +339,10 @@ async function generateGrounded(
     { role: "user", parts: [{ text: userPrompt }] },
   ];
 
-  const systemInstruction = briefBlock
-    ? `${SYSTEM_PROMPT}\n\n${briefBlock}`
-    : SYSTEM_PROMPT;
+  const systemInstruction = [SYSTEM_PROMPT, factsBlock, briefBlock]
+    .filter((s) => s && s.length > 0)
+    .join("\n\n");
+
 
   const res = await fetch(url, {
     method: "POST",
