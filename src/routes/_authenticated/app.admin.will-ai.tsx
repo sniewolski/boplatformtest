@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { AlertTriangle, Check, Clock, Loader2, Youtube } from "lucide-react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -830,6 +830,7 @@ function StatusBadge({ status }: { status: WillAiSource["status"] }) {
 
 type ContentGap = {
   fallbackId: string;
+  conversationId: string;
   ownerId: string;
   ownerEmail: string | null;
   question: string | null;
@@ -963,6 +964,7 @@ function useContentGaps() {
 
         return {
           fallbackId: r.id,
+          conversationId: r.conversation_id,
           ownerId: r.owner_id,
           ownerEmail: emailById.get(r.owner_id) ?? null,
           question,
@@ -1008,17 +1010,8 @@ function ContentGapsTab() {
         </span>
       </div>
       <ul className="flex flex-col divide-y divide-border border border-border rounded-xl">
-        {rows.map((g) => (
-          <li key={g.fallbackId} className="flex flex-col px-5 py-4 gap-1.5">
-            {g.question ? (
-              <p className="text-ink text-sm whitespace-pre-wrap break-words">
-                {g.question}
-              </p>
-            ) : (
-              <p className="text-ink-muted text-sm italic">
-                (question not found in conversation history)
-              </p>
-            )}
+        {rows.map((g) => {
+          const meta = (
             <p className="text-ink-muted text-xs">
               {g.ownerEmail ?? g.ownerId} ·{" "}
               {new Date(g.askedAt).toLocaleString(undefined, {
@@ -1029,8 +1022,45 @@ function ContentGapsTab() {
                 minute: "2-digit",
               })}
             </p>
-          </li>
-        ))}
+          );
+          const body = g.question ? (
+            <p className="text-ink text-sm whitespace-pre-wrap break-words">
+              {g.question}
+            </p>
+          ) : (
+            <p className="text-ink-muted text-sm italic">
+              (question not found in conversation history)
+            </p>
+          );
+          if (!g.conversationId) {
+            return (
+              <li
+                key={g.fallbackId}
+                className="flex flex-col px-5 py-4 gap-1.5"
+              >
+                {body}
+                {meta}
+              </li>
+            );
+          }
+          return (
+            <li key={g.fallbackId}>
+              <Link
+                to="/app/admin/will-ai"
+                search={{
+                  tab: "conversations" as const,
+                  owner: g.ownerId,
+                  conversation: g.conversationId,
+                  message: g.fallbackId,
+                }}
+                className="flex flex-col px-5 py-4 gap-1.5 hover:bg-[var(--surface-raised)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--red)] focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-colors"
+              >
+                {body}
+                {meta}
+              </Link>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
