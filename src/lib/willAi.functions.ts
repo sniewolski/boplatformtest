@@ -268,6 +268,9 @@ async function generateFallback(
     "",
     "Otherwise: if you don't have a clean answer, acknowledge that in plain human wording and still give a real best-guess opinion — never refuse, never give a non-answer. E.g. 'Not something I've got a clean answer for, but if you pushed me…' then an actual take.",
   ];
+  if (factsBlock) {
+    systemParts.push("", factsBlock);
+  }
   if (briefBlock) {
     systemParts.push("", briefBlock);
   }
