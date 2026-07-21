@@ -150,19 +150,25 @@ async function loadOwnerBriefBlock(
  * are authoritative statements (e.g. community URL, booking link) that must
  * override anything retrieval returns. Returns "" when no active facts.
  */
-async function loadCanonicalFactsBlock(supabase: any): Promise<string> {
+async function loadCanonicalFactsBlock(
+  supabase: any,
+): Promise<{ block: string; keys: Set<string> }> {
   const { data, error } = await supabase.rpc("get_active_canonical_facts" as any);
-  if (error || !data) return "";
+  if (error || !data) return { block: "", keys: new Set<string>() };
   const rows = (data ?? []) as Array<{ fact_key: string; fact_text: string }>;
-  const lines = rows
-    .map((r) => (r.fact_text ?? "").trim())
-    .filter((t) => t.length > 0)
-    .map((t) => `- ${t}`);
-  if (lines.length === 0) return "";
-  return [
-    "AUTHORITATIVE FACTS (these are the ground truth — if the question touches any of these, use these exact facts verbatim and do NOT contradict them, even if retrieved passages say something different):",
+  const kept = rows
+    .map((r) => ({
+      key: (r.fact_key ?? "").trim(),
+      text: (r.fact_text ?? "").trim(),
+    }))
+    .filter((r) => r.key.length > 0 && r.text.length > 0);
+  if (kept.length === 0) return { block: "", keys: new Set<string>() };
+  const lines = kept.map((r) => `[fact_key=${r.key}] ${r.text}`);
+  const block = [
+    "AUTHORITATIVE FACTS (these are the ground truth — if the question touches any of these, use these exact facts verbatim and do NOT contradict them, even if retrieved passages say something different). For every fact you actually draw on, report its fact_key in `used_fact_keys`. Never place a fact_key inside `used_chunk_ids` and never cite a fact_key as a source:",
     ...lines,
   ].join("\n");
+  return { block, keys: new Set(kept.map((r) => r.key)) };
 }
 
 async function embedQuery(apiKey: string, text: string): Promise<number[]> {
