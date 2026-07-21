@@ -247,7 +247,9 @@ async function generateFallback(
   userMessage: string,
   priors: PriorMessage[],
   briefBlock: string,
+  factsBlock: string,
 ): Promise<string> {
+
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${CHAT_MODEL}:generateContent?key=${encodeURIComponent(
     apiKey,
   )}`;
