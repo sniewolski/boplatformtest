@@ -402,8 +402,13 @@ async function generateFallback(
   const usedFactKeys = parsed.usedFactKeys.filter((k) => activeFactKeys.has(k));
   const answerText = parsed.answer || "";
   if (!answerText) throw new Error("Structured answer was empty");
+  // When a canonical fact answered the question, the answer is authoritative;
+  // the fallback closing line contradicts it, so suppress it entirely.
   return {
-    answer: `${answerText}\n\n${FALLBACK_CLOSING_LINE}`,
+    answer:
+      usedFactKeys.length > 0
+        ? answerText
+        : `${answerText}\n\n${FALLBACK_CLOSING_LINE}`,
     usedFactKeys,
   };
 }
