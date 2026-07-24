@@ -29,6 +29,7 @@ import { Route as ApiPublicRSaveRouteImport } from './routes/api/public/r/save'
 import { Route as ApiPublicRCompleteRouteImport } from './routes/api/public/r/complete'
 import { Route as ApiPublicRCaptureRouteImport } from './routes/api/public/r/capture'
 import { Route as AuthenticatedAppAdminWillAiRouteImport } from './routes/_authenticated/app.admin.will-ai'
+import { Route as AuthenticatedAppAdminTrackerRouteImport } from './routes/_authenticated/app.admin.tracker'
 import { Route as AuthenticatedAppAdminSopsRouteImport } from './routes/_authenticated/app.admin.sops'
 import { Route as AuthenticatedAppAdminReviewRouteImport } from './routes/_authenticated/app.admin.review'
 import { Route as AuthenticatedAppAdminSopsIndexRouteImport } from './routes/_authenticated/app.admin.sops.index'
@@ -140,6 +141,12 @@ const AuthenticatedAppAdminWillAiRoute =
     path: '/will-ai',
     getParentRoute: () => AuthenticatedAppAdminRoute,
   } as any)
+const AuthenticatedAppAdminTrackerRoute =
+  AuthenticatedAppAdminTrackerRouteImport.update({
+    id: '/tracker',
+    path: '/tracker',
+    getParentRoute: () => AuthenticatedAppAdminRoute,
+  } as any)
 const AuthenticatedAppAdminSopsRoute =
   AuthenticatedAppAdminSopsRouteImport.update({
     id: '/sops',
@@ -189,6 +196,7 @@ export interface FileRoutesByFullPath {
   '/r/$token/': typeof RTokenIndexRoute
   '/app/admin/review': typeof AuthenticatedAppAdminReviewRouteWithChildren
   '/app/admin/sops': typeof AuthenticatedAppAdminSopsRouteWithChildren
+  '/app/admin/tracker': typeof AuthenticatedAppAdminTrackerRoute
   '/app/admin/will-ai': typeof AuthenticatedAppAdminWillAiRoute
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
@@ -212,6 +220,7 @@ export interface FileRoutesByTo {
   '/r/$token/$': typeof RTokenSplatRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/r/$token': typeof RTokenIndexRoute
+  '/app/admin/tracker': typeof AuthenticatedAppAdminTrackerRoute
   '/app/admin/will-ai': typeof AuthenticatedAppAdminWillAiRoute
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
@@ -241,6 +250,7 @@ export interface FileRoutesById {
   '/r/$token/': typeof RTokenIndexRoute
   '/_authenticated/app/admin/review': typeof AuthenticatedAppAdminReviewRouteWithChildren
   '/_authenticated/app/admin/sops': typeof AuthenticatedAppAdminSopsRouteWithChildren
+  '/_authenticated/app/admin/tracker': typeof AuthenticatedAppAdminTrackerRoute
   '/_authenticated/app/admin/will-ai': typeof AuthenticatedAppAdminWillAiRoute
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
@@ -270,6 +280,7 @@ export interface FileRouteTypes {
     | '/r/$token/'
     | '/app/admin/review'
     | '/app/admin/sops'
+    | '/app/admin/tracker'
     | '/app/admin/will-ai'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
@@ -293,6 +304,7 @@ export interface FileRouteTypes {
     | '/r/$token/$'
     | '/app'
     | '/r/$token'
+    | '/app/admin/tracker'
     | '/app/admin/will-ai'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
@@ -321,6 +333,7 @@ export interface FileRouteTypes {
     | '/r/$token/'
     | '/_authenticated/app/admin/review'
     | '/_authenticated/app/admin/sops'
+    | '/_authenticated/app/admin/tracker'
     | '/_authenticated/app/admin/will-ai'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
@@ -494,6 +507,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAdminWillAiRouteImport
       parentRoute: typeof AuthenticatedAppAdminRoute
     }
+    '/_authenticated/app/admin/tracker': {
+      id: '/_authenticated/app/admin/tracker'
+      path: '/tracker'
+      fullPath: '/app/admin/tracker'
+      preLoaderRoute: typeof AuthenticatedAppAdminTrackerRouteImport
+      parentRoute: typeof AuthenticatedAppAdminRoute
+    }
     '/_authenticated/app/admin/sops': {
       id: '/_authenticated/app/admin/sops'
       path: '/sops'
@@ -574,6 +594,7 @@ const AuthenticatedAppAdminSopsRouteWithChildren =
 interface AuthenticatedAppAdminRouteChildren {
   AuthenticatedAppAdminReviewRoute: typeof AuthenticatedAppAdminReviewRouteWithChildren
   AuthenticatedAppAdminSopsRoute: typeof AuthenticatedAppAdminSopsRouteWithChildren
+  AuthenticatedAppAdminTrackerRoute: typeof AuthenticatedAppAdminTrackerRoute
   AuthenticatedAppAdminWillAiRoute: typeof AuthenticatedAppAdminWillAiRoute
   AuthenticatedAppAdminIndexRoute: typeof AuthenticatedAppAdminIndexRoute
 }
@@ -582,6 +603,7 @@ const AuthenticatedAppAdminRouteChildren: AuthenticatedAppAdminRouteChildren = {
   AuthenticatedAppAdminReviewRoute:
     AuthenticatedAppAdminReviewRouteWithChildren,
   AuthenticatedAppAdminSopsRoute: AuthenticatedAppAdminSopsRouteWithChildren,
+  AuthenticatedAppAdminTrackerRoute: AuthenticatedAppAdminTrackerRoute,
   AuthenticatedAppAdminWillAiRoute: AuthenticatedAppAdminWillAiRoute,
   AuthenticatedAppAdminIndexRoute: AuthenticatedAppAdminIndexRoute,
 }

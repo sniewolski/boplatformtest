@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode, type ComponentType } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
-import { Check, LayoutDashboard, Lock, Shield, ClipboardList, FileText, LogOut, CalendarDays, MessagesSquare, Briefcase } from "lucide-react";
+import { Check, LayoutDashboard, Lock, Shield, ClipboardList, FileText, LogOut, CalendarDays, MessagesSquare, Briefcase, Radio } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toolRegistry } from "@/tools/registry";
@@ -302,6 +302,16 @@ export function AppShell({
                 >
                   <MessagesSquare className="size-4" />
                   Will AI
+                </Link>
+              )}
+              {isAdmin && (
+                <Link
+                  to="/app/admin/tracker"
+                  className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-ink hover:bg-background transition-colors"
+                  activeProps={{ className: "bg-background font-medium" }}
+                >
+                  <Radio className="size-4" />
+                  Tracker
                 </Link>
               )}
             </>
