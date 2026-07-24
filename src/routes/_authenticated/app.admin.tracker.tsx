@@ -320,12 +320,12 @@ function TrackerAdmin() {
       ) : (
         <div className="flex flex-col gap-3">
           <p className="text-sm text-ink-muted">
-            <span className="text-ink tabular-nums">{totals.views}</span> views
+            <span className="text-ink tabular-nums">{totals.views}</span> Visits
             {" · "}
-            <span className="text-ink tabular-nums">{totals.clicks}</span> clicks
+            <span className="text-ink tabular-nums">{totals.clicks}</span> Button Clicks
             {" · "}
             <span className="text-ink tabular-nums">{totals.bookings}</span>{" "}
-            bookings
+            Bookings
           </p>
           <div className="rounded-md border border-border overflow-hidden">
             <table className="w-full text-sm">
