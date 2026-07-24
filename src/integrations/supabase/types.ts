@@ -654,6 +654,63 @@ export type Database = {
         }
         Relationships: []
       }
+      tracked_videos: {
+        Row: {
+          first_seen_at: string
+          resolved_at: string | null
+          thumbnail_url: string | null
+          title: string | null
+          video_id: string
+        }
+        Insert: {
+          first_seen_at?: string
+          resolved_at?: string | null
+          thumbnail_url?: string | null
+          title?: string | null
+          video_id: string
+        }
+        Update: {
+          first_seen_at?: string
+          resolved_at?: string | null
+          thumbnail_url?: string | null
+          title?: string | null
+          video_id?: string
+        }
+        Relationships: []
+      }
+      tracker_events: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          referrer: string | null
+          source_type: string | null
+          source_value: string | null
+          visitor_id: string
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          referrer?: string | null
+          source_type?: string | null
+          source_value?: string | null
+          visitor_id: string
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          referrer?: string | null
+          source_type?: string | null
+          source_value?: string | null
+          visitor_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
