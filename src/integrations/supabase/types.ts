@@ -661,6 +661,8 @@ export type Database = {
           thumbnail_url: string | null
           title: string | null
           video_id: string
+          view_count: number | null
+          views_updated_at: string | null
         }
         Insert: {
           first_seen_at?: string
@@ -668,6 +670,8 @@ export type Database = {
           thumbnail_url?: string | null
           title?: string | null
           video_id: string
+          view_count?: number | null
+          views_updated_at?: string | null
         }
         Update: {
           first_seen_at?: string
@@ -675,6 +679,8 @@ export type Database = {
           thumbnail_url?: string | null
           title?: string | null
           video_id?: string
+          view_count?: number | null
+          views_updated_at?: string | null
         }
         Relationships: []
       }
