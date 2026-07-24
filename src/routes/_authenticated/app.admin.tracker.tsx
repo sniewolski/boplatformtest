@@ -278,7 +278,7 @@ function TrackerAdmin() {
   const hasRows = videoAggregates.length > 0 || !!directRow;
 
   return (
-    <div className="app-content py-16 flex flex-col gap-8">
+    <div className="mx-auto w-full max-w-[1600px] px-6 py-16 flex flex-col gap-8">
       <header className="flex flex-col gap-2">
         <h1 className="text-3xl">Tracker</h1>
         <p className="text-ink-muted text-sm max-w-prose">
