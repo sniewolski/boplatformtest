@@ -83,6 +83,7 @@ type TrackedVideoRow = {
   thumbnail_url: string | null;
   resolved_at: string | null;
   view_count: number | null;
+  views_updated_at: string | null;
 };
 
 type VideoAggregate = {
@@ -162,7 +163,7 @@ function TrackerAdmin() {
     queryFn: async (): Promise<TrackedVideoRow[]> => {
       const { data, error } = await supabase
         .from("tracked_videos")
-        .select("video_id, title, thumbnail_url, resolved_at, view_count");
+        .select("video_id, title, thumbnail_url, resolved_at, view_count, views_updated_at");
       if (error) throw error;
       return (data ?? []) as TrackedVideoRow[];
     },
@@ -223,11 +224,14 @@ function TrackerAdmin() {
     const videos = videosQuery.data;
     if (!videos) return;
     const known = new Map(videos.map((v) => [v.video_id, v]));
+    const staleThreshold = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
     const missing = videoAggregates
       .map((a) => a.videoId)
       .filter((id) => {
         const row = known.get(id);
-        return !row || !row.resolved_at;
+        if (!row) return true;
+        if (!row.resolved_at || row.view_count == null || !row.views_updated_at) return true;
+        return row.views_updated_at < staleThreshold;
       });
     if (missing.length === 0) return;
 
