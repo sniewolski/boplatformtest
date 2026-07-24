@@ -19,7 +19,7 @@
   var K_VISITOR = "slt_visitor_id";
   var K_SOURCE = "slt_source";      // {type, value, ts}
   var K_BOOK_SENT = "slt_book_sent";
-  var K_BOOKINGS = "slt_bookings";  // comma list of booking_ids already logged
+  var K_BOOKED = "slt_booked";      // per-visitor booking dedup flag
 
   // ---- Helpers -----------------------------------------------------------
   function getItem(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
@@ -101,13 +101,10 @@
     wireBookCta();
   }
   function onConfirmedPage(){
-    var bookingId = param(BOOKING_ID_PARAM);
-    if (!bookingId) return;             // dormant until Calendly passes params
     if (!getItem(K_VISITOR)) return;    // never passed through a tracked page
-    var logged = (getItem(K_BOOKINGS) || "").split(",");
-    if (logged.indexOf(bookingId) !== -1) return;
-    setItem(K_BOOKINGS, logged.concat(bookingId).filter(Boolean).join(","));
-    logEvent("booking", { booking_id: bookingId });
+    if (getItem(K_BOOKED) === "1") return; // already logged for this visitor
+    setItem(K_BOOKED, "1");
+    logEvent("booking");
   }
 
   // ---- Route -------------------------------------------------------------
