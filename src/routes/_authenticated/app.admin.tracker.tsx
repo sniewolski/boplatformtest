@@ -320,12 +320,12 @@ function TrackerAdmin() {
       ) : (
         <div className="flex flex-col gap-3">
           <p className="text-sm text-ink-muted">
-            <span className="text-ink tabular-nums">{totals.views}</span> views
+            <span className="text-ink tabular-nums">{totals.views}</span> Visits
             {" · "}
-            <span className="text-ink tabular-nums">{totals.clicks}</span> clicks
+            <span className="text-ink tabular-nums">{totals.clicks}</span> Button Clicks
             {" · "}
             <span className="text-ink tabular-nums">{totals.bookings}</span>{" "}
-            bookings
+            Bookings
           </p>
           <div className="rounded-md border border-border overflow-hidden">
             <table className="w-full text-sm">
@@ -333,8 +333,8 @@ function TrackerAdmin() {
                 <tr className="text-left">
                   <th className="px-4 py-3 font-medium w-[120px]">Video</th>
                   <th className="px-4 py-3 font-medium">Title</th>
-                  <th className="px-4 py-3 font-medium text-right w-[100px]">Views</th>
-                  <th className="px-4 py-3 font-medium text-right w-[100px]">Clicks</th>
+                  <th className="px-4 py-3 font-medium text-right w-[100px]">Visits</th>
+                  <th className="px-4 py-3 font-medium text-right w-[100px]">Button Clicks</th>
                   <th className="px-4 py-3 font-medium text-right w-[110px]">Bookings</th>
                 </tr>
               </thead>
