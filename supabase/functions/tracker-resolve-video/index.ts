@@ -81,14 +81,28 @@ Deno.serve(async (req) => {
       const apiUrl =
         `https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${encodeURIComponent(videoId)}&key=${encodeURIComponent(YOUTUBE_DATA_API_KEY)}`;
       const apiRes = await fetch(apiUrl);
-      if (!apiRes.ok) return row;
+      console.log("[views] youtube api status", apiRes.status);
+      if (!apiRes.ok) {
+        console.error("[views] youtube api body", await apiRes.clone().text());
+        return row;
+      }
       const meta = await apiRes.json();
       const items = Array.isArray(meta?.items) ? meta.items : [];
-      if (items.length === 0) return row;
+      if (items.length === 0) {
+        console.error("[views] no items for", videoId);
+        return row;
+      }
       const raw = items[0]?.statistics?.viewCount;
-      if (raw == null) return row;
+      if (raw == null) {
+        console.error("[views] bad viewCount", raw);
+        return row;
+      }
       const parsed = typeof raw === "string" ? Number(raw) : Number(raw);
-      if (!Number.isFinite(parsed)) return row;
+      if (!Number.isFinite(parsed)) {
+        console.error("[views] bad viewCount", raw);
+        return row;
+      }
+      console.log("[views] resolved", videoId, parsed);
 
       const patchRes = await fetch(
         `${restBase}?video_id=eq.${encodeURIComponent(videoId)}`,
@@ -105,11 +119,15 @@ Deno.serve(async (req) => {
           }),
         },
       );
-      if (!patchRes.ok) return row;
+      if (!patchRes.ok) {
+        console.error("[views] patch failed", patchRes.status, await patchRes.clone().text());
+        return row;
+      }
       const patched = (await patchRes.json()) as any[];
       if (Array.isArray(patched) && patched.length > 0) return patched[0];
       return { ...row, view_count: parsed, views_updated_at: new Date().toISOString() };
-    } catch {
+    } catch (err) {
+      console.error("[views] threw", String(err));
       return row;
     }
   }
