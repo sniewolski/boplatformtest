@@ -12,6 +12,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/app/admin/tracker")({
@@ -21,18 +28,12 @@ export const Route = createFileRoute("/_authenticated/app/admin/tracker")({
 // ---------- London day boundary helpers ---------------------------------
 
 function toYmd(d: Date): string {
-  // Interpret Date as local calendar; format YYYY-MM-DD.
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
 
-/**
- * Return the UTC ISO string for 00:00 Europe/London on the given YYYY-MM-DD.
- * Iterates candidate UTC offsets (0 or -1h for BST) and picks the one that
- * maps back to 00:00 London on that calendar date.
- */
 function londonDayStartUtcISO(ymd: string): string {
   for (const hourGuess of [0, -1]) {
     const d = new Date(`${ymd}T00:00:00Z`);
@@ -59,7 +60,6 @@ function londonDayStartUtcISO(ymd: string): string {
 }
 
 function londonDayEndExclusiveUtcISO(ymd: string): string {
-  // Start of the next day, London.
   const d = new Date(`${ymd}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + 1);
   return londonDayStartUtcISO(toYmd(d));
@@ -86,11 +86,13 @@ type TrackedVideoRow = {
 
 type VideoAggregate = {
   videoId: string;
+  views: number;
   clicks: number;
-  bookButton: number;
   bookings: number;
   lastActivity: string;
 };
+
+type RangePreset = "30" | "90" | "360" | "custom";
 
 // ---------- Component ----------------------------------------------------
 
@@ -98,6 +100,7 @@ function TrackerAdmin() {
   const { user } = Route.useRouteContext();
   const { data: roles, isLoading: rolesLoading } = useMyRoles(user.id);
 
+  const [preset, setPreset] = useState<RangePreset>("30");
   const [toDate, setToDate] = useState<Date>(() => new Date());
   const [fromDate, setFromDate] = useState<Date>(() => {
     const d = new Date();
@@ -105,13 +108,24 @@ function TrackerAdmin() {
     return d;
   });
 
+  const { effectiveFrom, effectiveTo } = useMemo(() => {
+    if (preset === "custom") {
+      return { effectiveFrom: fromDate, effectiveTo: toDate };
+    }
+    const days = preset === "30" ? 30 : preset === "90" ? 90 : 360;
+    const to = new Date();
+    const from = new Date();
+    from.setDate(from.getDate() - days);
+    return { effectiveFrom: from, effectiveTo: to };
+  }, [preset, fromDate, toDate]);
+
   const fromISO = useMemo(
-    () => londonDayStartUtcISO(toYmd(fromDate)),
-    [fromDate],
+    () => londonDayStartUtcISO(toYmd(effectiveFrom)),
+    [effectiveFrom],
   );
   const toISO = useMemo(
-    () => londonDayEndExclusiveUtcISO(toYmd(toDate)),
-    [toDate],
+    () => londonDayEndExclusiveUtcISO(toYmd(effectiveTo)),
+    [effectiveTo],
   );
 
   const eventsQuery = useQuery({
@@ -142,11 +156,10 @@ function TrackerAdmin() {
     },
   });
 
-  // Aggregate events per video and the unattributed bucket.
-  const { videoAggregates, directRow } = useMemo(() => {
+  const { videoAggregates, directRow, totals } = useMemo(() => {
     const map = new Map<string, VideoAggregate>();
+    let directViews = 0;
     let directClicks = 0;
-    let directBook = 0;
     let directBookings = 0;
 
     for (const ev of eventsQuery.data ?? []) {
@@ -157,19 +170,19 @@ function TrackerAdmin() {
           map.get(key) ??
           ({
             videoId: key,
+            views: 0,
             clicks: 0,
-            bookButton: 0,
             bookings: 0,
             lastActivity: ev.created_at,
           } as VideoAggregate);
-        if (ev.event_type === "click") agg.clicks += 1;
-        else if (ev.event_type === "book_button") agg.bookButton += 1;
+        if (ev.event_type === "click") agg.views += 1;
+        else if (ev.event_type === "book_button") agg.clicks += 1;
         else if (ev.event_type === "booking") agg.bookings += 1;
         if (ev.created_at > agg.lastActivity) agg.lastActivity = ev.created_at;
         map.set(key, agg);
       } else if (!ev.source_type || !ev.source_value) {
-        if (ev.event_type === "click") directClicks += 1;
-        else if (ev.event_type === "book_button") directBook += 1;
+        if (ev.event_type === "click") directViews += 1;
+        else if (ev.event_type === "book_button") directClicks += 1;
         else if (ev.event_type === "booking") directBookings += 1;
       }
     }
@@ -177,16 +190,22 @@ function TrackerAdmin() {
     const list = Array.from(map.values()).sort((a, b) =>
       a.lastActivity < b.lastActivity ? 1 : -1,
     );
-    const hasDirect = directClicks + directBook + directBookings > 0;
+    const hasDirect = directViews + directClicks + directBookings > 0;
+    const totalViews =
+      list.reduce((s, r) => s + r.views, 0) + directViews;
+    const totalClicks =
+      list.reduce((s, r) => s + r.clicks, 0) + directClicks;
+    const totalBookings =
+      list.reduce((s, r) => s + r.bookings, 0) + directBookings;
     return {
       videoAggregates: list,
       directRow: hasDirect
-        ? { clicks: directClicks, bookButton: directBook, bookings: directBookings }
+        ? { views: directViews, clicks: directClicks, bookings: directBookings }
         : null,
+      totals: { views: totalViews, clicks: totalClicks, bookings: totalBookings },
     };
   }, [eventsQuery.data]);
 
-  // Resolve missing/unresolved video metadata via edge function.
   const queryClient = useQueryClient();
   useEffect(() => {
     const videos = videosQuery.data;
@@ -251,25 +270,43 @@ function TrackerAdmin() {
       <header className="flex flex-col gap-2">
         <h1 className="text-3xl">Tracker</h1>
         <p className="text-ink-muted text-sm max-w-prose">
-          Funnel attribution by YouTube video — clicks, book-button taps and
-          confirmed bookings for the selected window.
+          Funnel attribution by YouTube video — views, clicks and confirmed
+          bookings for the selected window.
         </p>
       </header>
 
       <div className="flex flex-wrap items-end gap-4">
-        <DateField
-          label="From"
-          value={fromDate}
-          onChange={(d) => d && setFromDate(d)}
-        />
-        <DateField
-          label="To"
-          value={toDate}
-          onChange={(d) => d && setToDate(d)}
-        />
-        <div className="text-xs text-ink-muted pb-2">
-          Europe/London — inclusive
+        <div className="flex flex-col gap-1">
+          <span className="text-xs text-ink-muted">Range</span>
+          <Select
+            value={preset}
+            onValueChange={(v) => setPreset(v as RangePreset)}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="30">Last 30 days</SelectItem>
+              <SelectItem value="90">Last 90 days</SelectItem>
+              <SelectItem value="360">Last 360 days</SelectItem>
+              <SelectItem value="custom">Custom</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+        {preset === "custom" && (
+          <>
+            <DateField
+              label="From"
+              value={fromDate}
+              onChange={(d) => d && setFromDate(d)}
+            />
+            <DateField
+              label="To"
+              value={toDate}
+              onChange={(d) => d && setToDate(d)}
+            />
+          </>
+        )}
       </div>
 
       {loading ? (
@@ -281,83 +318,93 @@ function TrackerAdmin() {
           </p>
         </div>
       ) : (
-        <div className="rounded-md border border-border overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-[var(--surface-raised)] text-ink-muted">
-              <tr className="text-left">
-                <th className="px-4 py-3 font-medium w-[88px]">Video</th>
-                <th className="px-4 py-3 font-medium">Title</th>
-                <th className="px-4 py-3 font-medium text-right w-[100px]">Clicks</th>
-                <th className="px-4 py-3 font-medium text-right w-[140px]">Book button</th>
-                <th className="px-4 py-3 font-medium text-right w-[110px]">Bookings</th>
-              </tr>
-            </thead>
-            <tbody>
-              {videoAggregates.map((row) => {
-                const meta = videosById.get(row.videoId);
-                const resolving = !meta || !meta.resolved_at;
-                const title = resolving
-                  ? null
-                  : meta!.title ?? "Untitled / unavailable";
-                return (
-                  <tr key={row.videoId} className="border-t border-border">
-                    <td className="px-4 py-3 align-middle">
-                      {meta?.thumbnail_url ? (
-                        <img
-                          src={meta.thumbnail_url}
-                          alt=""
-                          className="w-16 h-9 object-cover rounded"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="w-16 h-9 rounded bg-[var(--surface-raised)]" />
-                      )}
-                    </td>
-                    <td className="px-4 py-3 align-middle">
-                      {resolving ? (
-                        <span className="text-ink-muted">Resolving…</span>
-                      ) : (
+        <div className="flex flex-col gap-3">
+          <p className="text-sm text-ink-muted">
+            <span className="text-ink tabular-nums">{totals.views}</span> views
+            {" · "}
+            <span className="text-ink tabular-nums">{totals.clicks}</span> clicks
+            {" · "}
+            <span className="text-ink tabular-nums">{totals.bookings}</span>{" "}
+            bookings
+          </p>
+          <div className="rounded-md border border-border overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-[var(--surface-raised)] text-ink-muted">
+                <tr className="text-left">
+                  <th className="px-4 py-3 font-medium w-[120px]">Video</th>
+                  <th className="px-4 py-3 font-medium">Title</th>
+                  <th className="px-4 py-3 font-medium text-right w-[100px]">Views</th>
+                  <th className="px-4 py-3 font-medium text-right w-[100px]">Clicks</th>
+                  <th className="px-4 py-3 font-medium text-right w-[110px]">Bookings</th>
+                </tr>
+              </thead>
+              <tbody>
+                {videoAggregates.map((row) => {
+                  const meta = videosById.get(row.videoId);
+                  const resolving = !meta || !meta.resolved_at;
+                  const title = resolving
+                    ? "Resolving…"
+                    : meta!.title ?? "Untitled / unavailable";
+                  const href = `https://www.youtube.com/watch?v=${row.videoId}`;
+                  return (
+                    <tr key={row.videoId} className="border-t border-border">
+                      <td className="px-4 py-3 align-middle">
+                        {meta?.thumbnail_url ? (
+                          <img
+                            src={meta.thumbnail_url}
+                            alt=""
+                            className="w-24 h-[54px] object-cover rounded"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-24 h-[54px] rounded bg-[var(--surface-raised)]" />
+                        )}
+                      </td>
+                      <td className="px-4 py-3 align-middle">
                         <a
-                          href={`https://www.youtube.com/watch?v=${row.videoId}`}
+                          href={href}
                           target="_blank"
-                          rel="noreferrer"
-                          className="text-ink hover:underline"
+                          rel="noopener noreferrer"
+                          className={cn(
+                            "hover:underline",
+                            resolving ? "text-ink-muted" : "text-ink",
+                          )}
                         >
                           {title}
                         </a>
-                      )}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums">
+                        {row.views}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums">
+                        {row.clicks}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums">
+                        {row.bookings}
+                      </td>
+                    </tr>
+                  );
+                })}
+                {directRow && (
+                  <tr className="border-t border-border bg-[var(--surface-raised)]">
+                    <td className="px-4 py-3" />
+                    <td className="px-4 py-3 text-ink-muted italic">
+                      Direct / unattributed
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums">
-                      {row.clicks}
+                      {directRow.views}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums">
-                      {row.bookButton}
+                      {directRow.clicks}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums">
-                      {row.bookings}
+                      {directRow.bookings}
                     </td>
                   </tr>
-                );
-              })}
-              {directRow && (
-                <tr className="border-t border-border bg-[var(--surface-raised)]">
-                  <td className="px-4 py-3" />
-                  <td className="px-4 py-3 text-ink-muted italic">
-                    Direct / unattributed
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums">
-                    {directRow.clicks}
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums">
-                    {directRow.bookButton}
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums">
-                    {directRow.bookings}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
