@@ -162,7 +162,7 @@ function TrackerAdmin() {
     queryFn: async (): Promise<TrackedVideoRow[]> => {
       const { data, error } = await supabase
         .from("tracked_videos")
-        .select("video_id, title, thumbnail_url, resolved_at");
+        .select("video_id, title, thumbnail_url, resolved_at, view_count");
       if (error) throw error;
       return (data ?? []) as TrackedVideoRow[];
     },
