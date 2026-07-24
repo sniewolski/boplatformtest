@@ -82,6 +82,7 @@ type TrackedVideoRow = {
   title: string | null;
   thumbnail_url: string | null;
   resolved_at: string | null;
+  view_count: number | null;
 };
 
 type VideoAggregate = {
@@ -91,6 +92,17 @@ type VideoAggregate = {
   bookings: number;
   lastActivity: string;
 };
+
+function formatInt(n: number): string {
+  return n.toLocaleString("en-US");
+}
+
+function formatRatio(num: number, den: number | null | undefined): string {
+  if (!den || den <= 0 || !Number.isFinite(den)) return "—";
+  const pct = (num / den) * 100;
+  if (!Number.isFinite(pct)) return "—";
+  return `${pct.toFixed(1)}%`;
+}
 
 type RangePreset = "30" | "90" | "360" | "custom";
 
