@@ -304,6 +304,16 @@ export function AppShell({
                   Will AI
                 </Link>
               )}
+              {isAdmin && (
+                <Link
+                  to="/app/admin/tracker"
+                  className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-ink hover:bg-background transition-colors"
+                  activeProps={{ className: "bg-background font-medium" }}
+                >
+                  <Radio className="size-4" />
+                  Tracker
+                </Link>
+              )}
             </>
           )}
         </nav>
