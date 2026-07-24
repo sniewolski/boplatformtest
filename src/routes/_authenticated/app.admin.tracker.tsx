@@ -318,93 +318,100 @@ function TrackerAdmin() {
           </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
-          <p className="text-sm text-ink-muted">
-            <span className="text-ink tabular-nums">{totals.views}</span> Visits
-            {" · "}
-            <span className="text-ink tabular-nums">{totals.clicks}</span> Button Clicks
-            {" · "}
-            <span className="text-ink tabular-nums">{totals.bookings}</span>{" "}
-            Bookings
-          </p>
-          <div className="rounded-md border border-border overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-[var(--surface-raised)] text-ink-muted">
-                <tr className="text-left">
-                  <th className="px-4 py-3 font-medium w-[120px]">Video</th>
-                  <th className="px-4 py-3 font-medium">Title</th>
-                  <th className="px-4 py-3 font-medium text-right w-[100px]">Visits</th>
-                  <th className="px-4 py-3 font-medium text-right w-[100px]">Button Clicks</th>
-                  <th className="px-4 py-3 font-medium text-right w-[110px]">Bookings</th>
-                </tr>
-              </thead>
-              <tbody>
-                {videoAggregates.map((row) => {
-                  const meta = videosById.get(row.videoId);
-                  const resolving = !meta || !meta.resolved_at;
-                  const title = resolving
-                    ? "Resolving…"
-                    : meta!.title ?? "Untitled / unavailable";
-                  const href = `https://www.youtube.com/watch?v=${row.videoId}`;
-                  return (
-                    <tr key={row.videoId} className="border-t border-border">
-                      <td className="px-4 py-3 align-middle">
-                        {meta?.thumbnail_url ? (
-                          <img
-                            src={meta.thumbnail_url}
-                            alt=""
-                            className="w-24 h-[54px] object-cover rounded"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="w-24 h-[54px] rounded bg-[var(--surface-raised)]" />
+        <div className="rounded-md border border-border overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-[var(--surface-raised)] text-ink-muted">
+              <tr className="text-left">
+                <th className="px-4 py-3 font-medium w-[120px]">Category</th>
+                <th className="px-4 py-3 font-medium w-[120px]">Thumbnail</th>
+                <th className="px-4 py-3 font-medium">Title</th>
+                <th className="px-4 py-3 font-medium text-right w-[100px]">Visits</th>
+                <th className="px-4 py-3 font-medium text-right w-[100px]">Button Clicks</th>
+                <th className="px-4 py-3 font-medium text-right w-[110px]">Bookings</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-t border-border bg-[var(--surface-raised)] font-medium">
+                <td className="px-4 py-2">TOTAL</td>
+                <td className="px-4 py-2" />
+                <td className="px-4 py-2" />
+                <td className="px-4 py-2 text-right tabular-nums">
+                  {totals.views}
+                </td>
+                <td className="px-4 py-2 text-right tabular-nums">
+                  {totals.clicks}
+                </td>
+                <td className="px-4 py-2 text-right tabular-nums">
+                  {totals.bookings}
+                </td>
+              </tr>
+              {videoAggregates.map((row) => {
+                const meta = videosById.get(row.videoId);
+                const resolving = !meta || !meta.resolved_at;
+                const title = resolving
+                  ? "Resolving…"
+                  : meta!.title ?? "Untitled / unavailable";
+                const href = `https://www.youtube.com/watch?v=${row.videoId}`;
+                return (
+                  <tr key={row.videoId} className="border-t border-border">
+                    <td className="px-4 py-3 text-ink-muted">video</td>
+                    <td className="px-4 py-3 align-middle">
+                      {meta?.thumbnail_url ? (
+                        <img
+                          src={meta.thumbnail_url}
+                          alt=""
+                          className="w-24 h-[54px] object-cover rounded"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-24 h-[54px] rounded bg-[var(--surface-raised)]" />
+                      )}
+                    </td>
+                    <td className="px-4 py-3 align-middle">
+                      <a
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={cn(
+                          "hover:underline",
+                          resolving ? "text-ink-muted" : "text-ink",
                         )}
-                      </td>
-                      <td className="px-4 py-3 align-middle">
-                        <a
-                          href={href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={cn(
-                            "hover:underline",
-                            resolving ? "text-ink-muted" : "text-ink",
-                          )}
-                        >
-                          {title}
-                        </a>
-                      </td>
-                      <td className="px-4 py-3 text-right tabular-nums">
-                        {row.views}
-                      </td>
-                      <td className="px-4 py-3 text-right tabular-nums">
-                        {row.clicks}
-                      </td>
-                      <td className="px-4 py-3 text-right tabular-nums">
-                        {row.bookings}
-                      </td>
-                    </tr>
-                  );
-                })}
-                {directRow && (
-                  <tr className="border-t border-border bg-[var(--surface-raised)]">
-                    <td className="px-4 py-3" />
-                    <td className="px-4 py-3 text-ink-muted italic">
-                      Direct / unattributed
+                      >
+                        {title}
+                      </a>
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums">
-                      {directRow.views}
+                      {row.views}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums">
-                      {directRow.clicks}
+                      {row.clicks}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums">
-                      {directRow.bookings}
+                      {row.bookings}
                     </td>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                );
+              })}
+              {directRow && (
+                <tr className="border-t border-border bg-[var(--surface-raised)]">
+                  <td className="px-4 py-3 text-ink-muted">—</td>
+                  <td className="px-4 py-3" />
+                  <td className="px-4 py-3 text-ink-muted italic">
+                    Direct / unattributed
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums">
+                    {directRow.views}
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums">
+                    {directRow.clicks}
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums">
+                    {directRow.bookings}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
