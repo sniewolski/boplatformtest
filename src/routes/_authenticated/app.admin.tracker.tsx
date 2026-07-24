@@ -333,8 +333,8 @@ function TrackerAdmin() {
                 <tr className="text-left">
                   <th className="px-4 py-3 font-medium w-[120px]">Video</th>
                   <th className="px-4 py-3 font-medium">Title</th>
-                  <th className="px-4 py-3 font-medium text-right w-[100px]">Views</th>
-                  <th className="px-4 py-3 font-medium text-right w-[100px]">Clicks</th>
+                  <th className="px-4 py-3 font-medium text-right w-[100px]">Visits</th>
+                  <th className="px-4 py-3 font-medium text-right w-[100px]">Button Clicks</th>
                   <th className="px-4 py-3 font-medium text-right w-[110px]">Bookings</th>
                 </tr>
               </thead>
