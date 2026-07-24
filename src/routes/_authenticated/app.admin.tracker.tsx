@@ -82,6 +82,7 @@ type TrackedVideoRow = {
   title: string | null;
   thumbnail_url: string | null;
   resolved_at: string | null;
+  view_count: number | null;
 };
 
 type VideoAggregate = {
@@ -91,6 +92,17 @@ type VideoAggregate = {
   bookings: number;
   lastActivity: string;
 };
+
+function formatInt(n: number): string {
+  return n.toLocaleString("en-US");
+}
+
+function formatRatio(num: number, den: number | null | undefined): string {
+  if (!den || den <= 0 || !Number.isFinite(den)) return "—";
+  const pct = (num / den) * 100;
+  if (!Number.isFinite(pct)) return "—";
+  return `${pct.toFixed(1)}%`;
+}
 
 type RangePreset = "30" | "90" | "360" | "custom";
 
@@ -150,7 +162,7 @@ function TrackerAdmin() {
     queryFn: async (): Promise<TrackedVideoRow[]> => {
       const { data, error } = await supabase
         .from("tracked_videos")
-        .select("video_id, title, thumbnail_url, resolved_at");
+        .select("video_id, title, thumbnail_url, resolved_at, view_count");
       if (error) throw error;
       return (data ?? []) as TrackedVideoRow[];
     },
@@ -266,7 +278,7 @@ function TrackerAdmin() {
   const hasRows = videoAggregates.length > 0 || !!directRow;
 
   return (
-    <div className="app-content py-16 flex flex-col gap-8">
+    <div className="mx-auto w-full max-w-[1600px] px-6 py-16 flex flex-col gap-8">
       <header className="flex flex-col gap-2">
         <h1 className="text-3xl">Tracker</h1>
         <p className="text-ink-muted text-sm max-w-prose">
@@ -322,29 +334,48 @@ function TrackerAdmin() {
           <table className="w-full text-sm">
             <thead className="bg-[var(--surface-raised)] text-ink-muted">
               <tr className="text-left">
-                <th className="px-4 py-3 font-medium w-[120px]">Category</th>
+                <th className="px-4 py-3 font-medium w-[110px]">Category</th>
                 <th className="px-4 py-3 font-medium w-[120px]">Thumbnail</th>
                 <th className="px-4 py-3 font-medium">Title</th>
-                <th className="px-4 py-3 font-medium text-right w-[100px]">Visits</th>
-                <th className="px-4 py-3 font-medium text-right w-[100px]">Button Clicks</th>
-                <th className="px-4 py-3 font-medium text-right w-[110px]">Bookings</th>
+                <th className="px-4 py-3 font-medium text-right w-[110px]">Views</th>
+                <th className="px-4 py-3 font-medium text-right w-[90px]">Visits</th>
+                <th className="px-4 py-3 font-medium text-right w-[110px]">Button Clicks</th>
+                <th className="px-4 py-3 font-medium text-right w-[100px]">Bookings</th>
+                <th className="px-4 py-3 font-medium text-right w-[120px]">Views→Visits</th>
+                <th className="px-4 py-3 font-medium text-right w-[140px]">Visits→Bookings</th>
+                <th className="px-4 py-3 font-medium text-right w-[130px]">Views→Bookings</th>
               </tr>
             </thead>
             <tbody>
-              <tr className="border-t border-border bg-[var(--surface-raised)] font-medium">
-                <td className="px-4 py-2">TOTAL</td>
-                <td className="px-4 py-2" />
-                <td className="px-4 py-2" />
-                <td className="px-4 py-2 text-right tabular-nums">
-                  {totals.views}
-                </td>
-                <td className="px-4 py-2 text-right tabular-nums">
-                  {totals.clicks}
-                </td>
-                <td className="px-4 py-2 text-right tabular-nums">
-                  {totals.bookings}
-                </td>
-              </tr>
+              {(() => {
+                const totalYtViews = videoAggregates.reduce((s, r) => {
+                  const meta = videosById.get(r.videoId);
+                  return s + (meta?.view_count ?? 0);
+                }, 0);
+                const hasYtViews = totalYtViews > 0;
+                return (
+                  <tr className="border-t border-border bg-[var(--surface-raised)] font-medium">
+                    <td className="px-4 py-2">TOTAL</td>
+                    <td className="px-4 py-2" />
+                    <td className="px-4 py-2" />
+                    <td className="px-4 py-2 text-right tabular-nums">
+                      {hasYtViews ? formatInt(totalYtViews) : "—"}
+                    </td>
+                    <td className="px-4 py-2 text-right tabular-nums">{totals.views}</td>
+                    <td className="px-4 py-2 text-right tabular-nums">{totals.clicks}</td>
+                    <td className="px-4 py-2 text-right tabular-nums">{totals.bookings}</td>
+                    <td className="px-4 py-2 text-right tabular-nums">
+                      {formatRatio(totals.views, hasYtViews ? totalYtViews : 0)}
+                    </td>
+                    <td className="px-4 py-2 text-right tabular-nums">
+                      {formatRatio(totals.bookings, totals.views)}
+                    </td>
+                    <td className="px-4 py-2 text-right tabular-nums">
+                      {formatRatio(totals.bookings, hasYtViews ? totalYtViews : 0)}
+                    </td>
+                  </tr>
+                );
+              })()}
               {videoAggregates.map((row) => {
                 const meta = videosById.get(row.videoId);
                 const resolving = !meta || !meta.resolved_at;
@@ -352,6 +383,7 @@ function TrackerAdmin() {
                   ? "Resolving…"
                   : meta!.title ?? "Untitled / unavailable";
                 const href = `https://www.youtube.com/watch?v=${row.videoId}`;
+                const ytViews = meta?.view_count ?? null;
                 return (
                   <tr key={row.videoId} className="border-t border-border">
                     <td className="px-4 py-3 text-ink-muted">video</td>
@@ -381,13 +413,19 @@ function TrackerAdmin() {
                       </a>
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums">
-                      {row.views}
+                      {ytViews != null ? formatInt(ytViews) : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums">{row.views}</td>
+                    <td className="px-4 py-3 text-right tabular-nums">{row.clicks}</td>
+                    <td className="px-4 py-3 text-right tabular-nums">{row.bookings}</td>
+                    <td className="px-4 py-3 text-right tabular-nums">
+                      {formatRatio(row.views, ytViews)}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums">
-                      {row.clicks}
+                      {formatRatio(row.bookings, row.views)}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums">
-                      {row.bookings}
+                      {formatRatio(row.bookings, ytViews)}
                     </td>
                   </tr>
                 );
@@ -399,15 +437,15 @@ function TrackerAdmin() {
                   <td className="px-4 py-3 text-ink-muted italic">
                     Direct / unattributed
                   </td>
+                  <td className="px-4 py-3 text-right tabular-nums">—</td>
+                  <td className="px-4 py-3 text-right tabular-nums">{directRow.views}</td>
+                  <td className="px-4 py-3 text-right tabular-nums">{directRow.clicks}</td>
+                  <td className="px-4 py-3 text-right tabular-nums">{directRow.bookings}</td>
+                  <td className="px-4 py-3 text-right tabular-nums">—</td>
                   <td className="px-4 py-3 text-right tabular-nums">
-                    {directRow.views}
+                    {formatRatio(directRow.bookings, directRow.views)}
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums">
-                    {directRow.clicks}
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums">
-                    {directRow.bookings}
-                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums">—</td>
                 </tr>
               )}
             </tbody>
