@@ -13,7 +13,7 @@ const CORS = {
 
 const JSON_HEADERS = { "Content-Type": "application/json", ...CORS };
 
-const VIEWS_TTL_MS = 12 * 60 * 60 * 1000;
+const VIEWS_TTL_MS = 60 * 60 * 1000;
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
