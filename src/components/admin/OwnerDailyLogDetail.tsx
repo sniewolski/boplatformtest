@@ -237,7 +237,7 @@ export function OwnerDailyLogDetail({ ownerId }: { ownerId: string }) {
                     <TableCell className={num}>
                       {logged ? row!.connects : ""}
                     </TableCell>
-                    <TableCell className={num}>
+                    <TableCell className={revNum}>
                       {!logged ? (
                         ""
                       ) : revenue > 0 ? (
