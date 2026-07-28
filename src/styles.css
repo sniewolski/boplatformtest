@@ -230,3 +230,19 @@
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Daily Log calendar tiles — interactive (non-future) days only. */
+.daily-log-tile {
+  transition:
+    background-color 120ms var(--ease-out),
+    transform 120ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .daily-log-tile:hover {
+    background-color: var(--surface-raised);
+  }
+}
+.daily-log-tile:active {
+  transform: scale(0.97);
+}
+
