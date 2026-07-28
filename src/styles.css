@@ -246,3 +246,21 @@
   transform: scale(0.97);
 }
 
+
+/* Daily Log — mood toggle press feedback. */
+.daily-log-mood {
+  transition:
+    background-color 120ms var(--ease-out),
+    transform 120ms var(--ease-out);
+}
+.daily-log-mood:active {
+  transform: scale(0.97);
+}
+
+/* Daily Log — the entry dialog flies from its tile via the View Transitions
+   API; honour reduced motion by cancelling every transition group. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*) {
+    animation: none;
+  }
+}
