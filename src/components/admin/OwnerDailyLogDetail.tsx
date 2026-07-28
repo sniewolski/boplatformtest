@@ -177,7 +177,12 @@ export function OwnerDailyLogDetail({ ownerId }: { ownerId: string }) {
     const colWidths = ["22%", "10%", "10%", "11%", "11%", "16%", "10%", "10%"];
 
     body = (
-      <Table>
+      <Table className="table-fixed">
+        <colgroup>
+          {colWidths.map((w, i) => (
+            <col key={i} style={{ width: w }} />
+          ))}
+        </colgroup>
         <TableHeader className="sticky top-0 z-20 bg-background">
           <TableRow>
             <TableHead>Date</TableHead>
