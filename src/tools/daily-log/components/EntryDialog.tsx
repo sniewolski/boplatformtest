@@ -144,7 +144,7 @@ export function DailyLogEntryDialog({
             <div
               role="radiogroup"
               aria-label="Mood"
-              className="daily-log-mood grid grid-cols-3 overflow-hidden rounded-lg border border-[var(--border-token)]"
+              className="daily-log-mood flex w-full"
             >
               {MOODS.map(({ value, label, ariaLabel, Icon }, i) => {
                 const selected = draft.mood === value;
@@ -162,11 +162,13 @@ export function DailyLogEntryDialog({
                       }))
                     }
                     className={[
-                      "flex flex-col items-center justify-center gap-1.5 py-3.5 outline-none transition-colors",
-                      i > 0 ? "border-l border-[var(--border-token)]" : "",
+                      "flex flex-1 flex-col items-center justify-center gap-1.5 border py-3.5 outline-none transition-colors",
+                      i === 0 ? "rounded-l-lg" : "",
+                      i === 1 ? "rounded-none -ml-px" : "-ml-px",
+                      i === 2 ? "rounded-r-lg" : "",
                       selected
-                        ? "bg-[var(--surface-raised)] text-ink ring-1 ring-inset ring-[var(--ink)]"
-                        : "bg-transparent text-ink-muted",
+                        ? "relative z-10 border-[var(--ink)] bg-[var(--surface-raised)] text-ink"
+                        : "border-[var(--border-token)] bg-transparent text-ink-muted hover:bg-[var(--surface-raised)]",
                     ].join(" ")}
                   >
                     <Icon className="h-5 w-5" strokeWidth={1.5} />
