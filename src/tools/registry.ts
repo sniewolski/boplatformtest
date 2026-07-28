@@ -50,9 +50,9 @@ export type ToolManifest = {
 };
 
 export const toolRegistry: ToolManifest[] = [
+  dailyLogManifest,
   sellingSystemsAuditManifest,
   salescodeManifest,
   sopsManifest,
   willAiManifest,
-  dailyLogManifest,
 ];
