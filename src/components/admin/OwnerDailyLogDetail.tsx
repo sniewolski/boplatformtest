@@ -7,7 +7,6 @@ import {
   type AdminDailyLogRow,
 } from "@/tools/daily-log/admin.functions";
 import { formatCurrency } from "@/lib/format-currency";
-import { useCurrency } from "@/core/settings/useCurrency";
 import {
   Table,
   TableBody,
@@ -30,7 +29,6 @@ const MOOD_ICONS = {
  */
 export function OwnerDailyLogDetail({ ownerId }: { ownerId: string }) {
   const fetchLog = useServerFn(getDailyLogForOwner);
-  const { currency } = useCurrency();
   const log = useQuery({
     queryKey: ["admin", "daily-log", ownerId],
     queryFn: () => fetchLog({ data: { ownerId } }),
@@ -45,8 +43,9 @@ export function OwnerDailyLogDetail({ ownerId }: { ownerId: string }) {
     );
   }
 
+  const { entries, currency } = log.data!;
   const byDate = new Map<string, AdminDailyLogRow>();
-  for (const row of log.data ?? []) byDate.set(row.entry_date, row);
+  for (const row of entries) byDate.set(row.entry_date, row);
 
   const today = new Date();
   const days = Array.from({ length: 30 }, (_, i) => {
@@ -106,7 +105,7 @@ export function OwnerDailyLogDetail({ ownerId }: { ownerId: string }) {
             {totals.connects}
           </TableCell>
           <TableCell className="text-right tabular-nums">
-            {currency ? formatCurrency(totals.revenue, currency) : "—"}
+            {formatCurrency(totals.revenue, currency)}
           </TableCell>
           <TableCell className="text-center tabular-nums">
             {totals.mit}
@@ -136,11 +135,7 @@ export function OwnerDailyLogDetail({ ownerId }: { ownerId: string }) {
                 {row ? row.connects : ""}
               </TableCell>
               <TableCell className="text-right tabular-nums">
-                {row
-                  ? currency
-                    ? formatCurrency(Number(row.revenue ?? 0), currency)
-                    : String(row.revenue ?? 0)
-                  : ""}
+                {row ? formatCurrency(Number(row.revenue ?? 0), currency) : ""}
               </TableCell>
               <TableCell className="text-center">
                 {row?.mit_done ? (

@@ -7,6 +7,7 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { CurrencyCode } from "@/lib/format-currency";
 
 async function assertElevated(supabase: any, userId: string) {
   const { data, error } = await supabase.rpc("is_elevated", { _user_id: userId });
@@ -25,10 +26,15 @@ export type AdminDailyLogRow = {
   mood: string | null;
 };
 
+export type AdminDailyLogResult = {
+  entries: AdminDailyLogRow[];
+  currency: CurrencyCode;
+};
+
 export const getDailyLogForOwner = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { ownerId: string }) => data)
-  .handler(async ({ data, context }): Promise<AdminDailyLogRow[]> => {
+  .handler(async ({ data, context }): Promise<AdminDailyLogResult> => {
     await assertElevated(context.supabase, context.userId);
 
     const { supabaseAdmin } = await import(
@@ -49,5 +55,19 @@ export const getDailyLogForOwner = createServerFn({ method: "GET" })
       .order("entry_date", { ascending: false });
     if (error) throw new Error(error.message);
 
-    return (rows ?? []) as unknown as AdminDailyLogRow[];
+    // Read the viewed owner's currency (not the session user's) so admins and
+    // mentors see revenue labelled in the owner's own currency. Falls back to
+    // "USD" when the owner has no owner_settings row, matching useCurrency().
+    const { data: settings } = await supabaseAdmin
+      .from("owner_settings" as any)
+      .select("currency")
+      .eq("owner_id", data.ownerId)
+      .maybeSingle();
+    const currency: CurrencyCode =
+      ((settings as any)?.currency as CurrencyCode | null) ?? "USD";
+
+    return {
+      entries: (rows ?? []) as unknown as AdminDailyLogRow[],
+      currency,
+    };
   });
