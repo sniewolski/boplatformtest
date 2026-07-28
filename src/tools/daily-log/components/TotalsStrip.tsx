@@ -21,20 +21,27 @@ export function TotalsStrip({ entries }: { entries: DailyLogEntry[] }) {
     entries.filter((e) => e.mood === m).length;
 
   return (
-    <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-border pt-4">
-      <Pair label="Emails sent" value={String(emails)} />
-      <Pair label="Calls made" value={String(calls)} />
-      <Pair label="Connects" value={String(connects)} />
-      <Pair label="Meetings booked" value={String(meetings)} />
+    <div
+      className="grid items-center border-t border-border pt-4"
+      style={{
+        gridTemplateColumns:
+          "1fr 1fr 1fr 1.2fr 1.6fr 1.2fr 1.4fr",
+      }}
+    >
+      <Pair label="Emails sent" value={String(emails)} num />
+      <Pair label="Calls made" value={String(calls)} num />
+      <Pair label="Connects" value={String(connects)} num />
+      <Pair label="Meetings booked" value={String(meetings)} num />
       <Pair
         label="Revenue"
         value={currency ? formatCurrency(revenue, currency) : String(revenue)}
+        num
       />
-      <Pair label="MIT days hit" value={String(mitDays)} />
+      <Pair label="MIT days hit" value={String(mitDays)} num />
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 whitespace-nowrap">
         <span className="text-xs uppercase tracking-wide text-ink-muted">Mood</span>
-        <span className="flex items-center gap-3 text-sm text-ink font-medium">
+        <span className="flex items-center gap-3 text-sm text-ink font-medium tabular-nums whitespace-nowrap">
           <span className="flex items-center gap-1">
             <Smile className="h-4 w-4 text-ink-muted" strokeWidth={1.5} aria-label="Good days" />
             {moodCount("good")}
