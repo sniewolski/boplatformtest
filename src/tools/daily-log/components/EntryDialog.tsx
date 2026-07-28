@@ -148,10 +148,9 @@ export function DailyLogEntryDialog({
                       "flex flex-col items-center justify-center gap-1 py-2.5 outline-none transition-colors",
                       i > 0 ? "border-l border-border" : "",
                       selected
-                        ? "bg-[var(--surface-raised)] border-[var(--ink)] text-ink"
+                        ? "bg-[var(--surface-raised)] text-ink shadow-[inset_0_0_0_1px_var(--ink)]"
                         : "bg-transparent text-ink-muted",
                     ].join(" ")}
-                    style={selected ? { borderWidth: "1px" } : undefined}
                   >
                     <Icon className="h-5 w-5" strokeWidth={1.5} />
                     <span className="text-xs leading-none">{label}</span>
