@@ -18,6 +18,7 @@ import { sellingSystemsAuditManifest } from "./selling-systems-audit/manifest";
 import { salescodeManifest } from "./salescode/manifest";
 import { sopsManifest } from "./sops/manifest";
 import { willAiManifest } from "./will-ai/manifest";
+import { dailyLogManifest } from "./daily-log/manifest";
 
 export type ToolNavEntry = {
   label: string;
