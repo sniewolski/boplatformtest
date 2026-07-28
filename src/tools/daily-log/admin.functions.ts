@@ -33,7 +33,9 @@ export type AdminDailyLogResult = {
 
 export const getDailyLogForOwner = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { ownerId: string }) => data)
+  .inputValidator(
+    (data: { ownerId: string; monthStart: string; monthEnd: string }) => data,
+  )
   .handler(async ({ data, context }): Promise<AdminDailyLogResult> => {
     await assertElevated(context.supabase, context.userId);
 
@@ -41,17 +43,14 @@ export const getDailyLogForOwner = createServerFn({ method: "GET" })
       "@/integrations/supabase/client.server"
     );
 
-    const from = new Date();
-    from.setDate(from.getDate() - 29);
-    const fromStr = `${from.getFullYear()}-${String(from.getMonth() + 1).padStart(2, "0")}-${String(from.getDate()).padStart(2, "0")}`;
-
     const { data: rows, error } = await supabaseAdmin
       .from("daily_log_entries" as any)
       .select(
         "entry_date, emails_sent, calls_made, connects, meetings_booked, revenue, mit_done, mood",
       )
       .eq("owner_id", data.ownerId)
-      .gte("entry_date", fromStr)
+      .gte("entry_date", data.monthStart)
+      .lte("entry_date", data.monthEnd)
       .order("entry_date", { ascending: false });
     if (error) throw new Error(error.message);
 
