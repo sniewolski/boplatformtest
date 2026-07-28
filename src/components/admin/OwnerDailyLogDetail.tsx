@@ -105,7 +105,7 @@ export function OwnerDailyLogDetail({ ownerId }: { ownerId: string }) {
             {totals.connects}
           </TableCell>
           <TableCell className="text-right tabular-nums">
-            {currency ? formatCurrency(totals.revenue, currency) : "—"}
+            {formatCurrency(totals.revenue, currency)}
           </TableCell>
           <TableCell className="text-center tabular-nums">
             {totals.mit}
@@ -135,11 +135,7 @@ export function OwnerDailyLogDetail({ ownerId }: { ownerId: string }) {
                 {row ? row.connects : ""}
               </TableCell>
               <TableCell className="text-right tabular-nums">
-                {row
-                  ? currency
-                    ? formatCurrency(Number(row.revenue ?? 0), currency)
-                    : String(row.revenue ?? 0)
-                  : ""}
+                {row ? formatCurrency(Number(row.revenue ?? 0), currency) : ""}
               </TableCell>
               <TableCell className="text-center">
                 {row?.mit_done ? (
