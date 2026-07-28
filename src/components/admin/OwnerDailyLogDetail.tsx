@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -194,9 +194,8 @@ export function OwnerDailyLogDetail({ ownerId }: { ownerId: string }) {
           </TableRow>
 
           {weeks.map((week) => (
-            <>
+            <Fragment key={week.wk}>
               <TableRow
-                key={week.wk}
                 className="border-t border-t-[var(--border-strong)] font-medium text-ink"
               >
                 <TableCell className="whitespace-nowrap">
@@ -265,7 +264,7 @@ export function OwnerDailyLogDetail({ ownerId }: { ownerId: string }) {
                   </TableRow>
                 );
               })}
-            </>
+            </Fragment>
           ))}
         </TableBody>
       </Table>
