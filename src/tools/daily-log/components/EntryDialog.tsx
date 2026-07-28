@@ -12,7 +12,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useCurrency } from "@/core/settings/useCurrency";
 import { currencySymbol } from "@/lib/format-currency";
 import type { DailyLogDraft, DailyLogEntry, Mood } from "../data/useDailyLog";
@@ -34,10 +33,10 @@ const NUMERIC_FIELDS: Array<{ key: keyof DailyLogDraft; label: string }> = [
   { key: "meetings_booked", label: "Meetings booked" },
 ];
 
-const MOODS: Array<{ value: Mood; label: string; Icon: typeof Frown }> = [
-  { value: "bad", label: "Bad day", Icon: Frown },
-  { value: "neutral", label: "Neutral day", Icon: Meh },
-  { value: "good", label: "Good day", Icon: Smile },
+const MOODS: Array<{ value: Mood; label: string; ariaLabel: string; Icon: typeof Frown }> = [
+  { value: "bad", label: "Bad", ariaLabel: "Bad day", Icon: Frown },
+  { value: "neutral", label: "Neutral", ariaLabel: "Neutral day", Icon: Meh },
+  { value: "good", label: "Good", ariaLabel: "Good day", Icon: Smile },
 ];
 
 function titleFor(date: Date) {
@@ -109,22 +108,79 @@ export function DailyLogEntryDialog({
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
-          {NUMERIC_FIELDS.map(({ key, label }) => (
-            <div key={key} className="flex flex-col gap-1.5">
-              <label htmlFor={`dl-${key}`} className="text-sm text-ink-muted">
-                {label}
-              </label>
-              <Input
-                id={`dl-${key}`}
-                type="number"
-                inputMode="numeric"
-                min={0}
-                value={String(draft[key] as number)}
-                onChange={(e) => setNum(key, e.target.value)}
-              />
-            </div>
-          ))}
+          {/* 1. Most important task done */}
+          <div className="flex items-center gap-2.5">
+            <Checkbox
+              id="dl-mit"
+              checked={draft.mit_done}
+              onCheckedChange={(v) => setDraft((d) => ({ ...d, mit_done: v === true }))}
+              className="data-[state=checked]:!bg-[var(--ink)] data-[state=checked]:!border-[var(--ink)] data-[state=checked]:!text-[var(--white)]"
+            />
+            <label htmlFor="dl-mit" className="text-sm text-ink cursor-pointer">
+              Most important task done
+            </label>
+          </div>
 
+          {/* 2. Mood — segmented control */}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm text-ink-muted">Mood</span>
+            <div
+              role="radiogroup"
+              aria-label="Mood"
+              className="daily-log-mood grid grid-cols-3 overflow-hidden rounded-lg border border-border"
+            >
+              {MOODS.map(({ value, label, ariaLabel, Icon }, i) => {
+                const selected = draft.mood === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    aria-label={ariaLabel}
+                    onClick={() =>
+                      setDraft((d) => ({
+                        ...d,
+                        mood: d.mood === value ? null : value,
+                      }))
+                    }
+                    className={[
+                      "flex flex-col items-center justify-center gap-1 py-2.5 outline-none transition-colors",
+                      i > 0 ? "border-l border-border" : "",
+                      selected
+                        ? "bg-[var(--surface-raised)] border-[var(--ink)] text-ink"
+                        : "bg-transparent text-ink-muted",
+                    ].join(" ")}
+                    style={selected ? { borderWidth: "1px" } : undefined}
+                  >
+                    <Icon className="h-5 w-5" strokeWidth={1.5} />
+                    <span className="text-xs leading-none">{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 3–6. Counters — 2×2 grid */}
+          <div className="grid grid-cols-2 gap-3">
+            {NUMERIC_FIELDS.map(({ key, label }) => (
+              <div key={key} className="flex flex-col gap-1.5">
+                <label htmlFor={`dl-${key}`} className="text-sm text-ink-muted">
+                  {label}
+                </label>
+                <Input
+                  id={`dl-${key}`}
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  value={String(draft[key] as number)}
+                  onChange={(e) => setNum(key, e.target.value)}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* 7. Revenue — full width */}
           <div className="flex flex-col gap-1.5">
             <label htmlFor="dl-revenue" className="text-sm text-ink-muted">
               Revenue
@@ -144,40 +200,6 @@ export function DailyLogEntryDialog({
                 onChange={(e) => setNum("revenue", e.target.value, true)}
               />
             </div>
-          </div>
-
-          <div className="flex items-center gap-2.5">
-            <Checkbox
-              id="dl-mit"
-              checked={draft.mit_done}
-              onCheckedChange={(v) => setDraft((d) => ({ ...d, mit_done: v === true }))}
-            />
-            <label htmlFor="dl-mit" className="text-sm text-ink cursor-pointer">
-              Most important task done
-            </label>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <span className="text-sm text-ink-muted">Mood</span>
-            <ToggleGroup
-              type="single"
-              value={draft.mood ?? ""}
-              onValueChange={(v) =>
-                setDraft((d) => ({ ...d, mood: v ? (v as Mood) : null }))
-              }
-              className="justify-start gap-2"
-            >
-              {MOODS.map(({ value, label, Icon }) => (
-                <ToggleGroupItem
-                  key={value}
-                  value={value}
-                  aria-label={label}
-                  className="daily-log-mood h-10 w-10 rounded-lg border border-border text-ink-muted data-[state=on]:bg-[var(--ink)] data-[state=on]:text-[var(--white)]"
-                >
-                  <Icon className="h-5 w-5" strokeWidth={1.5} />
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
           </div>
         </div>
 
