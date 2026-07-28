@@ -158,6 +158,7 @@ export function OwnerDailyLogDetail({ ownerId }: { ownerId: string }) {
     );
 
     const num = "text-right tabular-nums";
+    const revNum = "text-right tabular-nums whitespace-nowrap";
 
     const totalCells = (t: Totals) => (
       <>
@@ -165,7 +166,7 @@ export function OwnerDailyLogDetail({ ownerId }: { ownerId: string }) {
         <TableCell className={num}>{t.calls_made}</TableCell>
         <TableCell className={num}>{t.meetings_booked}</TableCell>
         <TableCell className={num}>{t.connects}</TableCell>
-        <TableCell className={num}>
+        <TableCell className={revNum}>
           {formatCurrency(t.revenue, currency)}
         </TableCell>
         <TableCell className="text-center tabular-nums">{t.mit}</TableCell>
@@ -173,8 +174,15 @@ export function OwnerDailyLogDetail({ ownerId }: { ownerId: string }) {
       </>
     );
 
+    const colWidths = ["22%", "10%", "10%", "11%", "11%", "16%", "10%", "10%"];
+
     body = (
-      <Table>
+      <Table className="table-fixed">
+        <colgroup>
+          {colWidths.map((w, i) => (
+            <col key={i} style={{ width: w }} />
+          ))}
+        </colgroup>
         <TableHeader className="sticky top-0 z-20 bg-background">
           <TableRow>
             <TableHead>Date</TableHead>
@@ -229,7 +237,7 @@ export function OwnerDailyLogDetail({ ownerId }: { ownerId: string }) {
                     <TableCell className={num}>
                       {logged ? row!.connects : ""}
                     </TableCell>
-                    <TableCell className={num}>
+                    <TableCell className={revNum}>
                       {!logged ? (
                         ""
                       ) : revenue > 0 ? (
