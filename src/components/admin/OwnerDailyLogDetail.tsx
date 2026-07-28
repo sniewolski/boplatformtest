@@ -29,7 +29,6 @@ const MOOD_ICONS = {
  */
 export function OwnerDailyLogDetail({ ownerId }: { ownerId: string }) {
   const fetchLog = useServerFn(getDailyLogForOwner);
-  const { currency } = useCurrency();
   const log = useQuery({
     queryKey: ["admin", "daily-log", ownerId],
     queryFn: () => fetchLog({ data: { ownerId } }),
@@ -44,8 +43,9 @@ export function OwnerDailyLogDetail({ ownerId }: { ownerId: string }) {
     );
   }
 
+  const { entries, currency } = log.data!;
   const byDate = new Map<string, AdminDailyLogRow>();
-  for (const row of log.data ?? []) byDate.set(row.entry_date, row);
+  for (const row of entries) byDate.set(row.entry_date, row);
 
   const today = new Date();
   const days = Array.from({ length: 30 }, (_, i) => {
