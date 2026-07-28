@@ -211,7 +211,7 @@ export function DailyLogCalendar({ segment }: { segment?: string }) {
                 "h-20 rounded-xl border p-3 flex flex-col items-start text-left",
                 "text-ink daily-log-tile cursor-pointer",
                 logged
-                  ? "bg-[var(--surface-raised)] border-[var(--border-strong)]"
+                  ? "bg-[var(--border-token)] border-[var(--border-strong)]"
                   : "bg-background border-border",
                 isToday ? "ring-1 ring-[var(--red)]" : "",
               ].join(" ")}
