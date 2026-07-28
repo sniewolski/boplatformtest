@@ -121,7 +121,7 @@ export function DailyLogEntryDialog({
               "transition-transform duration-[120ms] ease-[var(--ease-out)]",
               "active:scale-[0.97] motion-reduce:transition-none motion-reduce:active:scale-100",
               draft.mit_done
-                ? "bg-[var(--surface-raised)] ring-1 ring-inset ring-[var(--ink)]"
+                ? "bg-[var(--surface-raised)] border border-[var(--ink)]"
                 : "bg-transparent border border-[var(--border-token)] hover:bg-[var(--surface-raised)]",
             ].join(" ")}
           >
@@ -129,7 +129,7 @@ export function DailyLogEntryDialog({
               className={[
                 "flex h-5 w-5 shrink-0 items-center justify-center rounded transition-colors",
                 draft.mit_done
-                  ? "bg-[var(--surface-raised)] text-[var(--ink)] ring-1 ring-inset ring-[var(--ink)]"
+                  ? "bg-[var(--surface-raised)] text-[var(--ink)] border border-[var(--ink)]"
                   : "border border-[var(--border-token)] bg-transparent text-transparent",
               ].join(" ")}
             >
