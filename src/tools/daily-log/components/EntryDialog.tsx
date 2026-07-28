@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { format, isSameYear } from "date-fns";
-import { Check, Frown, Meh, Smile } from "lucide-react";
+import { Frown, Meh, Smile } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useCurrency } from "@/core/settings/useCurrency";
 import { currencySymbol } from "@/lib/format-currency";
 import type { DailyLogDraft, DailyLogEntry, Mood } from "../data/useDailyLog";
@@ -28,8 +29,8 @@ const EMPTY: DailyLogDraft = {
 const NUMERIC_FIELDS: Array<{ key: keyof DailyLogDraft; label: string }> = [
   { key: "emails_sent", label: "Emails sent" },
   { key: "calls_made", label: "Calls made" },
-  { key: "meetings_booked", label: "Meetings booked" },
   { key: "connects", label: "Connects" },
+  { key: "meetings_booked", label: "Meetings booked" },
 ];
 
 const MOODS: Array<{ value: Mood; label: string; ariaLabel: string; Icon: typeof Frown }> = [
@@ -107,32 +108,18 @@ export function DailyLogEntryDialog({
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
-          {/* 1. Most important task done — full-width target, mirrors a mood segment */}
-          <button
-            type="button"
-            role="checkbox"
-            aria-checked={draft.mit_done}
-            aria-label="Most important task done"
-            onClick={() => setDraft((d) => ({ ...d, mit_done: !d.mit_done }))}
-            className={[
-              "flex w-full items-center gap-3 rounded-lg border border-border px-3 py-3.5 text-left",
-              "transition-[background-color,transform] duration-[120ms] ease-[var(--ease-out)]",
-              "active:scale-[0.97] motion-reduce:transition-none motion-reduce:active:scale-100",
-              draft.mit_done
-                ? "bg-[var(--surface-raised)] shadow-[inset_0_0_0_1px_var(--ink)]"
-                : "bg-transparent [@media(hover:hover)and(pointer:fine)]:hover:bg-[var(--surface-raised)]",
-            ].join(" ")}
-          >
-            <span
-              className={[
-                "grid h-5 w-5 shrink-0 place-content-center rounded-sm border",
-                draft.mit_done ? "border-[var(--ink)]" : "border-border",
-              ].join(" ")}
-            >
-              {draft.mit_done && <Check className="h-4 w-4 text-[var(--ink)]" strokeWidth={2.5} />}
-            </span>
-            <span className="text-sm text-ink">Most important task done</span>
-          </button>
+          {/* 1. Most important task done */}
+          <div className="flex items-center gap-2.5">
+            <Checkbox
+              id="dl-mit"
+              checked={draft.mit_done}
+              onCheckedChange={(v) => setDraft((d) => ({ ...d, mit_done: v === true }))}
+              className="data-[state=checked]:!bg-[var(--ink)] data-[state=checked]:!border-[var(--ink)] data-[state=checked]:!text-[var(--white)]"
+            />
+            <label htmlFor="dl-mit" className="text-sm text-ink cursor-pointer">
+              Most important task done
+            </label>
+          </div>
 
           {/* 2. Mood — segmented control */}
           <div className="flex flex-col gap-1.5">
@@ -158,7 +145,7 @@ export function DailyLogEntryDialog({
                       }))
                     }
                     className={[
-                      "flex flex-col items-center justify-center gap-1.5 py-3.5 outline-none transition-colors",
+                      "flex flex-col items-center justify-center gap-1 py-2.5 outline-none transition-colors",
                       i > 0 ? "border-l border-border" : "",
                       selected
                         ? "bg-[var(--surface-raised)] text-ink shadow-[inset_0_0_0_1px_var(--ink)]"
