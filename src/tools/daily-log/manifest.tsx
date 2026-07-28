@@ -1,6 +1,7 @@
 import { CalendarRange } from "lucide-react";
 import type { ToolManifest } from "../registry";
 import { DailyLogApp } from "./routes/App";
+import { DashboardWidget as DailyLogDashboardWidget } from "./components/DashboardWidget";
 
 export const dailyLogManifest: ToolManifest = {
   key: "daily-log",
@@ -12,5 +13,6 @@ export const dailyLogManifest: ToolManifest = {
     icon: CalendarRange,
     navGroup: "coaching",
   },
+  dashboardWidget: { render: () => <DailyLogDashboardWidget /> },
   Component: DailyLogApp,
 };
