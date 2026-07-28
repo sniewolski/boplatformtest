@@ -60,11 +60,23 @@ export function TotalsStrip({ entries }: { entries: DailyLogEntry[] }) {
   );
 }
 
-function Pair({ label, value }: { label: string; value: string }) {
+function Pair({
+  label,
+  value,
+  num = false,
+}: {
+  label: string;
+  value: string;
+  num?: boolean;
+}) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 whitespace-nowrap">
       <span className="text-xs uppercase tracking-wide text-ink-muted">{label}</span>
-      <span className="text-sm text-ink font-medium">{value}</span>
+      <span
+        className={`text-sm text-ink font-medium ${num ? "tabular-nums" : ""}`}
+      >
+        {value}
+      </span>
     </div>
   );
 }
