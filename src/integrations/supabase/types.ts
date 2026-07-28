@@ -184,6 +184,51 @@ export type Database = {
           },
         ]
       }
+      daily_log_entries: {
+        Row: {
+          calls_made: number
+          connects: number
+          created_at: string
+          emails_sent: number
+          entry_date: string
+          id: string
+          meetings_booked: number
+          mit_done: boolean
+          mood: string | null
+          owner_id: string
+          revenue: number
+          updated_at: string
+        }
+        Insert: {
+          calls_made?: number
+          connects?: number
+          created_at?: string
+          emails_sent?: number
+          entry_date: string
+          id?: string
+          meetings_booked?: number
+          mit_done?: boolean
+          mood?: string | null
+          owner_id: string
+          revenue?: number
+          updated_at?: string
+        }
+        Update: {
+          calls_made?: number
+          connects?: number
+          created_at?: string
+          emails_sent?: number
+          entry_date?: string
+          id?: string
+          meetings_booked?: number
+          mit_done?: boolean
+          mood?: string | null
+          owner_id?: string
+          revenue?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
