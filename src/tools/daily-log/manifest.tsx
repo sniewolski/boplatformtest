@@ -13,5 +13,6 @@ export const dailyLogManifest: ToolManifest = {
     icon: CalendarRange,
     navGroup: "coaching",
   },
+  dashboardWidget: { render: () => <DailyLogDashboardWidget /> },
   Component: DailyLogApp,
 };
