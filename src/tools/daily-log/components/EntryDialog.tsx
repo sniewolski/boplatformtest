@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { format, isSameYear } from "date-fns";
-import { Frown, Meh, Smile } from "lucide-react";
+import { Check, Frown, Meh, Smile } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useCurrency } from "@/core/settings/useCurrency";
 import { currencySymbol } from "@/lib/format-currency";
 import type { DailyLogDraft, DailyLogEntry, Mood } from "../data/useDailyLog";
@@ -26,11 +25,14 @@ const EMPTY: DailyLogDraft = {
   mood: null,
 };
 
+// Order matches the target grid rows:
+//   row 1: Emails sent | Calls made
+//   row 2: Meetings booked | Connects
 const NUMERIC_FIELDS: Array<{ key: keyof DailyLogDraft; label: string }> = [
   { key: "emails_sent", label: "Emails sent" },
   { key: "calls_made", label: "Calls made" },
-  { key: "connects", label: "Connects" },
   { key: "meetings_booked", label: "Meetings booked" },
+  { key: "connects", label: "Connects" },
 ];
 
 const MOODS: Array<{ value: Mood; label: string; ariaLabel: string; Icon: typeof Frown }> = [
@@ -108,18 +110,33 @@ export function DailyLogEntryDialog({
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
-          {/* 1. Most important task done */}
-          <div className="flex items-center gap-2.5">
-            <Checkbox
-              id="dl-mit"
-              checked={draft.mit_done}
-              onCheckedChange={(v) => setDraft((d) => ({ ...d, mit_done: v === true }))}
-              className="data-[state=checked]:!bg-[var(--ink)] data-[state=checked]:!border-[var(--ink)] data-[state=checked]:!text-[var(--white)]"
-            />
-            <label htmlFor="dl-mit" className="text-sm text-ink cursor-pointer">
-              Most important task done
-            </label>
-          </div>
+          {/* 1. Most important task done — full-width clickable row */}
+          <button
+            type="button"
+            role="checkbox"
+            aria-checked={draft.mit_done}
+            onClick={() => setDraft((d) => ({ ...d, mit_done: !d.mit_done }))}
+            className={[
+              "flex w-full items-center gap-2.5 rounded-lg px-3 py-3.5 text-left outline-none",
+              "transition-transform duration-[120ms] ease-[var(--ease-out)]",
+              "active:scale-[0.97] motion-reduce:transition-none motion-reduce:active:scale-100",
+              draft.mit_done
+                ? "bg-[var(--surface-raised)] ring-1 ring-inset ring-[var(--ink)]"
+                : "bg-transparent border border-[var(--border-token)] hover:bg-[var(--surface-raised)]",
+            ].join(" ")}
+          >
+            <span
+              className={[
+                "flex h-5 w-5 shrink-0 items-center justify-center rounded transition-colors",
+                draft.mit_done
+                  ? "bg-[var(--surface-raised)] text-[var(--ink)] ring-1 ring-inset ring-[var(--ink)]"
+                  : "border border-[var(--border-token)] bg-transparent text-transparent",
+              ].join(" ")}
+            >
+              <Check className="h-3.5 w-3.5" strokeWidth={3} />
+            </span>
+            <span className="text-sm text-ink">Most important task done</span>
+          </button>
 
           {/* 2. Mood — segmented control */}
           <div className="flex flex-col gap-1.5">
@@ -127,7 +144,7 @@ export function DailyLogEntryDialog({
             <div
               role="radiogroup"
               aria-label="Mood"
-              className="daily-log-mood grid grid-cols-3 overflow-hidden rounded-lg border border-border"
+              className="daily-log-mood grid grid-cols-3 overflow-hidden rounded-lg border border-[var(--border-token)]"
             >
               {MOODS.map(({ value, label, ariaLabel, Icon }, i) => {
                 const selected = draft.mood === value;
@@ -145,10 +162,10 @@ export function DailyLogEntryDialog({
                       }))
                     }
                     className={[
-                      "flex flex-col items-center justify-center gap-1 py-2.5 outline-none transition-colors",
-                      i > 0 ? "border-l border-border" : "",
+                      "flex flex-col items-center justify-center gap-1.5 py-3.5 outline-none transition-colors",
+                      i > 0 ? "border-l border-[var(--border-token)]" : "",
                       selected
-                        ? "bg-[var(--surface-raised)] text-ink shadow-[inset_0_0_0_1px_var(--ink)]"
+                        ? "bg-[var(--surface-raised)] text-ink ring-1 ring-inset ring-[var(--ink)]"
                         : "bg-transparent text-ink-muted",
                     ].join(" ")}
                   >
@@ -160,7 +177,7 @@ export function DailyLogEntryDialog({
             </div>
           </div>
 
-          {/* 3–6. Counters — 2×2 grid */}
+          {/* 3–4. Counters — 2-col grid (row 1: Emails | Calls, row 2: Meetings | Connects) */}
           <div className="grid grid-cols-2 gap-3">
             {NUMERIC_FIELDS.map(({ key, label }) => (
               <div key={key} className="flex flex-col gap-1.5">
@@ -179,7 +196,7 @@ export function DailyLogEntryDialog({
             ))}
           </div>
 
-          {/* 7. Revenue — full width */}
+          {/* 5. Revenue — full width */}
           <div className="flex flex-col gap-1.5">
             <label htmlFor="dl-revenue" className="text-sm text-ink-muted">
               Revenue
