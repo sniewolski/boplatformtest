@@ -64,7 +64,7 @@ export const getDailyLogForOwner = createServerFn({ method: "GET" })
       .eq("owner_id", data.ownerId)
       .maybeSingle();
     const currency: CurrencyCode =
-      (settings?.currency as CurrencyCode | null) ?? "USD";
+      ((settings as any)?.currency as CurrencyCode | null) ?? "USD";
 
     return {
       entries: (rows ?? []) as unknown as AdminDailyLogRow[],

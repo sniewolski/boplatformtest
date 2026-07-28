@@ -7,7 +7,6 @@ import {
   type AdminDailyLogRow,
 } from "@/tools/daily-log/admin.functions";
 import { formatCurrency } from "@/lib/format-currency";
-import { useCurrency } from "@/core/settings/useCurrency";
 import {
   Table,
   TableBody,
