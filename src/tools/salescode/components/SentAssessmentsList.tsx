@@ -18,7 +18,9 @@ import {
   listMyRespondentSessions,
 } from "@/lib/sessions.functions";
 import { SalesCodeResultView } from "./SalesCodeResultView";
-import type { SalesCodeResult } from "../lib/types";
+import { scoreSalesCode } from "../lib/scoring";
+import type { AnswerMap, SalesCodeResult } from "../lib/types";
+
 
 /**
  * Owner-side list of respondents the owner has sent SalesCode links to.
