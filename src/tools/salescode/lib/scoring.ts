@@ -234,7 +234,20 @@ const THRESHOLD_TRAITS: ReadonlyArray<ThresholdSpec> = [
     belowLabel: "Weak goal-setter",
     strengthSide: "above",
   },
+  // Influence — three positive items, one reverse-keyed (188), so the
+  // fixed four-item formula can't express it. Offset = 6 × 1 reverse item.
+  {
+    key: "influence",
+    offset: 6,
+    weights: [[185, 1], [186, 1], [187, 1], [188, -1]],
+    divisor: 4,
+    threshold: 3,
+    aboveLabel: "Influential",
+    belowLabel: "Needs work on influence",
+    strengthSide: "above",
+  },
 ];
+
 
 function evaluateThreshold(spec: ThresholdSpec, answers: AnswerMap): TraitOutcome {
   let sum = spec.offset;
