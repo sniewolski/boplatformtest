@@ -27,8 +27,26 @@ type SessionRow = {
   respondent_email: string | null;
   created_at: string;
   completed_at: string | null;
+  payload: AnswerMap | null;
   result: SalesCodeResult | null;
 };
+
+/**
+ * Recompute a respondent's result from their raw answers; fall back to the
+ * stored `result` blob only when the payload is missing or empty.
+ */
+function resolveSessionResult(r: SessionRow): SalesCodeResult | null {
+  const payload = r.payload;
+  if (payload && typeof payload === "object" && Object.keys(payload).length > 0) {
+    try {
+      return scoreSalesCode(payload as AnswerMap);
+    } catch {
+      /* fall through */
+    }
+  }
+  return r.result ?? null;
+}
+
 
 export function OwnerSalesCodeDetail({ ownerId }: { ownerId: string }) {
   const list = useServerFn(listOwners);
