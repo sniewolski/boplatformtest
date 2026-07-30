@@ -27,8 +27,26 @@ type SessionRow = {
   respondent_email: string | null;
   created_at: string;
   completed_at: string | null;
+  payload: AnswerMap | null;
   result: SalesCodeResult | null;
 };
+
+/**
+ * Recompute a respondent's result from their raw answers; fall back to the
+ * stored `result` blob only when the payload is missing or empty.
+ */
+function resolveSessionResult(r: SessionRow): SalesCodeResult | null {
+  const payload = r.payload;
+  if (payload && typeof payload === "object" && Object.keys(payload).length > 0) {
+    try {
+      return scoreSalesCode(payload as AnswerMap);
+    } catch {
+      /* fall through */
+    }
+  }
+  return r.result ?? null;
+}
+
 
 export function OwnerSalesCodeDetail({ ownerId }: { ownerId: string }) {
   const list = useServerFn(listOwners);
@@ -57,7 +75,7 @@ export function OwnerSalesCodeDetail({ ownerId }: { ownerId: string }) {
       const { data, error } = await supabase
         .from("respondent_sessions" as never)
         .select(
-          "id, token, status, respondent_name, respondent_email, created_at, completed_at, result",
+          "id, token, status, respondent_name, respondent_email, created_at, completed_at, payload, result",
         )
         .eq("owner_id", ownerId)
         .eq("tool_key", "salescode")
@@ -135,7 +153,8 @@ export function OwnerSalesCodeDetail({ ownerId }: { ownerId: string }) {
           <ul className="flex flex-col divide-y divide-border rounded-2xl border border-border bg-surface">
             {sessions.data!.map((r) => {
               const isOpen = openId === r.id;
-              const isCompleted = r.status === "completed" && r.result?.type;
+              const sessionResult = resolveSessionResult(r);
+              const isCompleted = r.status === "completed" && !!sessionResult?.type;
               return (
                 <li key={r.id} className="flex flex-col">
                   <div className="flex items-center gap-3 px-4 py-3">
@@ -166,7 +185,7 @@ export function OwnerSalesCodeDetail({ ownerId }: { ownerId: string }) {
                         {isOpen ? "Hide" : "View"}
                       </Button>
                     ) : null}
-                    {isCompleted && r.result ? (
+                    {isCompleted && sessionResult ? (
                       <Button
                         type="button"
                         variant="outline"
@@ -180,7 +199,7 @@ export function OwnerSalesCodeDetail({ ownerId }: { ownerId: string }) {
                             respondentName: r.respondent_name,
                             respondentEmail: r.respondent_email,
                             completedAt: r.completed_at,
-                            result: r.result!,
+                            result: sessionResult,
                           };
                           downloadMarkdown(
                             salesCodeExportFilename(input),
@@ -192,10 +211,10 @@ export function OwnerSalesCodeDetail({ ownerId }: { ownerId: string }) {
                       </Button>
                     ) : null}
                   </div>
-                  {isOpen && isCompleted && r.result ? (
+                  {isOpen && isCompleted && sessionResult ? (
                     <div className="px-4 pb-6 pt-2 border-t border-border bg-background">
                       <SalesCodeResultView
-                        result={r.result}
+                        result={sessionResult}
                         variant="respondent"
                       />
                     </div>

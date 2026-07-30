@@ -18,7 +18,9 @@ import {
   listMyRespondentSessions,
 } from "@/lib/sessions.functions";
 import { SalesCodeResultView } from "./SalesCodeResultView";
-import type { SalesCodeResult } from "../lib/types";
+import { scoreSalesCode } from "../lib/scoring";
+import type { AnswerMap, SalesCodeResult } from "../lib/types";
+
 
 /**
  * Owner-side list of respondents the owner has sent SalesCode links to.
@@ -223,7 +225,19 @@ function ExpandedResult({ sessionId }: { sessionId: string }) {
     );
   }
 
-  const result = stateQuery.data.result as SalesCodeResult | null;
+  // Recompute from the raw answers; the stored result blob is only a
+  // fallback when the payload is missing or has no answers.
+  const payload = stateQuery.data.payload;
+  let result: SalesCodeResult | null = null;
+  if (payload && typeof payload === "object" && Object.keys(payload).length > 0) {
+    try {
+      result = scoreSalesCode(payload as AnswerMap);
+    } catch {
+      result = null;
+    }
+  }
+  if (!result) result = stateQuery.data.result as SalesCodeResult | null;
+
   if (!result || !result.type) {
     return (
       <div className="px-4 pb-4 text-sm text-ink-muted">
@@ -231,6 +245,7 @@ function ExpandedResult({ sessionId }: { sessionId: string }) {
       </div>
     );
   }
+
 
   return (
     <div className="px-4 pb-6 pt-2 border-t border-border bg-background">
