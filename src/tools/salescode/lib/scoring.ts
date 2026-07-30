@@ -111,14 +111,12 @@ type ThresholdSpec = {
 
 const THRESHOLD_TRAITS: ReadonlyArray<ThresholdSpec> = [
   // Introvert / Extrovert — Extrovert sits on the "above" side of the threshold.
-  // Treated as a normal binary trait; the strength/growth framing comes from
-  // the per-trait copy entry, not from the scoring layer.
   {
     key: "introvert-extrovert",
-    offset: 38,
+    offset: 18,
     weights: [
-      [3, -1], [7, 1], [11, -1], [15, 1],
-      [19, -1], [23, 1], [27, -1], [31, -1],
+      [3, 1], [7, 1], [11, 1], [15, -1],
+      [19, 1], [23, -1], [27, -1], [31, 1],
     ],
     divisor: 8,
     threshold: 3,
@@ -129,10 +127,10 @@ const THRESHOLD_TRAITS: ReadonlyArray<ThresholdSpec> = [
   // Assertiveness
   {
     key: "assertiveness",
-    offset: 25,
+    offset: 36,
     weights: [
-      [81, 1], [82, 1], [83, 1], [84, 1], [85, 1], [86, 1],
-      [87, -1], [88, -1], [89, -1], [90, -1], [91, -1], [92, -1],
+      [81, -1], [82, -1], [83, -1], [84, -1], [85, -1], [86, -1],
+      [87, 1], [88, 1], [89, 1], [90, 1], [91, 1], [92, 1],
     ],
     divisor: 12,
     threshold: 3,
@@ -143,83 +141,78 @@ const THRESHOLD_TRAITS: ReadonlyArray<ThresholdSpec> = [
   // Comfortable with money
   {
     key: "comfortable-with-money",
-    offset: 13,
+    offset: 18,
     weights: [
-      [115, 1], [116, 1], [117, 1],
-      [118, -1], [119, -1], [120, -1],
+      [115, -1], [116, -1], [117, -1],
+      [118, 1], [119, 1], [120, 1],
     ],
     divisor: 6,
-    threshold: 2,
+    threshold: 3,
     aboveLabel: "Comfortable with money",
     belowLabel: "Not comfortable with money",
     strengthSide: "above",
   },
-  // Emotional intelligence — full signed form expanded from §4b:
-  //   (58 − Q41 − Q42 − Q43 − Q44 + Q45 − Q46 − Q47 − Q48 − Q49 − Q50 − Q51
-  //    + Q52 − Q53 − Q54 + Q55) / 15
+  // Emotional intelligence
   {
     key: "emotional-intelligence",
-    offset: 58,
+    offset: 18,
     weights: [
-      [41, -1], [42, -1], [43, -1], [44, -1], [45, 1],
-      [46, -1], [47, -1], [48, -1], [49, -1], [50, -1], [51, -1],
-      [52, 1], [53, -1], [54, -1], [55, 1],
+      [41, 1], [42, 1], [43, 1], [44, 1], [45, -1],
+      [46, 1], [47, 1], [48, 1], [49, 1], [50, 1], [51, 1],
+      [52, -1], [53, 1], [54, 1], [55, -1],
     ],
     divisor: 15,
-    threshold: 2,
+    threshold: 3,
     aboveLabel: "High emotional intelligence",
     belowLabel: "Low emotional intelligence",
     strengthSide: "above",
   },
-  // Self-esteem — full signed form expanded from §4b:
-  //   (22 − Q71 + Q72 − Q73 − Q74 + Q75 + Q76 − Q77 + Q78 + Q79 − Q80) / 10
+  // Self-esteem
   {
     key: "self-esteem",
-    offset: 22,
+    offset: 30,
     weights: [
-      [71, -1], [72, 1], [73, -1], [74, -1], [75, 1],
-      [76, 1], [77, -1], [78, 1], [79, 1], [80, -1],
+      [71, 1], [72, -1], [73, 1], [74, 1], [75, -1],
+      [76, -1], [77, 1], [78, -1], [79, -1], [80, 1],
     ],
     divisor: 10,
-    threshold: 2,
+    threshold: 3,
     aboveLabel: "High self-esteem",
     belowLabel: "Low self-esteem",
     strengthSide: "above",
   },
-  // Optimism — full signed form expanded from §4b:
-  //   (46 + Q56 + Q57 + Q58 − Q59 + Q60 − Q61 − Q62 − Q63 − Q64 − Q65
-  //    + Q66 − Q67 − Q68 − Q69 − Q70) / 15
+  // Optimism
   {
     key: "optimism",
-    offset: 46,
+    offset: 30,
     weights: [
-      [56, 1], [57, 1], [58, 1], [59, -1], [60, 1],
-      [61, -1], [62, -1], [63, -1], [64, -1], [65, -1],
-      [66, 1], [67, -1], [68, -1], [69, -1], [70, -1],
+      [56, -1], [57, -1], [58, -1], [59, 1], [60, -1],
+      [61, 1], [62, 1], [63, 1], [64, 1], [65, 1],
+      [66, -1], [67, 1], [68, 1], [69, 1], [70, 1],
     ],
     divisor: 15,
-    threshold: 2,
+    threshold: 3,
     aboveLabel: "Optimistic",
     belowLabel: "Pessimistic",
     strengthSide: "above",
   },
-  // People-pleaser — INVERTED: raw < 4 ⇒ strength ("not a people-pleaser").
+  // People-pleaser — INVERTED: raw < 3 ⇒ strength ("not a people-pleaser").
   {
     key: "people-pleaser",
-    offset: 38,
+    offset: 24,
     weights: [
       [103, 1], [104, -1], [105, 1], [106, 1], [107, 1],
       [108, -1], [109, -1], [110, 1], [111, 1],
       [112, -1], [113, 1], [114, 1],
     ],
     divisor: 12,
-    threshold: 4,
+    threshold: 3,
     aboveLabel: "People-pleaser",
     belowLabel: "Not a people-pleaser",
     strengthSide: "below",
     compare: "<",
   },
-  // Personal accountability — (Q121+Q122+Q123+Q124+Q125) / 5, ≥ 3
+  // Personal accountability
   {
     key: "personal-accountability",
     offset: 0,
@@ -229,19 +222,17 @@ const THRESHOLD_TRAITS: ReadonlyArray<ThresholdSpec> = [
     aboveLabel: "Has personal accountability",
     belowLabel: "Lacks personal accountability",
     strengthSide: "above",
-    compare: ">=",
   },
-  // Goal setting — (Q152 − Q153 + Q154 + Q155 − Q156), ≥ 5
+  // Goal setting
   {
     key: "goal-setting",
-    offset: 0,
+    offset: 12,
     weights: [[152, 1], [153, -1], [154, 1], [155, 1], [156, -1]],
-    divisor: 1,
-    threshold: 5,
+    divisor: 5,
+    threshold: 3,
     aboveLabel: "Strong goal-setter",
     belowLabel: "Weak goal-setter",
     strengthSide: "above",
-    compare: ">=",
   },
 ];
 
