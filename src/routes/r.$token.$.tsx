@@ -131,10 +131,23 @@ function SalesCodeRespondent({
 
   const [completed, setCompleted] = useState<SalesCodeResult | null>(() => {
     if (session.status !== "completed") return null;
+    // Recompute from the raw answers; only fall back to the stored blob
+    // when the payload is missing or has no answers.
+    if (payload && typeof payload === "object") {
+      const answers = payload as AnswerMap;
+      if (Object.keys(answers).length > 0) {
+        try {
+          return scoreSalesCode(answers);
+        } catch {
+          /* fall through to the stored result */
+        }
+      }
+    }
     const r = result as { type?: string; traits?: unknown } | null;
     if (r && r.type) return r as unknown as SalesCodeResult;
     return null;
   });
+
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const save = useMutation({
