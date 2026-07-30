@@ -263,7 +263,7 @@ type FourItemSpec = {
 
 const FOUR_ITEM_TRAITS: ReadonlyArray<FourItemSpec> = [
   { key: "objection-handling",       items: [181, 182, 183, 184], strengthLabel: "Strong at objection handling",    developmentLabel: "Needs work on objection handling" },
-  { key: "influence",                items: [185, 186, 187, 188], strengthLabel: "Influential",                     developmentLabel: "Needs work on influence" },
+  { key: "influence",                items: [185, 187, 186, 188], strengthLabel: "Influential",                     developmentLabel: "Needs work on influence" },
   { key: "industry-expert",          items: [189, 190, 191, 192], strengthLabel: "Industry expert",                 developmentLabel: "Not yet an industry expert" },
   { key: "storytelling",             items: [193, 194, 195, 196], strengthLabel: "Strong storyteller",              developmentLabel: "Needs work on storytelling" },
   { key: "negotiations",             items: [197, 198, 199, 200], strengthLabel: "Strong negotiator",               developmentLabel: "Needs work on negotiation" },
