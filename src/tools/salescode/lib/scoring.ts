@@ -299,11 +299,17 @@ function evaluateFourItem(spec: FourItemSpec, answers: AnswerMap): TraitOutcome 
 }
 
 export function computeTraits(answers: AnswerMap): TraitOutcome[] {
-  return [
-    ...THRESHOLD_TRAITS.map((s) => evaluateThreshold(s, answers)),
-    ...FOUR_ITEM_TRAITS.map((s) => evaluateFourItem(s, answers)),
-  ];
+  const thresholds = THRESHOLD_TRAITS.map((s) => evaluateThreshold(s, answers));
+  const fourItems = FOUR_ITEM_TRAITS.map((s) => evaluateFourItem(s, answers));
+  // "influence" moved to THRESHOLD_TRAITS but keeps its historical render
+  // position: immediately after "objection-handling" in the four-item block.
+  const influenceIdx = thresholds.findIndex((t) => t.key === "influence");
+  const influence = influenceIdx >= 0 ? thresholds.splice(influenceIdx, 1)[0] : undefined;
+  const objIdx = fourItems.findIndex((t) => t.key === "objection-handling");
+  if (influence) fourItems.splice(objIdx >= 0 ? objIdx + 1 : fourItems.length, 0, influence);
+  return [...thresholds, ...fourItems];
 }
+
 
 export function scoreSalesCode(answers: AnswerMap): SalesCodeResult {
   const axes = computeAxes(answers);
