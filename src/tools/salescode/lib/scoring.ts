@@ -234,7 +234,20 @@ const THRESHOLD_TRAITS: ReadonlyArray<ThresholdSpec> = [
     belowLabel: "Weak goal-setter",
     strengthSide: "above",
   },
+  // Influence — three positive items, one reverse-keyed (188), so the
+  // fixed four-item formula can't express it. Offset = 6 × 1 reverse item.
+  {
+    key: "influence",
+    offset: 6,
+    weights: [[185, 1], [186, 1], [187, 1], [188, -1]],
+    divisor: 4,
+    threshold: 3,
+    aboveLabel: "Influential",
+    belowLabel: "Needs work on influence",
+    strengthSide: "above",
+  },
 ];
+
 
 function evaluateThreshold(spec: ThresholdSpec, answers: AnswerMap): TraitOutcome {
   let sum = spec.offset;
@@ -263,7 +276,7 @@ type FourItemSpec = {
 
 const FOUR_ITEM_TRAITS: ReadonlyArray<FourItemSpec> = [
   { key: "objection-handling",       items: [181, 182, 183, 184], strengthLabel: "Strong at objection handling",    developmentLabel: "Needs work on objection handling" },
-  { key: "influence",                items: [185, 186, 187, 188], strengthLabel: "Influential",                     developmentLabel: "Needs work on influence" },
+  
   { key: "industry-expert",          items: [189, 190, 191, 192], strengthLabel: "Industry expert",                 developmentLabel: "Not yet an industry expert" },
   { key: "storytelling",             items: [193, 194, 195, 196], strengthLabel: "Strong storyteller",              developmentLabel: "Needs work on storytelling" },
   { key: "negotiations",             items: [197, 198, 199, 200], strengthLabel: "Strong negotiator",               developmentLabel: "Needs work on negotiation" },
@@ -286,11 +299,17 @@ function evaluateFourItem(spec: FourItemSpec, answers: AnswerMap): TraitOutcome 
 }
 
 export function computeTraits(answers: AnswerMap): TraitOutcome[] {
-  return [
-    ...THRESHOLD_TRAITS.map((s) => evaluateThreshold(s, answers)),
-    ...FOUR_ITEM_TRAITS.map((s) => evaluateFourItem(s, answers)),
-  ];
+  const thresholds = THRESHOLD_TRAITS.map((s) => evaluateThreshold(s, answers));
+  const fourItems = FOUR_ITEM_TRAITS.map((s) => evaluateFourItem(s, answers));
+  // "influence" moved to THRESHOLD_TRAITS but keeps its historical render
+  // position: immediately after "objection-handling" in the four-item block.
+  const influenceIdx = thresholds.findIndex((t) => t.key === "influence");
+  const influence = influenceIdx >= 0 ? thresholds.splice(influenceIdx, 1)[0] : undefined;
+  const objIdx = fourItems.findIndex((t) => t.key === "objection-handling");
+  if (influence) fourItems.splice(objIdx >= 0 ? objIdx + 1 : fourItems.length, 0, influence);
+  return [...thresholds, ...fourItems];
 }
+
 
 export function scoreSalesCode(answers: AnswerMap): SalesCodeResult {
   const axes = computeAxes(answers);
