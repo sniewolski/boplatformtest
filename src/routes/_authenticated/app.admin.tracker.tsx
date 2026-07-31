@@ -217,19 +217,52 @@ function TrackerAdmin() {
     };
   }, [eventsQuery.data]);
 
+  // ---- Windowed YouTube views (Analytics API v2, live, no cache) ----
+  const startYmd = useMemo(() => toYmd(effectiveFrom), [effectiveFrom]);
+  const endYmd = useMemo(() => toYmd(effectiveTo), [effectiveTo]);
+  const videoIds = useMemo(
+    () => videoAggregates.map((a) => a.videoId),
+    [videoAggregates],
+  );
+
+  const viewsQuery = useQuery({
+    queryKey: ["tracker-yt-views", startYmd, endYmd, videoIds.join(",")],
+    enabled:
+      !rolesLoading && !!roles?.includes("admin") && videoIds.length > 0,
+    refetchOnWindowFocus: false,
+    queryFn: async (): Promise<Record<string, number>> => {
+      const { data, error } = await supabase.functions.invoke(
+        "tracker-video-views",
+        {
+          body: {
+            video_ids: videoIds,
+            start_date: startYmd,
+            end_date: endYmd,
+          },
+        },
+      );
+      if (error) throw error;
+      if (!data?.ok) {
+        throw new Error(data?.error ?? "Unknown error from tracker-video-views");
+      }
+      return (data.views ?? {}) as Record<string, number>;
+    },
+  });
+
+  const viewsMap = viewsQuery.data ?? null;
+  const viewsLoading = videoIds.length > 0 && viewsQuery.isLoading;
+  const viewsError = viewsQuery.error as Error | null;
+
   const queryClient = useQueryClient();
   useEffect(() => {
     const videos = videosQuery.data;
     if (!videos) return;
     const known = new Map(videos.map((v) => [v.video_id, v]));
-    const staleThreshold = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
     const missing = videoAggregates
       .map((a) => a.videoId)
       .filter((id) => {
         const row = known.get(id);
-        if (!row) return true;
-        if (!row.resolved_at || row.view_count == null || !row.views_updated_at) return true;
-        return row.views_updated_at < staleThreshold;
+        return !row || !row.resolved_at;
       });
     if (missing.length === 0) return;
 
