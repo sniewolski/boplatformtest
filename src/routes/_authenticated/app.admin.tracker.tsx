@@ -82,8 +82,6 @@ type TrackedVideoRow = {
   title: string | null;
   thumbnail_url: string | null;
   resolved_at: string | null;
-  view_count: number | null;
-  views_updated_at: string | null;
 };
 
 type VideoAggregate = {
@@ -163,7 +161,7 @@ function TrackerAdmin() {
     queryFn: async (): Promise<TrackedVideoRow[]> => {
       const { data, error } = await supabase
         .from("tracked_videos")
-        .select("video_id, title, thumbnail_url, resolved_at, view_count, views_updated_at");
+        .select("video_id, title, thumbnail_url, resolved_at");
       if (error) throw error;
       return (data ?? []) as TrackedVideoRow[];
     },
@@ -219,19 +217,52 @@ function TrackerAdmin() {
     };
   }, [eventsQuery.data]);
 
+  // ---- Windowed YouTube views (Analytics API v2, live, no cache) ----
+  const startYmd = useMemo(() => toYmd(effectiveFrom), [effectiveFrom]);
+  const endYmd = useMemo(() => toYmd(effectiveTo), [effectiveTo]);
+  const videoIds = useMemo(
+    () => videoAggregates.map((a) => a.videoId),
+    [videoAggregates],
+  );
+
+  const viewsQuery = useQuery({
+    queryKey: ["tracker-yt-views", startYmd, endYmd, videoIds.join(",")],
+    enabled:
+      !rolesLoading && !!roles?.includes("admin") && videoIds.length > 0,
+    refetchOnWindowFocus: false,
+    queryFn: async (): Promise<Record<string, number>> => {
+      const { data, error } = await supabase.functions.invoke(
+        "tracker-video-views",
+        {
+          body: {
+            video_ids: videoIds,
+            start_date: startYmd,
+            end_date: endYmd,
+          },
+        },
+      );
+      if (error) throw error;
+      if (!data?.ok) {
+        throw new Error(data?.error ?? "Unknown error from tracker-video-views");
+      }
+      return (data.views ?? {}) as Record<string, number>;
+    },
+  });
+
+  const viewsMap = viewsQuery.data ?? null;
+  const viewsLoading = videoIds.length > 0 && viewsQuery.isLoading;
+  const viewsError = viewsQuery.error as Error | null;
+
   const queryClient = useQueryClient();
   useEffect(() => {
     const videos = videosQuery.data;
     if (!videos) return;
     const known = new Map(videos.map((v) => [v.video_id, v]));
-    const staleThreshold = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
     const missing = videoAggregates
       .map((a) => a.videoId)
       .filter((id) => {
         const row = known.get(id);
-        if (!row) return true;
-        if (!row.resolved_at || row.view_count == null || !row.views_updated_at) return true;
-        return row.views_updated_at < staleThreshold;
+        return !row || !row.resolved_at;
       });
     if (missing.length === 0) return;
 
@@ -325,6 +356,22 @@ function TrackerAdmin() {
         )}
       </div>
 
+      {eventsQuery.error && (
+        <p className="text-xs text-[var(--red)]">
+          Tracker events unavailable: {(eventsQuery.error as Error).message}
+        </p>
+      )}
+      {videosQuery.error && (
+        <p className="text-xs text-[var(--red)]">
+          Video metadata unavailable: {(videosQuery.error as Error).message}
+        </p>
+      )}
+      {viewsError && (
+        <p className="text-xs text-[var(--red)]">
+          YouTube views unavailable: {viewsError.message}
+        </p>
+      )}
+
       {loading ? (
         <p className="text-sm text-ink-muted">Loading…</p>
       ) : !hasRows ? (
@@ -352,30 +399,41 @@ function TrackerAdmin() {
             </thead>
             <tbody>
               {(() => {
-                const totalYtViews = videoAggregates.reduce((s, r) => {
-                  const meta = videosById.get(r.videoId);
-                  return s + (meta?.view_count ?? 0);
-                }, 0);
-                const hasYtViews = totalYtViews > 0;
+                const totalYtViews =
+                  viewsError || !viewsMap
+                    ? null
+                    : videoAggregates.reduce(
+                        (s, r) => s + (viewsMap[r.videoId] ?? 0),
+                        0,
+                      );
+                const denom = totalYtViews ?? 0;
                 return (
                   <tr className="border-t border-border bg-[var(--surface-raised)] font-medium">
                     <td className="px-4 py-2">TOTAL</td>
                     <td className="px-4 py-2" />
                     <td className="px-4 py-2" />
                     <td className="px-4 py-2 text-right tabular-nums">
-                      {hasYtViews ? formatInt(totalYtViews) : "—"}
+                      {viewsError ? (
+                        "—"
+                      ) : viewsLoading ? (
+                        <span className="text-ink-muted">…</span>
+                      ) : totalYtViews != null ? (
+                        formatInt(totalYtViews)
+                      ) : (
+                        "—"
+                      )}
                     </td>
                     <td className="px-4 py-2 text-right tabular-nums">{totals.views}</td>
                     <td className="px-4 py-2 text-right tabular-nums">{totals.clicks}</td>
                     <td className="px-4 py-2 text-right tabular-nums">{totals.bookings}</td>
                     <td className="px-4 py-2 text-right tabular-nums">
-                      {formatRatio(totals.views, hasYtViews ? totalYtViews : 0)}
+                      {formatRatio(totals.views, denom)}
                     </td>
                     <td className="px-4 py-2 text-right tabular-nums">
                       {formatRatio(totals.bookings, totals.views)}
                     </td>
                     <td className="px-4 py-2 text-right tabular-nums">
-                      {formatRatio(totals.bookings, hasYtViews ? totalYtViews : 0)}
+                      {formatRatio(totals.bookings, denom)}
                     </td>
                   </tr>
                 );
@@ -387,7 +445,8 @@ function TrackerAdmin() {
                   ? "Resolving…"
                   : meta!.title ?? "Untitled / unavailable";
                 const href = `https://www.youtube.com/watch?v=${row.videoId}`;
-                const ytViews = meta?.view_count ?? null;
+                const ytViews =
+                  viewsError || !viewsMap ? null : viewsMap[row.videoId] ?? 0;
                 return (
                   <tr key={row.videoId} className="border-t border-border">
                     <td className="px-4 py-3 text-ink-muted">video</td>
@@ -417,7 +476,15 @@ function TrackerAdmin() {
                       </a>
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums">
-                      {ytViews != null ? formatInt(ytViews) : "—"}
+                      {viewsError ? (
+                        "—"
+                      ) : viewsLoading ? (
+                        <span className="text-ink-muted">…</span>
+                      ) : ytViews != null ? (
+                        formatInt(ytViews)
+                      ) : (
+                        "—"
+                      )}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums">{row.views}</td>
                     <td className="px-4 py-3 text-right tabular-nums">{row.clicks}</td>
