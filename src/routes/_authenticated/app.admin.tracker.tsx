@@ -82,8 +82,6 @@ type TrackedVideoRow = {
   title: string | null;
   thumbnail_url: string | null;
   resolved_at: string | null;
-  view_count: number | null;
-  views_updated_at: string | null;
 };
 
 type VideoAggregate = {
