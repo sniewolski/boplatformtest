@@ -383,30 +383,41 @@ function TrackerAdmin() {
             </thead>
             <tbody>
               {(() => {
-                const totalYtViews = videoAggregates.reduce((s, r) => {
-                  const meta = videosById.get(r.videoId);
-                  return s + (meta?.view_count ?? 0);
-                }, 0);
-                const hasYtViews = totalYtViews > 0;
+                const totalYtViews =
+                  viewsError || !viewsMap
+                    ? null
+                    : videoAggregates.reduce(
+                        (s, r) => s + (viewsMap[r.videoId] ?? 0),
+                        0,
+                      );
+                const denom = totalYtViews ?? 0;
                 return (
                   <tr className="border-t border-border bg-[var(--surface-raised)] font-medium">
                     <td className="px-4 py-2">TOTAL</td>
                     <td className="px-4 py-2" />
                     <td className="px-4 py-2" />
                     <td className="px-4 py-2 text-right tabular-nums">
-                      {hasYtViews ? formatInt(totalYtViews) : "—"}
+                      {viewsError ? (
+                        "—"
+                      ) : viewsLoading ? (
+                        <span className="text-ink-muted">…</span>
+                      ) : totalYtViews != null ? (
+                        formatInt(totalYtViews)
+                      ) : (
+                        "—"
+                      )}
                     </td>
                     <td className="px-4 py-2 text-right tabular-nums">{totals.views}</td>
                     <td className="px-4 py-2 text-right tabular-nums">{totals.clicks}</td>
                     <td className="px-4 py-2 text-right tabular-nums">{totals.bookings}</td>
                     <td className="px-4 py-2 text-right tabular-nums">
-                      {formatRatio(totals.views, hasYtViews ? totalYtViews : 0)}
+                      {formatRatio(totals.views, denom)}
                     </td>
                     <td className="px-4 py-2 text-right tabular-nums">
                       {formatRatio(totals.bookings, totals.views)}
                     </td>
                     <td className="px-4 py-2 text-right tabular-nums">
-                      {formatRatio(totals.bookings, hasYtViews ? totalYtViews : 0)}
+                      {formatRatio(totals.bookings, denom)}
                     </td>
                   </tr>
                 );
@@ -418,7 +429,8 @@ function TrackerAdmin() {
                   ? "Resolving…"
                   : meta!.title ?? "Untitled / unavailable";
                 const href = `https://www.youtube.com/watch?v=${row.videoId}`;
-                const ytViews = meta?.view_count ?? null;
+                const ytViews =
+                  viewsError || !viewsMap ? null : viewsMap[row.videoId] ?? 0;
                 return (
                   <tr key={row.videoId} className="border-t border-border">
                     <td className="px-4 py-3 text-ink-muted">video</td>
