@@ -356,6 +356,22 @@ function TrackerAdmin() {
         )}
       </div>
 
+      {eventsQuery.error && (
+        <p className="text-xs text-[var(--red)]">
+          Tracker events unavailable: {(eventsQuery.error as Error).message}
+        </p>
+      )}
+      {videosQuery.error && (
+        <p className="text-xs text-[var(--red)]">
+          Video metadata unavailable: {(videosQuery.error as Error).message}
+        </p>
+      )}
+      {viewsError && (
+        <p className="text-xs text-[var(--red)]">
+          YouTube views unavailable: {viewsError.message}
+        </p>
+      )}
+
       {loading ? (
         <p className="text-sm text-ink-muted">Loading…</p>
       ) : !hasRows ? (
