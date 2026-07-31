@@ -460,7 +460,15 @@ function TrackerAdmin() {
                       </a>
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums">
-                      {ytViews != null ? formatInt(ytViews) : "—"}
+                      {viewsError ? (
+                        "—"
+                      ) : viewsLoading ? (
+                        <span className="text-ink-muted">…</span>
+                      ) : ytViews != null ? (
+                        formatInt(ytViews)
+                      ) : (
+                        "—"
+                      )}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums">{row.views}</td>
                     <td className="px-4 py-3 text-right tabular-nums">{row.clicks}</td>
