@@ -47,22 +47,22 @@ export function SalesCodeResultView({
           <header className="flex flex-col gap-2">
             <h1 className="text-3xl text-ink">{profile.name}</h1>
             {variant === "owner" ? (
-              <p className="text-lg text-ink-muted">{profile.tagline}</p>
+              <p className="text-lg text-ink-muted max-w-none">{profile.tagline}</p>
             ) : null}
           </header>
 
           {profile.intro.length > 0 ? (
             <div className="flex flex-col gap-4">
               {profile.intro.map((p, i) => (
-                <p key={i} className="text-ink leading-relaxed">
-                  {p}
-                </p>
+              <p key={i} className="text-ink leading-relaxed max-w-none">
+                {p}
+              </p>
               ))}
             </div>
           ) : null}
 
           {profile.pullQuote ? (
-            <p className="text-xl font-serif text-ink italic leading-snug py-2">
+            <p className="text-xl font-serif text-ink italic leading-snug py-2 max-w-none">
               {profile.pullQuote}
             </p>
           ) : null}
@@ -124,7 +124,7 @@ export function SalesCodeResultView({
               </h2>
               <div className="flex flex-col gap-4">
                 {profile.businessAndSales.map((p, i) => (
-                  <p key={i} className="text-ink leading-relaxed">
+                  <p key={i} className="text-ink leading-relaxed max-w-none">
                     {p}
                   </p>
                 ))}
@@ -133,7 +133,7 @@ export function SalesCodeResultView({
           ) : null}
 
           {profile.closingQuote ? (
-            <p className="text-xl font-serif text-ink italic leading-snug py-2">
+            <p className="text-xl font-serif text-ink italic leading-snug py-2 max-w-none">
               {profile.closingQuote}
             </p>
           ) : null}
