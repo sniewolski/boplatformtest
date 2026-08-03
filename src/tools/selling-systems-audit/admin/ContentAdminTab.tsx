@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   ArrowLeft,
+  Download,
   ExternalLink,
   FileText,
   FileType,
@@ -11,6 +12,7 @@ import {
   Trash2,
   Type,
 } from "lucide-react";
+import { downloadMarkdown } from "@/lib/download-file";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -136,17 +138,21 @@ function AssetList({
                     const Icon = inputIcon(a.input_type);
                     return (
                       <li key={a.id}>
-                        <button
-                          type="button"
-                          onClick={() => onOpen(a.id)}
-                          className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[var(--surface-raised)] transition-colors"
-                        >
-                          <Icon className="size-4 text-ink-muted shrink-0" />
-                          <span className="text-sm text-ink truncate">
-                            {a.title}
-                          </span>
-                        </button>
+                        <div className="w-full flex items-center gap-3 pr-2 hover:bg-[var(--surface-raised)] transition-colors">
+                          <button
+                            type="button"
+                            onClick={() => onOpen(a.id)}
+                            className="flex-1 min-w-0 flex items-center gap-3 px-4 py-3 text-left"
+                          >
+                            <Icon className="size-4 text-ink-muted shrink-0" />
+                            <span className="text-sm text-ink truncate">
+                              {a.title}
+                            </span>
+                          </button>
+                          <DownloadRowButton asset={a} />
+                        </div>
                       </li>
+
                     );
                   })}
                 </ul>
@@ -158,6 +164,58 @@ function AssetList({
     </div>
   );
 }
+
+/**
+ * Neutral per-row download utility. Resolves the asset (with an attachment
+ * signed URL) on demand — the list query intentionally stays as it is.
+ */
+function DownloadRowButton({ asset }: { asset: Row }) {
+  const get = useServerFn(getReviewAsset);
+  const [busy, setBusy] = useState(false);
+
+  const onDownload = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    try {
+      const res: any = await get({
+        data: { assetId: asset.id, download: true },
+      });
+      if (res?.signedUrl) {
+        const a = document.createElement("a");
+        a.href = res.signedUrl;
+        a.rel = "noopener";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } else {
+        const safe = (asset.title ?? "").replace(/[^a-zA-Z0-9._-]/g, "_");
+        const name = safe ? `${safe}.md` : `asset-${asset.id}.md`;
+        downloadMarkdown(name, res?.asset?.body_text ?? asset.body_text ?? "");
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={onDownload}
+      disabled={busy}
+      aria-label={`Download ${asset.title}`}
+      className="shrink-0 inline-flex items-center justify-center size-8 rounded-lg text-ink-muted hover:text-ink disabled:opacity-50 disabled:pointer-events-none active:scale-[0.97] motion-reduce:active:scale-100 motion-reduce:transition-none"
+      style={{
+        transition: "transform 140ms var(--ease-out), color 140ms var(--ease-out)",
+      }}
+    >
+      <Download className="size-4" />
+    </button>
+  );
+}
+
+
 
 function AssetDetail({
   assetId,

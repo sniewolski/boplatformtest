@@ -39,7 +39,12 @@ async function assertElevated(supabase: any, userId: string) {
 export const getReviewAsset = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ assetId: z.string().uuid() }).parse(input),
+    z
+      .object({
+        assetId: z.string().uuid(),
+        download: z.boolean().optional(),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     await assertElevated(context.supabase, context.userId);
@@ -68,9 +73,15 @@ export const getReviewAsset = createServerFn({ method: "GET" })
 
     let signedUrl: string | null = null;
     if (asset.storage_path) {
-      const { data: s } = await supabaseAdmin.storage
-        .from(CONTENT_STORAGE_BUCKET)
-        .createSignedUrl(asset.storage_path, 600);
+      const { data: s } = data.download
+        ? await supabaseAdmin.storage
+            .from(CONTENT_STORAGE_BUCKET)
+            .createSignedUrl(asset.storage_path, 600, {
+              download: asset.storage_path.split("/").pop(),
+            })
+        : await supabaseAdmin.storage
+            .from(CONTENT_STORAGE_BUCKET)
+            .createSignedUrl(asset.storage_path, 600);
       signedUrl = s?.signedUrl ?? null;
     }
 
