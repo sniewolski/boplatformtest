@@ -39,7 +39,12 @@ async function assertElevated(supabase: any, userId: string) {
 export const getReviewAsset = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ assetId: z.string().uuid() }).parse(input),
+    z
+      .object({
+        assetId: z.string().uuid(),
+        download: z.boolean().optional(),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     await assertElevated(context.supabase, context.userId);
