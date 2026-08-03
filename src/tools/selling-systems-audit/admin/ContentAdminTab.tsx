@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   ArrowLeft,
+  Download,
   ExternalLink,
   FileText,
   FileType,
@@ -11,6 +12,7 @@ import {
   Trash2,
   Type,
 } from "lucide-react";
+import { downloadMarkdown } from "@/lib/download-file";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
