@@ -165,6 +165,58 @@ function AssetList({
   );
 }
 
+/**
+ * Neutral per-row download utility. Resolves the asset (with an attachment
+ * signed URL) on demand — the list query intentionally stays as it is.
+ */
+function DownloadRowButton({ asset }: { asset: Row }) {
+  const get = useServerFn(getReviewAsset);
+  const [busy, setBusy] = useState(false);
+
+  const onDownload = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    try {
+      const res: any = await get({
+        data: { assetId: asset.id, download: true },
+      });
+      if (res?.signedUrl) {
+        const a = document.createElement("a");
+        a.href = res.signedUrl;
+        a.rel = "noopener";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } else {
+        const safe = (asset.title ?? "").replace(/[^a-zA-Z0-9._-]/g, "_");
+        const name = safe ? `${safe}.md` : `asset-${asset.id}.md`;
+        downloadMarkdown(name, res?.asset?.body_text ?? asset.body_text ?? "");
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={onDownload}
+      disabled={busy}
+      aria-label={`Download ${asset.title}`}
+      className="shrink-0 inline-flex items-center justify-center size-8 rounded-lg text-ink-muted hover:text-ink disabled:opacity-50 disabled:pointer-events-none active:scale-[0.97] motion-reduce:active:scale-100 motion-reduce:transition-none"
+      style={{
+        transition: "transform 140ms var(--ease-out), color 140ms var(--ease-out)",
+      }}
+    >
+      <Download className="size-4" />
+    </button>
+  );
+}
+
+
+
 function AssetDetail({
   assetId,
   onBack,
