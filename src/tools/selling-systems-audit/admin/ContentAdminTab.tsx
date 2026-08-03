@@ -136,17 +136,21 @@ function AssetList({
                     const Icon = inputIcon(a.input_type);
                     return (
                       <li key={a.id}>
-                        <button
-                          type="button"
-                          onClick={() => onOpen(a.id)}
-                          className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[var(--surface-raised)] transition-colors"
-                        >
-                          <Icon className="size-4 text-ink-muted shrink-0" />
-                          <span className="text-sm text-ink truncate">
-                            {a.title}
-                          </span>
-                        </button>
+                        <div className="w-full flex items-center gap-3 pr-2 hover:bg-[var(--surface-raised)] transition-colors">
+                          <button
+                            type="button"
+                            onClick={() => onOpen(a.id)}
+                            className="flex-1 min-w-0 flex items-center gap-3 px-4 py-3 text-left"
+                          >
+                            <Icon className="size-4 text-ink-muted shrink-0" />
+                            <span className="text-sm text-ink truncate">
+                              {a.title}
+                            </span>
+                          </button>
+                          <DownloadRowButton asset={a} />
+                        </div>
                       </li>
+
                     );
                   })}
                 </ul>
