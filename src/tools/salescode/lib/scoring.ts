@@ -119,7 +119,7 @@ const THRESHOLD_TRAITS: ReadonlyArray<ThresholdSpec> = [
       [19, 1], [23, -1], [27, -1], [31, 1],
     ],
     divisor: 8,
-    threshold: 3,
+    threshold: 3.42,
     aboveLabel: "Extrovert",
     belowLabel: "Introvert",
     strengthSide: "above",
@@ -133,7 +133,7 @@ const THRESHOLD_TRAITS: ReadonlyArray<ThresholdSpec> = [
       [87, 1], [88, 1], [89, 1], [90, 1], [91, 1], [92, 1],
     ],
     divisor: 12,
-    threshold: 3.5,
+    threshold: 4.14,
     aboveLabel: "Assertive",
     belowLabel: "Not assertive",
     strengthSide: "above",
@@ -147,7 +147,7 @@ const THRESHOLD_TRAITS: ReadonlyArray<ThresholdSpec> = [
       [118, 1], [119, 1], [120, 1],
     ],
     divisor: 6,
-    threshold: 3,
+    threshold: 3.8,
     aboveLabel: "Comfortable with money",
     belowLabel: "Not comfortable with money",
     strengthSide: "above",
@@ -162,7 +162,7 @@ const THRESHOLD_TRAITS: ReadonlyArray<ThresholdSpec> = [
       [52, -1], [53, 1], [54, 1], [55, -1],
     ],
     divisor: 15,
-    threshold: 3.6,
+    threshold: 4.22,
     aboveLabel: "High emotional intelligence",
     belowLabel: "Low emotional intelligence",
     strengthSide: "above",
@@ -176,7 +176,7 @@ const THRESHOLD_TRAITS: ReadonlyArray<ThresholdSpec> = [
       [76, -1], [77, 1], [78, -1], [79, -1], [80, 1],
     ],
     divisor: 10,
-    threshold: 3.9,
+    threshold: 4.55,
     aboveLabel: "High self-esteem",
     belowLabel: "Low self-esteem",
     strengthSide: "above",
@@ -191,7 +191,7 @@ const THRESHOLD_TRAITS: ReadonlyArray<ThresholdSpec> = [
       [66, -1], [67, 1], [68, 1], [69, 1], [70, 1],
     ],
     divisor: 15,
-    threshold: 3.8,
+    threshold: 4.21,
     aboveLabel: "Optimistic",
     belowLabel: "Pessimistic",
     strengthSide: "above",
@@ -206,7 +206,7 @@ const THRESHOLD_TRAITS: ReadonlyArray<ThresholdSpec> = [
       [112, -1], [113, 1], [114, 1],
     ],
     divisor: 12,
-    threshold: 3,
+    threshold: 2.49,
     aboveLabel: "People-pleaser",
     belowLabel: "Not a people-pleaser",
     strengthSide: "below",
@@ -218,7 +218,7 @@ const THRESHOLD_TRAITS: ReadonlyArray<ThresholdSpec> = [
     offset: 0,
     weights: [[121, 1], [122, 1], [123, 1], [124, 1], [125, 1]],
     divisor: 5,
-    threshold: 3,
+    threshold: 4.21,
     aboveLabel: "Has personal accountability",
     belowLabel: "Lacks personal accountability",
     strengthSide: "above",
@@ -229,7 +229,7 @@ const THRESHOLD_TRAITS: ReadonlyArray<ThresholdSpec> = [
     offset: 12,
     weights: [[152, 1], [153, -1], [154, 1], [155, 1], [156, -1]],
     divisor: 5,
-    threshold: 3,
+    threshold: 3.92,
     aboveLabel: "Strong goal-setter",
     belowLabel: "Weak goal-setter",
     strengthSide: "above",
@@ -241,7 +241,7 @@ const THRESHOLD_TRAITS: ReadonlyArray<ThresholdSpec> = [
     offset: 6,
     weights: [[185, 1], [186, 1], [187, 1], [188, -1]],
     divisor: 4,
-    threshold: 3,
+    threshold: 4.21,
     aboveLabel: "Influential",
     belowLabel: "Needs work on influence",
     strengthSide: "above",
@@ -269,27 +269,29 @@ function evaluateThreshold(spec: ThresholdSpec, answers: AnswerMap): TraitOutcom
 /** Four-item traits — corrected polarity: x > 0 ⇒ strength. */
 type FourItemSpec = {
   key: TraitKey;
+  /** Strength when raw > threshold. */
+  threshold: number;
   items: readonly [number, number, number, number];
   strengthLabel: string;
   developmentLabel: string;
 };
 
 const FOUR_ITEM_TRAITS: ReadonlyArray<FourItemSpec> = [
-  { key: "objection-handling",       items: [181, 182, 183, 184], strengthLabel: "Strong at objection handling",    developmentLabel: "Needs work on objection handling" },
+  { key: "objection-handling",       threshold: 3.07, items: [181, 182, 183, 184], strengthLabel: "Strong at objection handling",    developmentLabel: "Needs work on objection handling" },
   
-  { key: "industry-expert",          items: [189, 190, 191, 192], strengthLabel: "Industry expert",                 developmentLabel: "Not yet an industry expert" },
-  { key: "storytelling",             items: [193, 194, 195, 196], strengthLabel: "Strong storyteller",              developmentLabel: "Needs work on storytelling" },
-  { key: "negotiations",             items: [197, 198, 199, 200], strengthLabel: "Strong negotiator",               developmentLabel: "Needs work on negotiation" },
-  { key: "productivity",             items: [201, 202, 203, 204], strengthLabel: "Productive",                      developmentLabel: "Needs work on productivity" },
-  { key: "simplification",           items: [205, 206, 207, 208], strengthLabel: "Strong at simplification",        developmentLabel: "Needs work on simplification" },
-  { key: "identifying-key-accounts", items: [209, 210, 211, 212], strengthLabel: "Identifies key accounts well",    developmentLabel: "Needs work on identifying key accounts" },
-  { key: "caveman-brain",            items: [213, 214, 215, 216], strengthLabel: "Manages caveman brain well",      developmentLabel: "Needs work on caveman brain" },
-  { key: "habits",                   items: [217, 218, 219, 220], strengthLabel: "Strong sales habits",              developmentLabel: "Needs work on sales habits" },
+  { key: "industry-expert",          threshold: 2.73, items: [189, 190, 191, 192], strengthLabel: "Industry expert",                 developmentLabel: "Not yet an industry expert" },
+  { key: "storytelling",             threshold: 3.93, items: [193, 194, 195, 196], strengthLabel: "Strong storyteller",              developmentLabel: "Needs work on storytelling" },
+  { key: "negotiations",             threshold: 1.67, items: [197, 198, 199, 200], strengthLabel: "Strong negotiator",               developmentLabel: "Needs work on negotiation" },
+  { key: "productivity",             threshold: 1.13, items: [201, 202, 203, 204], strengthLabel: "Productive",                      developmentLabel: "Needs work on productivity" },
+  { key: "simplification",           threshold: 3.67, items: [205, 206, 207, 208], strengthLabel: "Strong at simplification",        developmentLabel: "Needs work on simplification" },
+  { key: "identifying-key-accounts", threshold: 3.33, items: [209, 210, 211, 212], strengthLabel: "Identifies key accounts well",    developmentLabel: "Needs work on identifying key accounts" },
+  { key: "caveman-brain",            threshold: 4.13, items: [213, 214, 215, 216], strengthLabel: "Manages caveman brain well",      developmentLabel: "Needs work on caveman brain" },
+  { key: "habits",                   threshold: 2.93, items: [217, 218, 219, 220], strengthLabel: "Strong sales habits",              developmentLabel: "Needs work on sales habits" },
 ];
 
 function evaluateFourItem(spec: FourItemSpec, answers: AnswerMap): TraitOutcome {
   const raw = fourItem(answers, spec.items[0], spec.items[1], spec.items[2], spec.items[3]);
-  const isStrength = raw > 0;
+  const isStrength = raw > spec.threshold;
   return {
     key: spec.key,
     label: isStrength ? spec.strengthLabel : spec.developmentLabel,
