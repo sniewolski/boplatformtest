@@ -17,10 +17,10 @@ function inputIcon(type: ContentAsset["input_type"]) {
   }
 }
 
-export function ContentReview() {
+export function ContentReview({ auditId }: { auditId: string }) {
   const { session } = useSession();
   const ownerId = session?.user.id;
-  const { data: assets, isLoading } = useContentAssets(ownerId);
+  const { data: assets, isLoading } = useContentAssets(auditId);
 
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploadCategory, setUploadCategory] = useState<string | undefined>(undefined);
@@ -46,7 +46,7 @@ export function ContentReview() {
     <div className="app-content py-12 flex flex-col gap-10">
       <Link
         to="/app/tools/$key/$"
-        params={{ key: "selling-systems-audit", _splat: "" }}
+        params={{ key: "selling-systems-audit", _splat: auditId }}
         className="inline-flex items-center gap-2 text-ink-muted text-sm hover:text-ink transition-colors w-fit"
       >
         <ArrowLeft className="size-4" />
@@ -130,6 +130,7 @@ export function ContentReview() {
           open={uploadOpen}
           onOpenChange={setUploadOpen}
           ownerId={ownerId}
+          auditId={auditId}
           defaultCategory={uploadCategory}
         />
       )}
