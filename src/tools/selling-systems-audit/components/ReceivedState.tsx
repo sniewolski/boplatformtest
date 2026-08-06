@@ -5,6 +5,7 @@ import { AUDIT_SECTIONS, type AuditSectionKey } from "../config";
 
 interface ReceivedStateProps {
   sectionKey: AuditSectionKey;
+  auditId: string;
   onEdit: () => void;
 }
 
@@ -15,7 +16,7 @@ interface ReceivedStateProps {
  *  - "Next: {label}" or "Back to overview" (primary red) — derived from
  *    AUDIT_SECTIONS order, skipping non-stepped sections (e.g. content).
  */
-export function ReceivedState({ sectionKey, onEdit }: ReceivedStateProps) {
+export function ReceivedState({ sectionKey, auditId, onEdit }: ReceivedStateProps) {
   const idx = AUDIT_SECTIONS.findIndex((s) => s.key === sectionKey);
   const next = idx >= 0 ? AUDIT_SECTIONS[idx + 1] : undefined;
   const hasNextStepped = !!next && next.key !== "content";
@@ -50,7 +51,10 @@ export function ReceivedState({ sectionKey, onEdit }: ReceivedStateProps) {
           >
             <Link
               to="/app/tools/$key/$"
-              params={{ key: "selling-systems-audit", _splat: next.key }}
+              params={{
+                key: "selling-systems-audit",
+                _splat: `${auditId}/${next.key}`,
+              }}
             >
               Next: {next.label}
             </Link>
@@ -62,7 +66,7 @@ export function ReceivedState({ sectionKey, onEdit }: ReceivedStateProps) {
           >
             <Link
               to="/app/tools/$key/$"
-              params={{ key: "selling-systems-audit", _splat: "" }}
+              params={{ key: "selling-systems-audit", _splat: auditId }}
             >
               Back to overview
             </Link>
