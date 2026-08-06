@@ -29,11 +29,13 @@ export function UploadDialog({
   open,
   onOpenChange,
   ownerId,
+  auditId,
   defaultCategory,
 }: {
   open: boolean;
   onOpenChange: (next: boolean) => void;
   ownerId: string;
+  auditId: string;
   defaultCategory?: string;
 }) {
   const upload = useUploadAsset();
@@ -61,6 +63,7 @@ export function UploadDialog({
       try {
         await upload.mutateAsync({
           ownerId,
+          auditId,
           category,
           title: t,
           kind: "text",
@@ -81,6 +84,7 @@ export function UploadDialog({
     try {
       await upload.mutateAsync({
         ownerId,
+        auditId,
         category,
         title: t,
         kind: "file",

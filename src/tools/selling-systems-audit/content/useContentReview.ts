@@ -79,32 +79,13 @@ export function useAssetNotes(assetId: string | null) {
 
 export type UploadInput = {
   ownerId: string;
+  auditId: string;
   category: string;
   title: string;
 } & (
   | { kind: "text"; body: string }
   | { kind: "file"; file: File; inputType: Exclude<ContentInputType, "text"> }
 );
-
-/** Resolve the owner's audit row, creating the default one if missing. */
-async function resolveAuditId(ownerId: string): Promise<string> {
-  const { data, error } = await supabase
-    .from("audits")
-    .select("id")
-    .eq("owner_id", ownerId)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-  if (error) throw error;
-  if (data?.id) return data.id as string;
-  const { data: created, error: insErr } = await supabase
-    .from("audits")
-    .insert({ owner_id: ownerId, name: "Main service" })
-    .select("id")
-    .single();
-  if (insErr) throw insErr;
-  return created.id as string;
-}
 
 export function useUploadAsset() {
   const qc = useQueryClient();
@@ -131,9 +112,8 @@ export function useUploadAsset() {
         if (upErr) throw upErr;
       }
 
-      const auditId = await resolveAuditId(input.ownerId);
       const { error } = await supabase.from(ASSETS).insert({
-        audit_id: auditId,
+        audit_id: input.auditId,
         id,
         owner_id: input.ownerId,
         category: input.category,
@@ -152,12 +132,12 @@ export function useUploadAsset() {
       return id;
     },
     onSuccess: (_id, vars) => {
-      void qc.invalidateQueries({ queryKey: ["content-assets", vars.ownerId] });
+      void qc.invalidateQueries({ queryKey: ["content-assets", vars.auditId] });
     },
   });
 }
 
-export function useDeleteAsset(ownerId: string | undefined) {
+export function useDeleteAsset(auditId: string | undefined) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (asset: ContentAsset) => {
@@ -170,7 +150,7 @@ export function useDeleteAsset(ownerId: string | undefined) {
       if (error) throw error;
     },
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["content-assets", ownerId] });
+      void qc.invalidateQueries({ queryKey: ["content-assets", auditId] });
     },
   });
 }
