@@ -8,8 +8,10 @@ import { AUDIT_SECTIONS } from "@/tools/selling-systems-audit/config";
  * `has_unsubmitted_changes` is intentionally ignored — once submitted, the
  * section counts as complete.
  *
- * Mirrors the direct-Supabase, owner-scoped pattern used by each section's
- * intake hook. Content Review is excluded (no submission concept).
+ * Multi-audit: an owner can have several audits (one per service). Readiness
+ * is judged against the owner's BEST audit — the one with the most submitted
+ * sections. "All complete" therefore means at least one audit has all six
+ * sections submitted. Content Review is excluded (no submission concept).
  */
 
 type IncompleteItem = { key: string; label: string; route: string };
@@ -28,12 +30,26 @@ type AuditGateKey = keyof typeof AUDIT_TABLES;
 const auditLabel = (key: AuditGateKey): string =>
   AUDIT_SECTIONS.find((s) => s.key === key)?.label ?? key;
 
-const auditRoute = (key: AuditGateKey): string =>
-  `/app/tools/selling-systems-audit/${key}`;
+const auditRoute = (auditId: string | null, key: AuditGateKey): string =>
+  auditId
+    ? `/app/tools/selling-systems-audit/${auditId}/${key}`
+    : `/app/tools/selling-systems-audit`;
 
-async function readSubmittedAt(table: string, ownerId: string): Promise<string | null> {
+async function readSectionRows(
+  table: string,
+  ownerId: string,
+): Promise<{ audit_id: string; submitted_at: string | null }[]> {
   const { data, error } = await supabase
     .from(table as never)
+    .select("audit_id, submitted_at")
+    .eq("owner_id", ownerId);
+  if (error) throw error;
+  return (data ?? []) as unknown as { audit_id: string; submitted_at: string | null }[];
+}
+
+async function readSalescodeSubmittedAt(ownerId: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("salescode_results" as never)
     .select("submitted_at")
     .eq("owner_id", ownerId)
     .maybeSingle();
@@ -48,23 +64,51 @@ export function useBookingReadiness(ownerId: string | undefined) {
     staleTime: 60_000,
     queryFn: async () => {
       const auditKeys = Object.keys(AUDIT_TABLES) as AuditGateKey[];
-      const [auditResults, salescodeAt] = await Promise.all([
-        Promise.all(
-          auditKeys.map((key) => readSubmittedAt(AUDIT_TABLES[key], ownerId!)),
-        ),
-        readSubmittedAt("salescode_results", ownerId!),
+      const [auditRows, salescodeAt, auditList] = await Promise.all([
+        Promise.all(auditKeys.map((key) => readSectionRows(AUDIT_TABLES[key], ownerId!))),
+        readSalescodeSubmittedAt(ownerId!),
+        supabase
+          .from("audits")
+          .select("id")
+          .eq("owner_id", ownerId!)
+          .order("created_at", { ascending: true })
+          .then(({ data, error }) => {
+            if (error) throw error;
+            return (data ?? []) as { id: string }[];
+          }),
       ]);
 
-      const incomplete: IncompleteItem[] = [];
+      // Per-audit set of submitted section keys.
+      const byAudit = new Map<string, Set<AuditGateKey>>();
+      for (const audit of auditList) byAudit.set(audit.id, new Set());
       auditKeys.forEach((key, i) => {
-        if (!auditResults[i]) {
+        for (const row of auditRows[i]) {
+          if (!row.audit_id || !row.submitted_at) continue;
+          if (!byAudit.has(row.audit_id)) byAudit.set(row.audit_id, new Set());
+          byAudit.get(row.audit_id)!.add(key);
+        }
+      });
+
+      // Best audit = most submitted sections; ties resolve to the earliest.
+      let bestId: string | null = null;
+      let bestDone: Set<AuditGateKey> = new Set();
+      for (const [id, done] of byAudit) {
+        if (bestId === null || done.size > bestDone.size) {
+          bestId = id;
+          bestDone = done;
+        }
+      }
+
+      const incomplete: IncompleteItem[] = [];
+      for (const key of auditKeys) {
+        if (!bestDone.has(key)) {
           incomplete.push({
             key,
             label: auditLabel(key),
-            route: auditRoute(key),
+            route: auditRoute(bestId, key),
           });
         }
-      });
+      }
       if (!salescodeAt) {
         incomplete.push({
           key: "salescode",
