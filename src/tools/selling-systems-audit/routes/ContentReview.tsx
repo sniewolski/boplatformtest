@@ -139,7 +139,7 @@ export function ContentReview({ auditId }: { auditId: string }) {
           asset={openAsset}
           open={!!openAsset}
           onOpenChange={(v) => { if (!v) setOpenAsset(null); }}
-          ownerId={ownerId}
+          auditId={auditId}
         />
       )}
     </div>

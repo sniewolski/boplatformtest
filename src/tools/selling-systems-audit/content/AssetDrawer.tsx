@@ -22,14 +22,14 @@ export function AssetDrawer({
   asset,
   open,
   onOpenChange,
-  ownerId,
+  auditId,
 }: {
   asset: ContentAsset | null;
   open: boolean;
   onOpenChange: (next: boolean) => void;
-  ownerId: string;
+  auditId: string;
 }) {
-  const del = useDeleteAsset(ownerId);
+  const del = useDeleteAsset(auditId);
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
 
   useEffect(() => {
