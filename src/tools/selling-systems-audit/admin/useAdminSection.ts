@@ -37,17 +37,17 @@ export type SubmittedRow = {
 };
 
 export function useSubmittedAnswers(
-  ownerId: string | undefined,
+  auditId: string | null | undefined,
   sectionKey: AdminSectionKey,
 ) {
   return useQuery({
-    queryKey: ["admin-audit", "submitted", ownerId, sectionKey],
-    enabled: !!ownerId,
+    queryKey: ["admin-audit", "submitted", auditId, sectionKey],
+    enabled: !!auditId,
     queryFn: async (): Promise<SubmittedRow | null> => {
       const { data, error } = await supabase
         .from(SECTION_TABLE[sectionKey] as never)
         .select("submitted_answers, submitted_at, updated_at")
-        .eq("owner_id", ownerId!)
+        .eq("audit_id", auditId!)
         .maybeSingle();
       if (error) throw error;
       return (data as SubmittedRow | null) ?? null;
@@ -77,17 +77,17 @@ export type SectionSummaryRow = {
 };
 
 export function useSectionSummary(
-  ownerId: string | undefined,
+  auditId: string | null | undefined,
   sectionKey: AdminSectionKey,
 ) {
   return useQuery({
-    queryKey: ["admin-audit", "summary", ownerId, sectionKey],
-    enabled: !!ownerId,
+    queryKey: ["admin-audit", "summary", auditId, sectionKey],
+    enabled: !!auditId,
     queryFn: async (): Promise<SectionSummaryRow | null> => {
       const { data, error } = await supabase
         .from("audit_section_summaries")
         .select("summary_text, updated_at")
-        .eq("owner_id", ownerId!)
+        .eq("audit_id", auditId!)
         .eq("section_key", sectionKey)
         .maybeSingle();
       if (error) throw error;
@@ -102,17 +102,17 @@ export type SectionNoteRow = {
 };
 
 export function useSectionNote(
-  ownerId: string | undefined,
+  auditId: string | null | undefined,
   sectionKey: AdminSectionKey,
 ) {
   return useQuery({
-    queryKey: ["admin-audit", "note", ownerId, sectionKey],
-    enabled: !!ownerId,
+    queryKey: ["admin-audit", "note", auditId, sectionKey],
+    enabled: !!auditId,
     queryFn: async (): Promise<SectionNoteRow | null> => {
       const { data, error } = await supabase
         .from("audit_section_notes")
         .select("body, updated_at")
-        .eq("owner_id", ownerId!)
+        .eq("audit_id", auditId!)
         .eq("section_key", sectionKey)
         .maybeSingle();
       if (error) throw error;
@@ -126,36 +126,29 @@ export function useSectionNote(
  */
 export function useSaveSectionNote(
   ownerId: string | undefined,
+  auditId: string | null | undefined,
   sectionKey: AdminSectionKey,
 ) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (body: string) => {
       if (!ownerId) throw new Error("No owner");
+      if (!auditId) throw new Error("No audit found for this owner.");
       const trimmed = body.trim();
       if (!trimmed) {
         const { error } = await supabase
           .from("audit_section_notes")
           .delete()
-          .eq("owner_id", ownerId)
+          .eq("audit_id", auditId)
           .eq("section_key", sectionKey);
         if (error) throw error;
         return null;
       }
-      const { data: auditRow, error: auditErr } = await supabase
-        .from("audits")
-        .select("id")
-        .eq("owner_id", ownerId)
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      if (auditErr) throw auditErr;
-      if (!auditRow) throw new Error("No audit found for this owner.");
       const { error } = await supabase
         .from("audit_section_notes")
         .upsert(
           {
-            audit_id: auditRow.id as string,
+            audit_id: auditId,
             owner_id: ownerId,
             section_key: sectionKey,
             body: trimmed,
@@ -167,7 +160,7 @@ export function useSaveSectionNote(
     },
     onSuccess: () => {
       void qc.invalidateQueries({
-        queryKey: ["admin-audit", "note", ownerId, sectionKey],
+        queryKey: ["admin-audit", "note", auditId, sectionKey],
       });
     },
   });
