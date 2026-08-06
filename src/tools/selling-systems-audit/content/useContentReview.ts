@@ -28,21 +28,38 @@ export type ContentNote = {
   updated_at: string;
 };
 
-export function useContentAssets(ownerId: string | undefined) {
+export function useContentAssets(auditId: string | undefined) {
   return useQuery({
-    queryKey: ["content-assets", ownerId],
-    enabled: !!ownerId,
+    queryKey: ["content-assets", auditId],
+    enabled: !!auditId,
     queryFn: async (): Promise<ContentAsset[]> => {
       const { data, error } = await supabase
         .from(ASSETS)
         .select("*")
-        .eq("owner_id", ownerId!)
+        .eq("audit_id", auditId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as ContentAsset[];
     },
   });
 }
+
+/** Owner-wide asset count across every audit (dashboard rollup). */
+export function useOwnerContentAssetCount(ownerId: string | undefined) {
+  return useQuery({
+    queryKey: ["content-assets-count", ownerId],
+    enabled: !!ownerId,
+    queryFn: async (): Promise<number> => {
+      const { count, error } = await supabase
+        .from(ASSETS)
+        .select("id", { count: "exact", head: true })
+        .eq("owner_id", ownerId!);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+}
+
 
 export function useAssetNotes(assetId: string | null) {
   return useQuery({
