@@ -114,7 +114,9 @@ export function useUploadAsset() {
         if (upErr) throw upErr;
       }
 
+      const auditId = await resolveAuditId(input.ownerId);
       const { error } = await supabase.from(ASSETS).insert({
+        audit_id: auditId,
         id,
         owner_id: input.ownerId,
         category: input.category,
