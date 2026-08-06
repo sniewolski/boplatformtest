@@ -142,11 +142,25 @@ export function useSaveSectionNote(
         if (error) throw error;
         return null;
       }
+      const { data: auditRow, error: auditErr } = await supabase
+        .from("audits")
+        .select("id")
+        .eq("owner_id", ownerId)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (auditErr) throw auditErr;
+      if (!auditRow) throw new Error("No audit found for this owner.");
       const { error } = await supabase
         .from("audit_section_notes")
         .upsert(
-          { owner_id: ownerId, section_key: sectionKey, body: trimmed },
-          { onConflict: "owner_id,section_key" },
+          {
+            audit_id: auditRow.id as string,
+            owner_id: ownerId,
+            section_key: sectionKey,
+            body: trimmed,
+          },
+          { onConflict: "audit_id,section_key" },
         );
       if (error) throw error;
       return trimmed;

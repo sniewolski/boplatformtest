@@ -150,15 +150,26 @@ export const generateSectionSummary = createServerFn({ method: "POST" })
       .trim();
     if (!summary) throw new Error("AI returned an empty summary.");
 
+    const { data: auditRow, error: auditErr } = await supabaseAdmin
+      .from("audits")
+      .select("id")
+      .eq("owner_id", data.ownerId)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (auditErr) throw new Error(auditErr.message);
+    if (!auditRow) throw new Error("No audit found for this owner.");
+
     const { error: upErr } = await supabaseAdmin
       .from("audit_section_summaries")
       .upsert(
         {
+          audit_id: auditRow.id as string,
           owner_id: data.ownerId,
           section_key: data.sectionKey,
           summary_text: summary,
         },
-        { onConflict: "owner_id,section_key" },
+        { onConflict: "audit_id,section_key" },
       );
     if (upErr) throw new Error(upErr.message);
 

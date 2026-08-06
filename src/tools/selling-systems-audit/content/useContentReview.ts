@@ -69,6 +69,26 @@ export type UploadInput = {
   | { kind: "file"; file: File; inputType: Exclude<ContentInputType, "text"> }
 );
 
+/** Resolve the owner's audit row, creating the default one if missing. */
+async function resolveAuditId(ownerId: string): Promise<string> {
+  const { data, error } = await supabase
+    .from("audits")
+    .select("id")
+    .eq("owner_id", ownerId)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  if (data?.id) return data.id as string;
+  const { data: created, error: insErr } = await supabase
+    .from("audits")
+    .insert({ owner_id: ownerId, name: "Main service" })
+    .select("id")
+    .single();
+  if (insErr) throw insErr;
+  return created.id as string;
+}
+
 export function useUploadAsset() {
   const qc = useQueryClient();
   return useMutation({
@@ -94,7 +114,9 @@ export function useUploadAsset() {
         if (upErr) throw upErr;
       }
 
+      const auditId = await resolveAuditId(input.ownerId);
       const { error } = await supabase.from(ASSETS).insert({
+        audit_id: auditId,
         id,
         owner_id: input.ownerId,
         category: input.category,
