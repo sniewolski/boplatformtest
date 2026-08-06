@@ -152,7 +152,7 @@ export function AuditList() {
             return (
               <li
                 key={audit.id}
-                className="group relative rounded-xl bg-[var(--white)] overflow-hidden transition-[background-color] duration-150 ease-[var(--ease-out)] hover:bg-[var(--surface-raised)] focus-within:bg-[var(--surface-raised)]"
+                className="group relative rounded-xl bg-[var(--white)] border border-[var(--border)] overflow-hidden transition-colors duration-150 ease-[var(--ease-out)] hover:bg-[var(--surface-raised)] hover:border-[var(--border-strong)] focus-within:bg-[var(--surface-raised)] focus-within:border-[var(--border-strong)]"
               >
                 <Link
                   to="/app/tools/$key/$"
