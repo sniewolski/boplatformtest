@@ -152,7 +152,7 @@ export function AuditList() {
             return (
               <li
                 key={audit.id}
-                className="relative rounded-xl bg-[var(--surface-raised)] overflow-hidden"
+                className="group relative rounded-xl bg-[var(--surface-raised)] overflow-hidden transition-[background-color] duration-150 ease-[var(--ease-out)] hover:bg-[var(--white)] focus-within:bg-[var(--white)]"
               >
                 <Link
                   to="/app/tools/$key/$"
@@ -176,7 +176,10 @@ export function AuditList() {
                       <Pencil className="size-3.5" />
                     </button>
                   </span>
-                  <ArrowRight className="size-4 text-ink-muted shrink-0" aria-hidden />
+                  <ArrowRight
+                    className="size-4 text-ink-muted shrink-0 transition-transform duration-150 ease-[var(--ease-out)] origin-left group-hover:translate-x-[3px] group-focus-within:translate-x-[3px] motion-reduce:translate-x-0"
+                    aria-hidden
+                  />
                 </Link>
                 <ProgressBar frac={frac} />
               </li>
