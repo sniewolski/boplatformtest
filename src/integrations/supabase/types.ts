@@ -16,42 +16,88 @@ export type Database = {
     Tables: {
       audit_section_notes: {
         Row: {
+          audit_id: string
           body: string
           owner_id: string
           section_key: string
           updated_at: string
         }
         Insert: {
+          audit_id: string
           body: string
           owner_id: string
           section_key: string
           updated_at?: string
         }
         Update: {
+          audit_id?: string
           body?: string
           owner_id?: string
           section_key?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "audit_section_notes_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "audits"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       audit_section_summaries: {
         Row: {
+          audit_id: string
           owner_id: string
           section_key: string
           summary_text: string
           updated_at: string
         }
         Insert: {
+          audit_id: string
           owner_id: string
           section_key: string
           summary_text: string
           updated_at?: string
         }
         Update: {
+          audit_id?: string
           owner_id?: string
           section_key?: string
           summary_text?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_section_summaries_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "audits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audits: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
           updated_at?: string
         }
         Relationships: []
@@ -103,6 +149,7 @@ export type Database = {
       }
       content_review_assets: {
         Row: {
+          audit_id: string
           body_text: string | null
           category: string
           created_at: string
@@ -115,6 +162,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          audit_id: string
           body_text?: string | null
           category: string
           created_at?: string
@@ -127,6 +175,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          audit_id?: string
           body_text?: string | null
           category?: string
           created_at?: string
@@ -138,7 +187,15 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "content_review_assets_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "audits"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       content_review_notes: {
         Row: {
@@ -450,6 +507,7 @@ export type Database = {
       }
       selling_systems_audit_activity: {
         Row: {
+          audit_id: string
           draft_answers: Json | null
           has_unsubmitted_changes: boolean
           owner_id: string
@@ -458,6 +516,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          audit_id: string
           draft_answers?: Json | null
           has_unsubmitted_changes?: boolean
           owner_id: string
@@ -466,6 +525,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          audit_id?: string
           draft_answers?: Json | null
           has_unsubmitted_changes?: boolean
           owner_id?: string
@@ -473,10 +533,19 @@ export type Database = {
           submitted_at?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ssa_activity_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: true
+            referencedRelation: "audits"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       selling_systems_audit_alignment: {
         Row: {
+          audit_id: string
           draft_answers: Json | null
           has_unsubmitted_changes: boolean
           owner_id: string
@@ -485,6 +554,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          audit_id: string
           draft_answers?: Json | null
           has_unsubmitted_changes?: boolean
           owner_id: string
@@ -493,6 +563,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          audit_id?: string
           draft_answers?: Json | null
           has_unsubmitted_changes?: boolean
           owner_id?: string
@@ -500,10 +571,19 @@ export type Database = {
           submitted_at?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ssa_alignment_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: true
+            referencedRelation: "audits"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       selling_systems_audit_conversion: {
         Row: {
+          audit_id: string
           draft_answers: Json | null
           has_unsubmitted_changes: boolean
           owner_id: string
@@ -512,6 +592,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          audit_id: string
           draft_answers?: Json | null
           has_unsubmitted_changes?: boolean
           owner_id: string
@@ -520,6 +601,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          audit_id?: string
           draft_answers?: Json | null
           has_unsubmitted_changes?: boolean
           owner_id?: string
@@ -527,10 +609,19 @@ export type Database = {
           submitted_at?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ssa_conversion_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: true
+            referencedRelation: "audits"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       selling_systems_audit_messaging: {
         Row: {
+          audit_id: string
           draft_answers: Json | null
           has_unsubmitted_changes: boolean
           owner_id: string
@@ -539,6 +630,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          audit_id: string
           draft_answers?: Json | null
           has_unsubmitted_changes?: boolean
           owner_id: string
@@ -547,6 +639,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          audit_id?: string
           draft_answers?: Json | null
           has_unsubmitted_changes?: boolean
           owner_id?: string
@@ -554,10 +647,19 @@ export type Database = {
           submitted_at?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ssa_messaging_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: true
+            referencedRelation: "audits"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       selling_systems_audit_pipeline: {
         Row: {
+          audit_id: string
           draft_answers: Json | null
           has_unsubmitted_changes: boolean
           owner_id: string
@@ -566,6 +668,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          audit_id: string
           draft_answers?: Json | null
           has_unsubmitted_changes?: boolean
           owner_id: string
@@ -574,6 +677,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          audit_id?: string
           draft_answers?: Json | null
           has_unsubmitted_changes?: boolean
           owner_id?: string
@@ -581,10 +685,19 @@ export type Database = {
           submitted_at?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ssa_pipeline_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: true
+            referencedRelation: "audits"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       selling_systems_audit_process: {
         Row: {
+          audit_id: string
           draft_answers: Json | null
           has_unsubmitted_changes: boolean
           owner_id: string
@@ -593,6 +706,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          audit_id: string
           draft_answers?: Json | null
           has_unsubmitted_changes?: boolean
           owner_id: string
@@ -601,6 +715,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          audit_id?: string
           draft_answers?: Json | null
           has_unsubmitted_changes?: boolean
           owner_id?: string
@@ -608,7 +723,15 @@ export type Database = {
           submitted_at?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ssa_process_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: true
+            referencedRelation: "audits"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sop_folders: {
         Row: {
