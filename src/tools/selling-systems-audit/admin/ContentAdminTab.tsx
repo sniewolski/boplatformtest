@@ -53,7 +53,7 @@ function inputIcon(type: Row["input_type"]) {
   }
 }
 
-export function ContentAdminTab({ ownerId }: { ownerId: string }) {
+export function ContentAdminTab({ auditId }: { auditId: string | null }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   if (selectedId) {
@@ -64,24 +64,24 @@ export function ContentAdminTab({ ownerId }: { ownerId: string }) {
       />
     );
   }
-  return <AssetList ownerId={ownerId} onOpen={setSelectedId} />;
+  return <AssetList auditId={auditId} onOpen={setSelectedId} />;
 }
 
 function AssetList({
-  ownerId,
+  auditId,
   onOpen,
 }: {
-  ownerId: string;
+  auditId: string | null;
   onOpen: (id: string) => void;
 }) {
   const q = useQuery({
-    queryKey: ["admin-audit", "content", ownerId],
-    enabled: !!ownerId,
+    queryKey: ["admin-audit", "content", auditId],
+    enabled: !!auditId,
     queryFn: async (): Promise<Row[]> => {
       const { data, error } = await supabase
         .from("content_review_assets")
         .select("id, category, title, input_type, body_text, created_at")
-        .eq("owner_id", ownerId)
+        .eq("audit_id", auditId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Row[];
