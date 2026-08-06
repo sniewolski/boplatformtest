@@ -145,44 +145,40 @@ export function AuditList() {
           </Button>
         </div>
       ) : (
-        <ol className="flex flex-col">
-          {list.map((audit, i) => {
+        <ol className="flex flex-col gap-3">
+          {list.map((audit) => {
             const done = progress?.[audit.id] ?? 0;
             const frac = Math.max(0, Math.min(1, done / 6));
-            const isLast = i === list.length - 1;
             return (
-              <li key={audit.id} className="relative">
-                <div
-                  className={`relative flex items-center justify-between gap-4 ${
-                    isLast ? "" : "border-b border-border"
-                  }`}
+              <li
+                key={audit.id}
+                className="relative rounded-xl bg-[var(--surface-raised)] overflow-hidden"
+              >
+                <Link
+                  to="/app/tools/$key/$"
+                  params={{ key: "selling-systems-audit", _splat: audit.id }}
+                  className="group flex w-full min-w-0 items-center justify-between gap-6 py-5 px-3"
                 >
-                  <Link
-                    to="/app/tools/$key/$"
-                    params={{ key: "selling-systems-audit", _splat: audit.id }}
-                    className="group flex-1 min-w-0 flex items-center justify-between gap-6 py-5 pr-2 transition-[background-color] duration-[120ms] hover:bg-[var(--surface-raised)] rounded-md -mx-3 px-3"
-                  >
-                    <span className="flex items-center gap-2 min-w-0">
-                      <span className="text-ink font-medium text-base truncate">
-                        {audit.name}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          openRename(audit.id, audit.name);
-                        }}
-                        aria-label={`Rename ${audit.name}`}
-                        className="shrink-0 text-ink-muted hover:text-ink transition-colors p-2"
-                      >
-                        <Pencil className="size-3.5" />
-                      </button>
+                  <span className="flex items-center gap-2 min-w-0">
+                    <span className="text-ink font-medium text-base truncate">
+                      {audit.name}
                     </span>
-                    <ArrowRight className="size-4 text-ink-muted shrink-0" aria-hidden />
-                  </Link>
-                  <ProgressBar frac={frac} />
-                </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        openRename(audit.id, audit.name);
+                      }}
+                      aria-label={`Rename ${audit.name}`}
+                      className="shrink-0 text-ink-muted hover:text-ink transition-colors p-2"
+                    >
+                      <Pencil className="size-3.5" />
+                    </button>
+                  </span>
+                  <ArrowRight className="size-4 text-ink-muted shrink-0" aria-hidden />
+                </Link>
+                <ProgressBar frac={frac} />
               </li>
             );
           })}
