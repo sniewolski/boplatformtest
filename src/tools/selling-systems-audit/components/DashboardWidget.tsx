@@ -28,7 +28,11 @@ export function DashboardWidget() {
   const completedCount = 6 - auditIncomplete;
 
   return (
-    <Link to="/app/tools/selling-systems-audit" className={TILE_CLASSES}>
+    <Link
+      to="/app/tools/$key/$"
+      params={{ key: "selling-systems-audit", _splat: "" }}
+      className={TILE_CLASSES}
+    >
       <span className="text-ink-muted text-xs uppercase tracking-wider">
         Selling Systems Audit
       </span>
