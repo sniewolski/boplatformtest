@@ -20,11 +20,13 @@ import { SectionNotes } from "./SectionNotes";
  */
 export function SectionAdminTab({
   ownerId,
+  auditId,
   sectionKey,
   sectionLabel,
   renderReadBack,
 }: {
   ownerId: string;
+  auditId: string | null;
   sectionKey: AdminSectionKey;
   sectionLabel: string;
   renderReadBack: (
@@ -32,7 +34,7 @@ export function SectionAdminTab({
     currency: CurrencyCode | null,
   ) => ReactNode;
 }) {
-  const submitted = useSubmittedAnswers(ownerId, sectionKey);
+  const submitted = useSubmittedAnswers(auditId, sectionKey);
   const currencyQ = useOwnerCurrency(ownerId);
 
   const answers = submitted.data?.submitted_answers ?? null;
@@ -44,6 +46,7 @@ export function SectionAdminTab({
     <div className="flex flex-col gap-8 max-w-3xl">
       <SectionSummaryPanel
         ownerId={ownerId}
+        auditId={auditId}
         sectionKey={sectionKey}
         hasSubmitted={hasSubmitted}
       />
@@ -81,7 +84,7 @@ export function SectionAdminTab({
           )}
       </section>
 
-      <SectionNotes ownerId={ownerId} sectionKey={sectionKey} />
+      <SectionNotes ownerId={ownerId} auditId={auditId} sectionKey={sectionKey} />
     </div>
   );
 }
