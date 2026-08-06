@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Download, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -36,10 +37,31 @@ export function OwnerAuditDetail({ ownerId }: { ownerId: string }) {
   const [tab, setTab] = useState<TabKey>("conversion");
   const isAdmin = useIsAdmin();
 
+  /**
+   * SINGLE RESOLUTION POINT for the selected audit. Exactly one audit per
+   * owner today; Phase 3 replaces this with an audit selector. Every section
+   * tab, the content tab and the export trigger read the auditId from here.
+   */
+  const auditsQ = useQuery({
+    queryKey: ["admin-audit", "audits", ownerId],
+    enabled: !!ownerId,
+    queryFn: async (): Promise<{ id: string }[]> => {
+      const { data, error } = await supabase
+        .from("audits")
+        .select("id")
+        .eq("owner_id", ownerId)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as { id: string }[];
+    },
+  });
+  const auditId = auditsQ.data?.[0]?.id ?? null;
+
   const fetchExport = useServerFn(getAuditExportData);
   const exportMut = useMutation({
     mutationFn: async () => {
-      const data = await fetchExport({ data: { ownerId } });
+      if (!auditId) throw new Error("Nothing to export yet.");
+      const data = await fetchExport({ data: { ownerId, auditId } });
       if (!hasAnySubmission(data)) {
         throw new Error("Nothing to export yet.");
       }
@@ -66,7 +88,7 @@ export function OwnerAuditDetail({ ownerId }: { ownerId: string }) {
               variant="outline"
               size="sm"
               onClick={() => exportMut.mutate()}
-              disabled={exportMut.isPending}
+              disabled={!auditId || exportMut.isPending}
             >
               {exportMut.isPending ? (
                 <Loader2 className="size-3.5 animate-spin" aria-hidden />
@@ -111,10 +133,11 @@ export function OwnerAuditDetail({ ownerId }: { ownerId: string }) {
       </nav>
 
       <section className="min-h-[40vh]">
-        {tab === "conversion" && <ConversionAdminTab ownerId={ownerId} />}
+        {tab === "conversion" && <ConversionAdminTab ownerId={ownerId} auditId={auditId} />}
         {tab === "pipeline" && (
           <SectionAdminTab
             ownerId={ownerId}
+            auditId={auditId}
             sectionKey="pipeline"
             sectionLabel="Pipeline"
             renderReadBack={(answers, currency) => (
@@ -125,6 +148,7 @@ export function OwnerAuditDetail({ ownerId }: { ownerId: string }) {
         {tab === "process" && (
           <SectionAdminTab
             ownerId={ownerId}
+            auditId={auditId}
             sectionKey="process"
             sectionLabel="Process"
             renderReadBack={(answers) => <ProcessAdminReadBack answers={answers} />}
@@ -133,6 +157,7 @@ export function OwnerAuditDetail({ ownerId }: { ownerId: string }) {
         {tab === "activity" && (
           <SectionAdminTab
             ownerId={ownerId}
+            auditId={auditId}
             sectionKey="activity"
             sectionLabel="Activity"
             renderReadBack={(answers) => <ActivityAdminReadBack answers={answers} />}
@@ -141,6 +166,7 @@ export function OwnerAuditDetail({ ownerId }: { ownerId: string }) {
         {tab === "messaging" && (
           <SectionAdminTab
             ownerId={ownerId}
+            auditId={auditId}
             sectionKey="messaging"
             sectionLabel="Messaging"
             renderReadBack={(answers) => <MessagingAdminReadBack answers={answers} />}
@@ -149,12 +175,13 @@ export function OwnerAuditDetail({ ownerId }: { ownerId: string }) {
         {tab === "alignment" && (
           <SectionAdminTab
             ownerId={ownerId}
+            auditId={auditId}
             sectionKey="alignment"
             sectionLabel="Alignment"
             renderReadBack={(answers) => <AlignmentAdminReadBack answers={answers} />}
           />
         )}
-        {tab === "content" && <ContentAdminTab ownerId={ownerId} />}
+        {tab === "content" && <ContentAdminTab auditId={auditId} />}
       </section>
     </div>
   );
