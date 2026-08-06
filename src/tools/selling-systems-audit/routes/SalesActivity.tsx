@@ -51,12 +51,12 @@ const AUTOSAVE_MS = 700;
  * ReceivedState, "edit after submit" note. Phase 2 leaves the 4 step
  * bodies empty — Phase 3 fills questions + read-back.
  */
-export function SalesActivity() {
+export function SalesActivity({ auditId }: { auditId: string }) {
   const { session } = useSession();
   const userId = session?.user.id;
-  const { data: intake, isLoading } = useActivityIntake(userId);
-  const save = useSaveDraft(userId);
-  const submit = useSubmitIntake(userId);
+  const { data: intake, isLoading } = useActivityIntake(auditId);
+  const save = useSaveDraft(userId, auditId);
+  const submit = useSubmitIntake(userId, auditId);
 
   const [stepIdx, setStepIdx] = useState(0);
   const step = ACTIVITY_STEPS[stepIdx];
@@ -171,7 +171,7 @@ export function SalesActivity() {
     <div className="app-content py-12 flex flex-col gap-10">
       <Link
         to="/app/tools/$key/$"
-        params={{ key: "selling-systems-audit", _splat: "" }}
+        params={{ key: "selling-systems-audit", _splat: auditId }}
         className="inline-flex items-center gap-2 text-ink-muted text-sm hover:text-ink transition-colors w-fit"
       >
         <ArrowLeft className="size-4" />
@@ -186,6 +186,7 @@ export function SalesActivity() {
 
       {isReceived ? (
         <ReceivedState
+          auditId={auditId}
           sectionKey="activity"
           onEdit={() => {
             setEditingAfterSubmit(true);

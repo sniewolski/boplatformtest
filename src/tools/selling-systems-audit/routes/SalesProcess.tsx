@@ -56,12 +56,12 @@ const AUTOSAVE_MS = 700;
  * "edit after submit" note. Phase 2 leaves the five steps empty — Phase 3
  * fills Stages with the StageBuilder, Phase 4 fills the other UIs + read-back.
  */
-export function SalesProcess() {
+export function SalesProcess({ auditId }: { auditId: string }) {
   const { session } = useSession();
   const userId = session?.user.id;
-  const { data: intake, isLoading } = useProcessIntake(userId);
-  const save = useSaveDraft(userId);
-  const submit = useSubmitIntake(userId);
+  const { data: intake, isLoading } = useProcessIntake(auditId);
+  const save = useSaveDraft(userId, auditId);
+  const submit = useSubmitIntake(userId, auditId);
 
   const [stepIdx, setStepIdx] = useState(0);
   const step = PROCESS_STEPS[stepIdx];
@@ -178,7 +178,7 @@ export function SalesProcess() {
     <div className="app-content py-12 flex flex-col gap-10">
       <Link
         to="/app/tools/$key/$"
-        params={{ key: "selling-systems-audit", _splat: "" }}
+        params={{ key: "selling-systems-audit", _splat: auditId }}
         className="inline-flex items-center gap-2 text-ink-muted text-sm hover:text-ink transition-colors w-fit"
       >
         <ArrowLeft className="size-4" />
@@ -193,6 +193,7 @@ export function SalesProcess() {
 
       {isReceived ? (
         <ReceivedState
+          auditId={auditId}
           sectionKey="process"
           onEdit={() => {
             setEditingAfterSubmit(true);
