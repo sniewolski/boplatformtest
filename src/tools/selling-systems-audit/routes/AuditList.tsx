@@ -162,19 +162,25 @@ export function AuditList() {
                     params={{ key: "selling-systems-audit", _splat: audit.id }}
                     className="group flex-1 min-w-0 flex items-center justify-between gap-6 py-5 pr-2 transition-[background-color] duration-[120ms] hover:bg-[var(--surface-raised)] rounded-md -mx-3 px-3"
                   >
-                    <span className="text-ink font-medium text-base truncate">
-                      {audit.name}
+                    <span className="flex items-center gap-2 min-w-0">
+                      <span className="text-ink font-medium text-base truncate">
+                        {audit.name}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          openRename(audit.id, audit.name);
+                        }}
+                        aria-label={`Rename ${audit.name}`}
+                        className="shrink-0 text-ink-muted hover:text-ink transition-colors p-2"
+                      >
+                        <Pencil className="size-3.5" />
+                      </button>
                     </span>
                     <ArrowRight className="size-4 text-ink-muted shrink-0" aria-hidden />
                   </Link>
-                  <button
-                    type="button"
-                    onClick={() => openRename(audit.id, audit.name)}
-                    aria-label={`Rename ${audit.name}`}
-                    className="shrink-0 text-ink-muted hover:text-ink transition-colors p-2"
-                  >
-                    <Pencil className="size-3.5" />
-                  </button>
                   <ProgressBar frac={frac} />
                 </div>
               </li>
