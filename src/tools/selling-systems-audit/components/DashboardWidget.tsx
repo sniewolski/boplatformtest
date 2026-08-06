@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useSession } from "@/core/auth/useSession";
 import { useBookingReadiness } from "@/lib/useBookingReadiness";
-import { useContentAssets } from "../content/useContentReview";
+import { useOwnerContentAssetCount } from "../content/useContentReview";
 
 const TILE_CLASSES =
   "block border border-border rounded-xl p-5 aspect-[4/3] flex flex-col h-full hover:bg-[var(--surface-raised)] transition-[background-color] duration-[120ms]";
@@ -18,10 +18,10 @@ const AUDIT_SECTION_KEYS = [
 export function DashboardWidget() {
   const { session } = useSession();
   const userId = session?.user.id;
-  const { data: assets } = useContentAssets(userId);
+  const { data: assetCount } = useOwnerContentAssetCount(userId);
   const { incomplete } = useBookingReadiness(userId);
 
-  const contentCount = assets?.length ?? 0;
+  const contentCount = assetCount ?? 0;
   const auditIncomplete = incomplete.filter((item) =>
     AUDIT_SECTION_KEYS.includes(item.key),
   ).length;

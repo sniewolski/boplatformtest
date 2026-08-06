@@ -44,10 +44,10 @@ export type ConversionIntakeRow = {
   updated_at: string;
 };
 
-export function useConversionIntake(ownerId: string | undefined) {
+export function useConversionIntake(auditId: string | undefined) {
   return useQuery({
-    queryKey: ["ssa-conversion-intake", ownerId],
-    enabled: !!ownerId,
+    queryKey: ["ssa-conversion-intake", auditId],
+    enabled: !!auditId,
     // Keep cached draft warm across in-app navigation so returning to the tool
     // hydrates instantly from cache instead of flashing defaults during refetch.
     staleTime: 5 * 60_000,
@@ -60,7 +60,7 @@ export function useConversionIntake(ownerId: string | undefined) {
         .select(
           "owner_id, draft_answers, submitted_answers, has_unsubmitted_changes, submitted_at, updated_at",
         )
-        .eq("owner_id", ownerId!)
+        .eq("audit_id", auditId!)
         .maybeSingle();
       if (error) throw error;
       return (data as ConversionIntakeRow | null) ?? null;
@@ -75,24 +75,26 @@ export function useConversionIntake(ownerId: string | undefined) {
  * `has_unsubmitted_changes` only flips to true once a submission exists.
  * Before the first submit there's nothing to be "dirty" against.
  */
-export function useSaveDraft(ownerId: string | undefined) {
+export function useSaveDraft(ownerId: string | undefined, auditId: string | undefined) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: { draft: IntakeAnswers; hasSubmitted: boolean }) => {
       if (!ownerId) throw new Error("Not signed in");
+      if (!auditId) throw new Error("No audit selected");
       const row = {
         owner_id: ownerId,
+        audit_id: auditId,
         draft_answers: payload.draft,
         // Only mark dirty after a first submission has been made.
         ...(payload.hasSubmitted ? { has_unsubmitted_changes: true } : {}),
       };
       const { error } = await supabase
         .from(TABLE as never)
-        .upsert(row as never, { onConflict: "owner_id" });
+        .upsert(row as never, { onConflict: "audit_id" });
       if (error) throw error;
     },
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["ssa-conversion-intake", ownerId] });
+      void qc.invalidateQueries({ queryKey: ["ssa-conversion-intake", auditId] });
     },
   });
 }
@@ -102,13 +104,15 @@ export function useSaveDraft(ownerId: string | undefined) {
  * clear the dirty flag. Caller passes the draft to snapshot so we don't
  * race a pending autosave.
  */
-export function useSubmitIntake(ownerId: string | undefined) {
+export function useSubmitIntake(ownerId: string | undefined, auditId: string | undefined) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: { draft: IntakeAnswers }) => {
       if (!ownerId) throw new Error("Not signed in");
+      if (!auditId) throw new Error("No audit selected");
       const row = {
         owner_id: ownerId,
+        audit_id: auditId,
         draft_answers: payload.draft,
         submitted_answers: payload.draft,
         has_unsubmitted_changes: false,
@@ -116,11 +120,11 @@ export function useSubmitIntake(ownerId: string | undefined) {
       };
       const { error } = await supabase
         .from(TABLE as never)
-        .upsert(row as never, { onConflict: "owner_id" });
+        .upsert(row as never, { onConflict: "audit_id" });
       if (error) throw error;
     },
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["ssa-conversion-intake", ownerId] });
+      void qc.invalidateQueries({ queryKey: ["ssa-conversion-intake", auditId] });
     },
   });
 }

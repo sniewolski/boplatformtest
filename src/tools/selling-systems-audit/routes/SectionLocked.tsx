@@ -5,15 +5,17 @@ import { ArrowLeft } from "lucide-react";
 export function SectionLocked({
   title,
   description,
+  auditId,
 }: {
   title: string;
   description?: string;
+  auditId: string;
 }) {
   return (
     <div className="app-content py-16 flex flex-col gap-8">
       <Link
         to="/app/tools/$key/$"
-        params={{ key: "selling-systems-audit", _splat: "" }}
+        params={{ key: "selling-systems-audit", _splat: auditId }}
         className="inline-flex items-center gap-2 text-ink-muted text-sm hover:text-ink transition-colors w-fit"
       >
         <ArrowLeft className="size-4" />

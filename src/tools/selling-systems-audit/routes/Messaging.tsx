@@ -49,12 +49,12 @@ import {
 
 const AUTOSAVE_MS = 700;
 
-export function Messaging() {
+export function Messaging({ auditId }: { auditId: string }) {
   const { session } = useSession();
   const userId = session?.user.id;
-  const { data: intake, isLoading } = useMessagingIntake(userId);
-  const save = useSaveDraft(userId);
-  const submit = useSubmitIntake(userId);
+  const { data: intake, isLoading } = useMessagingIntake(auditId);
+  const save = useSaveDraft(userId, auditId);
+  const submit = useSubmitIntake(userId, auditId);
 
   const [stepIdx, setStepIdx] = useState(0);
   const step = MESSAGING_STEPS[stepIdx];
@@ -173,7 +173,7 @@ export function Messaging() {
     <div className="app-content py-12 flex flex-col gap-10">
       <Link
         to="/app/tools/$key/$"
-        params={{ key: "selling-systems-audit", _splat: "" }}
+        params={{ key: "selling-systems-audit", _splat: auditId }}
         className="inline-flex items-center gap-2 text-ink-muted text-sm hover:text-ink transition-colors w-fit"
       >
         <ArrowLeft className="size-4" />
@@ -188,6 +188,7 @@ export function Messaging() {
 
       {isReceived ? (
         <ReceivedState
+          auditId={auditId}
           sectionKey="messaging"
           onEdit={() => {
             setEditingAfterSubmit(true);

@@ -69,10 +69,10 @@ export type PipelineIntakeRow = {
   updated_at: string;
 };
 
-export function usePipelineIntake(ownerId: string | undefined) {
+export function usePipelineIntake(auditId: string | undefined) {
   return useQuery({
-    queryKey: ["ssa-pipeline-intake", ownerId],
-    enabled: !!ownerId,
+    queryKey: ["ssa-pipeline-intake", auditId],
+    enabled: !!auditId,
     // Warm cache across in-app navigation so returning hydrates instantly
     // instead of flashing defaults during refetch.
     staleTime: 5 * 60_000,
@@ -84,7 +84,7 @@ export function usePipelineIntake(ownerId: string | undefined) {
         .select(
           "owner_id, draft_answers, submitted_answers, has_unsubmitted_changes, submitted_at, updated_at",
         )
-        .eq("owner_id", ownerId!)
+        .eq("audit_id", auditId!)
         .maybeSingle();
       if (error) throw error;
       return (data as PipelineIntakeRow | null) ?? null;
@@ -96,23 +96,25 @@ export function usePipelineIntake(ownerId: string | undefined) {
  * Autosave the draft. Whole-blob upsert — caller assembles the next draft.
  * `has_unsubmitted_changes` only flips to true once a submission exists.
  */
-export function useSaveDraft(ownerId: string | undefined) {
+export function useSaveDraft(ownerId: string | undefined, auditId: string | undefined) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: { draft: PipelineAnswers; hasSubmitted: boolean }) => {
       if (!ownerId) throw new Error("Not signed in");
+      if (!auditId) throw new Error("No audit selected");
       const row = {
         owner_id: ownerId,
+        audit_id: auditId,
         draft_answers: payload.draft,
         ...(payload.hasSubmitted ? { has_unsubmitted_changes: true } : {}),
       };
       const { error } = await supabase
         .from(TABLE as never)
-        .upsert(row as never, { onConflict: "owner_id" });
+        .upsert(row as never, { onConflict: "audit_id" });
       if (error) throw error;
     },
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["ssa-pipeline-intake", ownerId] });
+      void qc.invalidateQueries({ queryKey: ["ssa-pipeline-intake", auditId] });
     },
   });
 }
@@ -122,13 +124,15 @@ export function useSaveDraft(ownerId: string | undefined) {
  * clear the dirty flag. Caller passes the draft to snapshot so we don't
  * race a pending autosave.
  */
-export function useSubmitIntake(ownerId: string | undefined) {
+export function useSubmitIntake(ownerId: string | undefined, auditId: string | undefined) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: { draft: PipelineAnswers }) => {
       if (!ownerId) throw new Error("Not signed in");
+      if (!auditId) throw new Error("No audit selected");
       const row = {
         owner_id: ownerId,
+        audit_id: auditId,
         draft_answers: payload.draft,
         submitted_answers: payload.draft,
         has_unsubmitted_changes: false,
@@ -136,11 +140,11 @@ export function useSubmitIntake(ownerId: string | undefined) {
       };
       const { error } = await supabase
         .from(TABLE as never)
-        .upsert(row as never, { onConflict: "owner_id" });
+        .upsert(row as never, { onConflict: "audit_id" });
       if (error) throw error;
     },
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["ssa-pipeline-intake", ownerId] });
+      void qc.invalidateQueries({ queryKey: ["ssa-pipeline-intake", auditId] });
     },
   });
 }

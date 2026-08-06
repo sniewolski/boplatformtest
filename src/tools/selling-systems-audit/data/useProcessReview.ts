@@ -73,10 +73,10 @@ export type ProcessIntakeRow = {
   updated_at: string;
 };
 
-export function useProcessIntake(ownerId: string | undefined) {
+export function useProcessIntake(auditId: string | undefined) {
   return useQuery({
-    queryKey: ["ssa-process-intake", ownerId],
-    enabled: !!ownerId,
+    queryKey: ["ssa-process-intake", auditId],
+    enabled: !!auditId,
     staleTime: 5 * 60_000,
     gcTime: 30 * 60_000,
     queryFn: async (): Promise<ProcessIntakeRow | null> => {
@@ -85,7 +85,7 @@ export function useProcessIntake(ownerId: string | undefined) {
         .select(
           "owner_id, draft_answers, submitted_answers, has_unsubmitted_changes, submitted_at, updated_at",
         )
-        .eq("owner_id", ownerId!)
+        .eq("audit_id", auditId!)
         .maybeSingle();
       if (error) throw error;
       return (data as ProcessIntakeRow | null) ?? null;
@@ -93,34 +93,38 @@ export function useProcessIntake(ownerId: string | undefined) {
   });
 }
 
-export function useSaveDraft(ownerId: string | undefined) {
+export function useSaveDraft(ownerId: string | undefined, auditId: string | undefined) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: { draft: ProcessAnswers; hasSubmitted: boolean }) => {
       if (!ownerId) throw new Error("Not signed in");
+      if (!auditId) throw new Error("No audit selected");
       const row = {
         owner_id: ownerId,
+        audit_id: auditId,
         draft_answers: payload.draft,
         ...(payload.hasSubmitted ? { has_unsubmitted_changes: true } : {}),
       };
       const { error } = await supabase
         .from(TABLE as never)
-        .upsert(row as never, { onConflict: "owner_id" });
+        .upsert(row as never, { onConflict: "audit_id" });
       if (error) throw error;
     },
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["ssa-process-intake", ownerId] });
+      void qc.invalidateQueries({ queryKey: ["ssa-process-intake", auditId] });
     },
   });
 }
 
-export function useSubmitIntake(ownerId: string | undefined) {
+export function useSubmitIntake(ownerId: string | undefined, auditId: string | undefined) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: { draft: ProcessAnswers }) => {
       if (!ownerId) throw new Error("Not signed in");
+      if (!auditId) throw new Error("No audit selected");
       const row = {
         owner_id: ownerId,
+        audit_id: auditId,
         draft_answers: payload.draft,
         submitted_answers: payload.draft,
         has_unsubmitted_changes: false,
@@ -128,11 +132,11 @@ export function useSubmitIntake(ownerId: string | undefined) {
       };
       const { error } = await supabase
         .from(TABLE as never)
-        .upsert(row as never, { onConflict: "owner_id" });
+        .upsert(row as never, { onConflict: "audit_id" });
       if (error) throw error;
     },
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["ssa-process-intake", ownerId] });
+      void qc.invalidateQueries({ queryKey: ["ssa-process-intake", auditId] });
     },
   });
 }

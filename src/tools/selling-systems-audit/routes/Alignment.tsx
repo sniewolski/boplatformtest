@@ -48,12 +48,12 @@ import {
 
 const AUTOSAVE_MS = 700;
 
-export function Alignment() {
+export function Alignment({ auditId }: { auditId: string }) {
   const { session } = useSession();
   const userId = session?.user.id;
-  const { data: intake, isLoading } = useAlignmentIntake(userId);
-  const save = useSaveDraft(userId);
-  const submit = useSubmitIntake(userId);
+  const { data: intake, isLoading } = useAlignmentIntake(auditId);
+  const save = useSaveDraft(userId, auditId);
+  const submit = useSubmitIntake(userId, auditId);
 
   const [stepIdx, setStepIdx] = useState(0);
   const step = ALIGNMENT_STEPS[stepIdx];
@@ -172,7 +172,7 @@ export function Alignment() {
     <div className="app-content py-12 flex flex-col gap-10">
       <Link
         to="/app/tools/$key/$"
-        params={{ key: "selling-systems-audit", _splat: "" }}
+        params={{ key: "selling-systems-audit", _splat: auditId }}
         className="inline-flex items-center gap-2 text-ink-muted text-sm hover:text-ink transition-colors w-fit"
       >
         <ArrowLeft className="size-4" />
@@ -187,6 +187,7 @@ export function Alignment() {
 
       {isReceived ? (
         <ReceivedState
+          auditId={auditId}
           sectionKey="alignment"
           onEdit={() => {
             setEditingAfterSubmit(true);

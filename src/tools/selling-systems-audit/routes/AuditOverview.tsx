@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Check, Circle, Lock } from "lucide-react";
-import { useSession } from "@/core/auth/useSession";
+import { ArrowLeft, ArrowRight, Check, Circle, Lock } from "lucide-react";
 import { AUDIT_SECTIONS, type AuditSectionKey } from "../config";
 import { useConversionIntake } from "../data/useConversionReview";
 import { usePipelineIntake } from "../data/usePipelineReview";
@@ -10,16 +9,20 @@ import { useMessagingIntake } from "../data/useMessagingReview";
 import { useAlignmentIntake } from "../data/useAlignmentReview";
 import { useContentAssets } from "../content/useContentReview";
 
-export function AuditOverview() {
-  const { session } = useSession();
-  const userId = session?.user.id;
-  const { data: intake } = useConversionIntake(userId);
-  const { data: pipelineIntake } = usePipelineIntake(userId);
-  const { data: processIntake } = useProcessIntake(userId);
-  const { data: activityIntake } = useActivityIntake(userId);
-  const { data: messagingIntake } = useMessagingIntake(userId);
-  const { data: alignmentIntake } = useAlignmentIntake(userId);
-  const { data: contentAssets } = useContentAssets(userId);
+export function AuditOverview({
+  auditId,
+  auditName,
+}: {
+  auditId: string;
+  auditName: string;
+}) {
+  const { data: intake } = useConversionIntake(auditId);
+  const { data: pipelineIntake } = usePipelineIntake(auditId);
+  const { data: processIntake } = useProcessIntake(auditId);
+  const { data: activityIntake } = useActivityIntake(auditId);
+  const { data: messagingIntake } = useMessagingIntake(auditId);
+  const { data: alignmentIntake } = useAlignmentIntake(auditId);
+  const { data: contentAssets } = useContentAssets(auditId);
 
   const submittedByKey: Partial<Record<AuditSectionKey, boolean>> = {
     conversion: !!intake?.submitted_at,
@@ -34,9 +37,21 @@ export function AuditOverview() {
 
   return (
     <div className="app-content py-16 flex flex-col gap-10">
+      <Link
+        to="/app/tools/$key/$"
+        params={{ key: "selling-systems-audit", _splat: "" }}
+        className="inline-flex items-center gap-2 text-ink-muted text-sm hover:text-ink transition-colors w-fit"
+      >
+        <ArrowLeft className="size-4" />
+        All audits
+      </Link>
+
       <header className="flex flex-col gap-3">
-        <h1 className="text-3xl" style={{ letterSpacing: "-0.02em" }}>
+        <span className="text-ink-muted text-sm uppercase tracking-wider">
           Selling Systems Audit
+        </span>
+        <h1 className="text-3xl" style={{ letterSpacing: "-0.02em" }}>
+          {auditName}
         </h1>
         <p className="text-ink-muted text-base max-w-prose">
           Complete the audit to find gaps in your sales systems and prepare for your 1:1 audit and assessment review with Will Barron.
@@ -123,7 +138,7 @@ export function AuditOverview() {
             <li key={section.key}>
               <Link
                 to="/app/tools/$key/$"
-                params={{ key: "selling-systems-audit", _splat: section.key }}
+                params={{ key: "selling-systems-audit", _splat: `${auditId}/${section.key}` }}
                 className="group block transition-[background-color] duration-[120ms] hover:bg-[var(--surface-raised)] rounded-md -mx-3 px-3"
               >
                 {rowBody}

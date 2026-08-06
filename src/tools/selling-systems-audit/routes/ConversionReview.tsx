@@ -135,12 +135,12 @@ type AllAnswers = {
   summary?: SummaryAnswers;
 };
 
-export function ConversionReview() {
+export function ConversionReview({ auditId }: { auditId: string }) {
   const { session } = useSession();
   const userId = session?.user.id;
-  const { data: intake, isLoading } = useConversionIntake(userId);
-  const save = useSaveDraft(userId);
-  const submit = useSubmitIntake(userId);
+  const { data: intake, isLoading } = useConversionIntake(auditId);
+  const save = useSaveDraft(userId, auditId);
+  const submit = useSubmitIntake(userId, auditId);
   const { currency, setCurrency, isLoading: currencyLoading } = useCurrency();
 
   const [stepIdx, setStepIdx] = useState(0);
@@ -309,7 +309,7 @@ export function ConversionReview() {
     <div className="app-content py-12 flex flex-col gap-10">
       <Link
         to="/app/tools/$key/$"
-        params={{ key: "selling-systems-audit", _splat: "" }}
+        params={{ key: "selling-systems-audit", _splat: auditId }}
         className="inline-flex items-center gap-2 text-ink-muted text-sm hover:text-ink transition-colors w-fit"
       >
         <ArrowLeft className="size-4" />
@@ -324,6 +324,7 @@ export function ConversionReview() {
 
       {isReceived ? (
         <ReceivedState
+          auditId={auditId}
           sectionKey="conversion"
           onEdit={() => {
             setEditingAfterSubmit(true);

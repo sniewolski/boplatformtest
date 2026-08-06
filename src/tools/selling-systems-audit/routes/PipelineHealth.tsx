@@ -44,13 +44,13 @@ const AUTOSAVE_MS = 700;
 
 type AllAnswers = PipelineAnswers;
 
-export function PipelineHealth() {
+export function PipelineHealth({ auditId }: { auditId: string }) {
   const { session } = useSession();
   const userId = session?.user.id;
-  const { data: intake, isLoading } = usePipelineIntake(userId);
-  const { data: conversionIntake } = useConversionIntake(userId);
-  const save = useSaveDraft(userId);
-  const submit = useSubmitIntake(userId);
+  const { data: intake, isLoading } = usePipelineIntake(auditId);
+  const { data: conversionIntake } = useConversionIntake(auditId);
+  const save = useSaveDraft(userId, auditId);
+  const submit = useSubmitIntake(userId, auditId);
   const { currency, setCurrency, isLoading: currencyLoading } = useCurrency();
 
   const [stepIdx, setStepIdx] = useState(0);
@@ -169,7 +169,7 @@ export function PipelineHealth() {
     <div className="app-content py-12 flex flex-col gap-10">
       <Link
         to="/app/tools/$key/$"
-        params={{ key: "selling-systems-audit", _splat: "" }}
+        params={{ key: "selling-systems-audit", _splat: auditId }}
         className="inline-flex items-center gap-2 text-ink-muted text-sm hover:text-ink transition-colors w-fit"
       >
         <ArrowLeft className="size-4" />
@@ -184,6 +184,7 @@ export function PipelineHealth() {
 
       {isReceived ? (
         <ReceivedState
+          auditId={auditId}
           sectionKey="pipeline"
           onEdit={() => {
             setEditingAfterSubmit(true);
