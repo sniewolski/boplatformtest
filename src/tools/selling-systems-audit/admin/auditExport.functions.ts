@@ -69,7 +69,9 @@ async function assertAdmin(supabase: any, userId: string) {
 export const getAuditExportData = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ ownerId: z.string().uuid() }).parse(input),
+    z
+      .object({ ownerId: z.string().uuid(), auditId: z.string().uuid() })
+      .parse(input),
   )
   .handler(async ({ data, context }): Promise<AuditExportData> => {
     await assertAdmin(context.supabase, context.userId);
@@ -95,13 +97,13 @@ export const getAuditExportData = createServerFn({ method: "POST" })
     const { data: summaries, error: sumErr } = await supabaseAdmin
       .from("audit_section_summaries")
       .select("section_key, summary_text")
-      .eq("owner_id", data.ownerId);
+      .eq("audit_id", data.auditId);
     if (sumErr) throw new Error(sumErr.message);
 
     const { data: notes, error: notesErr } = await supabaseAdmin
       .from("audit_section_notes")
       .select("section_key, body")
-      .eq("owner_id", data.ownerId);
+      .eq("audit_id", data.auditId);
     if (notesErr) throw new Error(notesErr.message);
 
     const summaryBy = new Map<string, string>();
@@ -118,7 +120,7 @@ export const getAuditExportData = createServerFn({ method: "POST" })
       const { data: row, error } = await supabaseAdmin
         .from(SECTION_TABLE[key] as any)
         .select("submitted_answers, submitted_at")
-        .eq("owner_id", data.ownerId)
+        .eq("audit_id", data.auditId)
         .maybeSingle();
       if (error) throw new Error(error.message);
       sections.push({

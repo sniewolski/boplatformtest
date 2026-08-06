@@ -18,27 +18,29 @@ import { generateSectionSummary } from "./sectionSummary.functions";
  */
 export function SectionSummaryPanel({
   ownerId,
+  auditId,
   sectionKey,
   hasSubmitted,
 }: {
   ownerId: string;
+  auditId: string | null;
   sectionKey: AdminSectionKey;
   hasSubmitted: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const summaryQ = useSectionSummary(ownerId, sectionKey);
+  const summaryQ = useSectionSummary(auditId, sectionKey);
   const generate = useServerFn(generateSectionSummary);
   const qc = useQueryClient();
   const isAdmin = useIsAdmin();
 
   const generateMut = useMutation({
     mutationFn: () =>
-      generate({ data: { ownerId, sectionKey } }) as Promise<{
+      generate({ data: { ownerId, auditId: auditId!, sectionKey } }) as Promise<{
         summaryText: string;
       }>,
     onSuccess: () => {
       void qc.invalidateQueries({
-        queryKey: ["admin-audit", "summary", ownerId, sectionKey],
+        queryKey: ["admin-audit", "summary", auditId, sectionKey],
       });
       setOpen(true);
     },
@@ -112,7 +114,7 @@ export function SectionSummaryPanel({
                 type="button"
                 size="sm"
                 onClick={() => generateMut.mutate()}
-                disabled={!hasSubmitted || generateMut.isPending}
+                disabled={!hasSubmitted || !auditId || generateMut.isPending}
                 className="active:scale-[0.97] transition-transform"
               >
                 {generateMut.isPending ? (

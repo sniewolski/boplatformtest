@@ -13,13 +13,15 @@ import {
  */
 export function SectionNotes({
   ownerId,
+  auditId,
   sectionKey,
 }: {
   ownerId: string;
+  auditId: string | null;
   sectionKey: AdminSectionKey;
 }) {
-  const noteQ = useSectionNote(ownerId, sectionKey);
-  const saveMut = useSaveSectionNote(ownerId, sectionKey);
+  const noteQ = useSectionNote(auditId, sectionKey);
+  const saveMut = useSaveSectionNote(ownerId, auditId, sectionKey);
   const isAdmin = useIsAdmin();
 
   const [value, setValue] = useState("");
@@ -37,7 +39,7 @@ export function SectionNotes({
   // primarily resets between section tabs), reset hydration.
   useEffect(() => {
     hydrated.current = false;
-  }, [ownerId, sectionKey]);
+  }, [auditId, sectionKey]);
 
   function handleBlur() {
     const current = (noteQ.data?.body ?? "").trim();

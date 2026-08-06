@@ -88,6 +88,7 @@ export const generateSectionSummary = createServerFn({ method: "POST" })
     z
       .object({
         ownerId: z.string().uuid(),
+        auditId: z.string().uuid(),
         sectionKey: z.enum(SECTION_KEYS),
       })
       .parse(input),
@@ -104,7 +105,7 @@ export const generateSectionSummary = createServerFn({ method: "POST" })
     const { data: row, error: rowErr } = await supabaseAdmin
       .from(tableName as any)
       .select("submitted_answers, submitted_at")
-      .eq("owner_id", data.ownerId)
+      .eq("audit_id", data.auditId)
       .maybeSingle();
     if (rowErr) throw new Error(rowErr.message);
 
@@ -150,21 +151,11 @@ export const generateSectionSummary = createServerFn({ method: "POST" })
       .trim();
     if (!summary) throw new Error("AI returned an empty summary.");
 
-    const { data: auditRow, error: auditErr } = await supabaseAdmin
-      .from("audits")
-      .select("id")
-      .eq("owner_id", data.ownerId)
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-    if (auditErr) throw new Error(auditErr.message);
-    if (!auditRow) throw new Error("No audit found for this owner.");
-
     const { error: upErr } = await supabaseAdmin
       .from("audit_section_summaries")
       .upsert(
         {
-          audit_id: auditRow.id as string,
+          audit_id: data.auditId,
           owner_id: data.ownerId,
           section_key: data.sectionKey,
           summary_text: summary,

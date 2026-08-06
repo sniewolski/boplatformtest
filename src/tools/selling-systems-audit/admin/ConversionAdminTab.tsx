@@ -14,8 +14,14 @@ import { ConversionAdminReadBack } from "./ConversionAdminReadBack";
  *   2. Submitted answers, rebuilt 1:1 from ReadBack primitives.
  *   3. Private coach notes (admin-only).
  */
-export function ConversionAdminTab({ ownerId }: { ownerId: string }) {
-  const submitted = useSubmittedAnswers(ownerId, "conversion");
+export function ConversionAdminTab({
+  ownerId,
+  auditId,
+}: {
+  ownerId: string;
+  auditId: string | null;
+}) {
+  const submitted = useSubmittedAnswers(auditId, "conversion");
   const currencyQ = useOwnerCurrency(ownerId);
 
   const answers = submitted.data?.submitted_answers ?? null;
@@ -26,6 +32,7 @@ export function ConversionAdminTab({ ownerId }: { ownerId: string }) {
     <div className="flex flex-col gap-8 max-w-3xl">
       <SectionSummaryPanel
         ownerId={ownerId}
+        auditId={auditId}
         sectionKey="conversion"
         hasSubmitted={hasSubmitted}
       />
@@ -63,7 +70,7 @@ export function ConversionAdminTab({ ownerId }: { ownerId: string }) {
         )}
       </section>
 
-      <SectionNotes ownerId={ownerId} sectionKey="conversion" />
+      <SectionNotes ownerId={ownerId} auditId={auditId} sectionKey="conversion" />
     </div>
   );
 }
