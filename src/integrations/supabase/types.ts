@@ -107,6 +107,10 @@ export type Database = {
           average_deal_size: string
           business_name: string
           created_at: string
+          goal_amount: number | null
+          goal_by: string | null
+          goal_notes: string
+          goal_period: string | null
           how_you_sell: string
           id: string
           ideal_client: string
@@ -121,6 +125,10 @@ export type Database = {
           average_deal_size?: string
           business_name?: string
           created_at?: string
+          goal_amount?: number | null
+          goal_by?: string | null
+          goal_notes?: string
+          goal_period?: string | null
           how_you_sell?: string
           id?: string
           ideal_client?: string
@@ -135,6 +143,10 @@ export type Database = {
           average_deal_size?: string
           business_name?: string
           created_at?: string
+          goal_amount?: number | null
+          goal_by?: string | null
+          goal_notes?: string
+          goal_period?: string | null
           how_you_sell?: string
           id?: string
           ideal_client?: string
