@@ -78,9 +78,7 @@ export const getMyBusinessBrief = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<BusinessBrief> => {
     const { data, error } = await context.supabase
       .from("business_briefs" as never)
-      .select(
-        "business_name, website, your_offer, average_deal_size, ideal_client, how_you_sell, whos_selling, sales_cycle, updated_at",
-      )
+      .select(BRIEF_COLUMNS)
       .eq("owner_id", context.userId)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -98,9 +96,7 @@ export const saveMyBusinessBrief = createServerFn({ method: "POST" })
         { owner_id: context.userId, ...data },
         { onConflict: "owner_id" },
       )
-      .select(
-        "business_name, website, your_offer, average_deal_size, ideal_client, how_you_sell, whos_selling, sales_cycle, updated_at",
-      )
+      .select(BRIEF_COLUMNS)
       .single();
     if (error) throw new Error(error.message);
     return row as unknown as BusinessBrief;
@@ -118,9 +114,7 @@ export const getBusinessBriefForOwner = createServerFn({ method: "GET" })
   .handler(async ({ data, context }): Promise<BusinessBrief> => {
     const { data: row, error } = await context.supabase
       .from("business_briefs" as never)
-      .select(
-        "business_name, website, your_offer, average_deal_size, ideal_client, how_you_sell, whos_selling, sales_cycle, updated_at",
-      )
+      .select(BRIEF_COLUMNS)
       .eq("owner_id", data.ownerId)
       .maybeSingle();
     if (error) throw new Error(error.message);
