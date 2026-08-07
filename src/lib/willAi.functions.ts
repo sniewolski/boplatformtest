@@ -121,7 +121,7 @@ async function loadOwnerBriefBlock(
   const { data, error } = await supabase
     .from("business_briefs")
     .select(
-      "your_offer, average_deal_size, ideal_client, how_you_sell, whos_selling, sales_cycle",
+      "your_offer, average_deal_size, ideal_client, how_you_sell, whos_selling, sales_cycle, goal_amount, goal_period, goal_by, goal_notes",
     )
     .eq("owner_id", userId)
     .maybeSingle();
@@ -134,10 +134,41 @@ async function loadOwnerBriefBlock(
     ["Who's selling", (data.whos_selling ?? "").trim()],
     ["Sales cycle", (data.sales_cycle ?? "").trim()],
   ];
+
+  // Goal lines are appended only when the owner has actually filled them in.
+  // No currency symbol: this function has no owner_settings dependency and we
+  // deliberately don't add one here — the bare number is rendered.
+  const goalAmount =
+    data.goal_amount === null || data.goal_amount === undefined
+      ? null
+      : Number(data.goal_amount);
+  if (goalAmount !== null && Number.isFinite(goalAmount)) {
+    const period =
+      data.goal_period === "per_month"
+        ? " per month"
+        : data.goal_period === "per_year"
+          ? " per year"
+          : "";
+    let by = "";
+    if (data.goal_by) {
+      const d = new Date(`${String(data.goal_by).slice(0, 10)}T00:00:00Z`);
+      if (!Number.isNaN(d.getTime())) {
+        by = ` by ${d.toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" })}`;
+      }
+    }
+    fields.push([
+      "Goal",
+      `${goalAmount.toLocaleString("en-US")}${period}${by}`,
+    ]);
+  }
+  const goalNotes = (data.goal_notes ?? "").trim();
+  if (goalNotes.length > 0) fields.push(["Goal notes", goalNotes]);
+
   const lines = fields
     .filter(([, v]) => v.length > 0)
     .map(([k, v]) => `- ${k}: ${v}`);
   if (lines.length === 0) return "";
+
   return [
     "About the business owner you're talking to (use this to frame your answer so it fits their offer and ICP — do NOT let it override what the retrieved passages actually say, and do NOT invent facts beyond it):",
     ...lines,
