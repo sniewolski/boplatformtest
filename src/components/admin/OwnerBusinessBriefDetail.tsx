@@ -34,6 +34,8 @@ export function OwnerBusinessBriefDetail({ ownerId }: { ownerId: string }) {
   }
 
 
+  const goalLine = formatGoalLine(data);
+
   return (
     <div className="flex flex-col gap-6 max-w-3xl">
       <Field label="Business Name" value={data.business_name} />
@@ -44,6 +46,10 @@ export function OwnerBusinessBriefDetail({ ownerId }: { ownerId: string }) {
       <Field label="How You Sell" value={data.how_you_sell} />
       <Field label="Who's Selling" value={data.whos_selling} />
       <Field label="Sales Cycle" value={data.sales_cycle} />
+      {goalLine && <Field label="Revenue Goal" value={goalLine} />}
+      {(data.goal_notes ?? "").trim().length > 0 && (
+        <Field label="Goal Notes" value={data.goal_notes} />
+      )}
       {data.updated_at && (
         <p className="text-xs text-ink-muted">
           Last saved {new Date(data.updated_at).toLocaleString()}
@@ -51,6 +57,45 @@ export function OwnerBusinessBriefDetail({ ownerId }: { ownerId: string }) {
       )}
     </div>
   );
+}
+
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+/**
+ * Mirrors the Will AI brief-block goal formatting: no amount → no line at
+ * all; a missing period or target date simply drops that piece.
+ * Currency: the owner's own currency setting isn't available on the admin
+ * screen, so the platform default "£" is used.
+ */
+function formatGoalLine(b: BusinessBrief): string | null {
+  const amount = b.goal_amount === null || b.goal_amount === undefined ? null : Number(b.goal_amount);
+  if (amount === null || !Number.isFinite(amount)) return null;
+  const period =
+    b.goal_period === "per_month"
+      ? " per month"
+      : b.goal_period === "per_year"
+        ? " per year"
+        : "";
+  let by = "";
+  if (b.goal_by) {
+    const m = Number(b.goal_by.slice(5, 7));
+    const y = b.goal_by.slice(0, 4);
+    if (m >= 1 && m <= 12) by = ` by ${MONTHS[m - 1]} ${y}`;
+  }
+  return `£${amount.toLocaleString("en-GB")}${period}${by}`;
 }
 
 function hasAny(b: BusinessBrief): boolean {
@@ -62,9 +107,12 @@ function hasAny(b: BusinessBrief): boolean {
     b.ideal_client.trim().length > 0 ||
     b.how_you_sell.trim().length > 0 ||
     b.whos_selling.trim().length > 0 ||
-    b.sales_cycle.trim().length > 0
+    b.sales_cycle.trim().length > 0 ||
+    b.goal_amount !== null ||
+    (b.goal_notes ?? "").trim().length > 0
   );
 }
+
 
 function Field({ label, value }: { label: string; value: string }) {
   const empty = !value.trim();
