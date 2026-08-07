@@ -33,6 +33,29 @@ export function OwnerBusinessBriefDetail({ ownerId }: { ownerId: string }) {
     isLoading: currencyLoading,
   } = useOwnerCurrency(ownerId);
 
+  const isAdmin = useIsAdmin();
+  const fetchExport = useServerFn(getBusinessBriefExportData);
+  const exportMut = useMutation({
+    mutationFn: async () => {
+      const payload = await fetchExport({ data: { ownerId } });
+      if (!hasAnyBriefContent(payload)) {
+        throw new Error("Nothing to export yet.");
+      }
+      const md = briefExportToMarkdown(payload);
+      const nameSource =
+        payload.owner.fullName?.trim() || payload.owner.email.split("@")[0];
+      const slug =
+        nameSource
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "") || "owner";
+      const today = new Date().toISOString().slice(0, 10);
+      downloadMarkdown(`brief-${slug}-${today}.md`, md);
+    },
+  });
+
+
+
   if (brief.isLoading) {
     return <p className="text-ink-muted text-sm">Loading…</p>;
   }
