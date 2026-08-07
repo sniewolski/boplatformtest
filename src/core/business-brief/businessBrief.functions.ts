@@ -10,6 +10,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+export type GoalPeriod = "per_month" | "per_year";
+
 export type BusinessBrief = {
   business_name: string;
   website: string;
@@ -19,6 +21,11 @@ export type BusinessBrief = {
   how_you_sell: string;
   whos_selling: string;
   sales_cycle: string;
+  goal_amount: number | null;
+  goal_period: GoalPeriod | null;
+  /** ISO date, always the 1st of the target month (YYYY-MM-01). */
+  goal_by: string | null;
+  goal_notes: string;
   updated_at: string | null;
 };
 
@@ -31,6 +38,10 @@ const EMPTY: BusinessBrief = {
   how_you_sell: "",
   whos_selling: "",
   sales_cycle: "",
+  goal_amount: null,
+  goal_period: null,
+  goal_by: null,
+  goal_notes: "",
   updated_at: null,
 };
 
@@ -46,9 +57,20 @@ const briefFields = {
   how_you_sell: z.string().max(FIELD_MAX),
   whos_selling: z.string().max(FIELD_MAX),
   sales_cycle: z.string().max(FIELD_MAX),
+  goal_amount: z.number().nonnegative().nullable(),
+  goal_period: z.enum(["per_month", "per_year"]).nullable(),
+  goal_by: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable(),
+  goal_notes: z.string().max(FIELD_MAX),
 } as const;
 
+const BRIEF_COLUMNS =
+  "business_name, website, your_offer, average_deal_size, ideal_client, how_you_sell, whos_selling, sales_cycle, goal_amount, goal_period, goal_by, goal_notes, updated_at";
+
 const BriefInput = z.object(briefFields);
+
 
 /** Own brief (current signed-in owner). Returns empty shape if no row yet. */
 export const getMyBusinessBrief = createServerFn({ method: "GET" })
