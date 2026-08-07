@@ -80,6 +80,32 @@ export function OwnerBusinessBriefDetail({ ownerId }: { ownerId: string }) {
 
   return (
     <div className="flex flex-col gap-6 max-w-3xl">
+      {isAdmin && (
+        <div className="flex items-start justify-end gap-4">
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => exportMut.mutate()}
+              disabled={exportMut.isPending}
+            >
+              {exportMut.isPending ? (
+                <Loader2 className="size-3.5 animate-spin" aria-hidden />
+              ) : (
+                <Download className="size-3.5" aria-hidden />
+              )}
+              {exportMut.isPending ? "Exporting…" : "Export to MD"}
+            </Button>
+            {exportMut.error && (
+              <span className="text-xs text-[var(--red)]">
+                {(exportMut.error as Error).message}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       <Field label="Business Name" value={data.business_name} />
       <Field label="Website" value={data.website} />
       <Field label="Your Offer" value={data.your_offer} />
