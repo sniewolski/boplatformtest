@@ -18,6 +18,10 @@ export function OwnerBusinessBriefDetail({ ownerId }: { ownerId: string }) {
     queryKey: ["admin", "business-brief", ownerId],
     queryFn: () => fetchBrief({ data: { ownerId } }),
   });
+  const {
+    data: ownerCurrency,
+    isLoading: currencyLoading,
+  } = useOwnerCurrency(ownerId);
 
   if (brief.isLoading) {
     return <p className="text-ink-muted text-sm">Loading…</p>;
