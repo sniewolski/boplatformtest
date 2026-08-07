@@ -4,6 +4,8 @@ import {
   getBusinessBriefForOwner,
   type BusinessBrief,
 } from "@/core/business-brief/businessBrief.functions";
+import { useOwnerCurrency } from "@/tools/selling-systems-audit/admin/useAdminSection";
+import { currencySymbol, type CurrencyCode } from "@/lib/format-currency";
 
 /**
  * Admin read-only view of an owner's Business Brief. Renders ALL eight
@@ -16,6 +18,10 @@ export function OwnerBusinessBriefDetail({ ownerId }: { ownerId: string }) {
     queryKey: ["admin", "business-brief", ownerId],
     queryFn: () => fetchBrief({ data: { ownerId } }),
   });
+  const {
+    data: ownerCurrency,
+    isLoading: currencyLoading,
+  } = useOwnerCurrency(ownerId);
 
   if (brief.isLoading) {
     return <p className="text-ink-muted text-sm">Loading…</p>;
@@ -34,7 +40,10 @@ export function OwnerBusinessBriefDetail({ ownerId }: { ownerId: string }) {
   }
 
 
-  const goalLine = formatGoalLine(data);
+  const symbol = currencyLoading || !ownerCurrency
+    ? "£"
+    : currencySymbol(ownerCurrency as CurrencyCode);
+  const goalLine = formatGoalLine(data, symbol);
 
   return (
     <div className="flex flex-col gap-6 max-w-3xl">
@@ -77,10 +86,10 @@ const MONTHS = [
 /**
  * Mirrors the Will AI brief-block goal formatting: no amount → no line at
  * all; a missing period or target date simply drops that piece.
- * Currency: the owner's own currency setting isn't available on the admin
- * screen, so the platform default "£" is used.
+ * Currency symbol is the owner's own currency, falling back to "£" only when
+ * the setting is not loaded or not set.
  */
-function formatGoalLine(b: BusinessBrief): string | null {
+function formatGoalLine(b: BusinessBrief, symbol: string): string | null {
   const amount = b.goal_amount === null || b.goal_amount === undefined ? null : Number(b.goal_amount);
   if (amount === null || !Number.isFinite(amount)) return null;
   const period =
@@ -95,7 +104,7 @@ function formatGoalLine(b: BusinessBrief): string | null {
     const y = b.goal_by.slice(0, 4);
     if (m >= 1 && m <= 12) by = ` by ${MONTHS[m - 1]} ${y}`;
   }
-  return `£${amount.toLocaleString("en-GB")}${period}${by}`;
+  return `${symbol}${amount.toLocaleString("en-GB")}${period}${by}`;
 }
 
 function hasAny(b: BusinessBrief): boolean {
