@@ -1,11 +1,21 @@
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Download, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useIsAdmin } from "@/core/roles/useMyRoles";
 import {
   getBusinessBriefForOwner,
   type BusinessBrief,
 } from "@/core/business-brief/businessBrief.functions";
+import { getBusinessBriefExportData } from "@/core/business-brief/briefExport.functions";
+import {
+  briefExportToMarkdown,
+  hasAnyBriefContent,
+} from "@/core/business-brief/briefExportToMarkdown";
+import { downloadMarkdown } from "@/lib/download-file";
 import { useOwnerCurrency } from "@/tools/selling-systems-audit/admin/useAdminSection";
 import { currencySymbol, type CurrencyCode } from "@/lib/format-currency";
+
 
 /**
  * Admin read-only view of an owner's Business Brief. Renders ALL eight
@@ -22,6 +32,29 @@ export function OwnerBusinessBriefDetail({ ownerId }: { ownerId: string }) {
     data: ownerCurrency,
     isLoading: currencyLoading,
   } = useOwnerCurrency(ownerId);
+
+  const isAdmin = useIsAdmin();
+  const fetchExport = useServerFn(getBusinessBriefExportData);
+  const exportMut = useMutation({
+    mutationFn: async () => {
+      const payload = await fetchExport({ data: { ownerId } });
+      if (!hasAnyBriefContent(payload)) {
+        throw new Error("Nothing to export yet.");
+      }
+      const md = briefExportToMarkdown(payload);
+      const nameSource =
+        payload.owner.fullName?.trim() || payload.owner.email.split("@")[0];
+      const slug =
+        nameSource
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "") || "owner";
+      const today = new Date().toISOString().slice(0, 10);
+      downloadMarkdown(`brief-${slug}-${today}.md`, md);
+    },
+  });
+
+
 
   if (brief.isLoading) {
     return <p className="text-ink-muted text-sm">Loading…</p>;
@@ -47,6 +80,32 @@ export function OwnerBusinessBriefDetail({ ownerId }: { ownerId: string }) {
 
   return (
     <div className="flex flex-col gap-6 max-w-3xl">
+      {isAdmin && (
+        <div className="flex items-start justify-end gap-4">
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => exportMut.mutate()}
+              disabled={exportMut.isPending}
+            >
+              {exportMut.isPending ? (
+                <Loader2 className="size-3.5 animate-spin" aria-hidden />
+              ) : (
+                <Download className="size-3.5" aria-hidden />
+              )}
+              {exportMut.isPending ? "Exporting…" : "Export to MD"}
+            </Button>
+            {exportMut.error && (
+              <span className="text-xs text-[var(--red)]">
+                {(exportMut.error as Error).message}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       <Field label="Business Name" value={data.business_name} />
       <Field label="Website" value={data.website} />
       <Field label="Your Offer" value={data.your_offer} />
