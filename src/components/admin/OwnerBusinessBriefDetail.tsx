@@ -1,11 +1,21 @@
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Download, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useIsAdmin } from "@/core/roles/useMyRoles";
 import {
   getBusinessBriefForOwner,
   type BusinessBrief,
 } from "@/core/business-brief/businessBrief.functions";
+import { getBusinessBriefExportData } from "@/core/business-brief/briefExport.functions";
+import {
+  briefExportToMarkdown,
+  hasAnyBriefContent,
+} from "@/core/business-brief/briefExportToMarkdown";
+import { downloadMarkdown } from "@/lib/download-file";
 import { useOwnerCurrency } from "@/tools/selling-systems-audit/admin/useAdminSection";
 import { currencySymbol, type CurrencyCode } from "@/lib/format-currency";
+
 
 /**
  * Admin read-only view of an owner's Business Brief. Renders ALL eight
