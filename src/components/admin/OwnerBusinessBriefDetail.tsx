@@ -40,7 +40,10 @@ export function OwnerBusinessBriefDetail({ ownerId }: { ownerId: string }) {
   }
 
 
-  const goalLine = formatGoalLine(data);
+  const symbol = currencyLoading || !ownerCurrency
+    ? "£"
+    : currencySymbol(ownerCurrency as CurrencyCode);
+  const goalLine = formatGoalLine(data, symbol);
 
   return (
     <div className="flex flex-col gap-6 max-w-3xl">
