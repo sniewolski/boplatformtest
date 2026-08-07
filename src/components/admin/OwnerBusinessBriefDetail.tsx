@@ -4,6 +4,8 @@ import {
   getBusinessBriefForOwner,
   type BusinessBrief,
 } from "@/core/business-brief/businessBrief.functions";
+import { useOwnerCurrency } from "@/tools/selling-systems-audit/admin/useAdminSection";
+import { currencySymbol, type CurrencyCode } from "@/lib/format-currency";
 
 /**
  * Admin read-only view of an owner's Business Brief. Renders ALL eight
