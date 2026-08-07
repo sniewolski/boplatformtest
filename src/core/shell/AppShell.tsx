@@ -110,7 +110,7 @@ export function AppShell({
     to: "/app/business-brief",
     label: "Business Brief",
     icon: Briefcase,
-    navGroup: "resources",
+    navGroup: "coaching",
     needsAttention: briefNeedsAttention,
   };
 
@@ -141,19 +141,13 @@ export function AppShell({
       ungroupedItems.push(item);
     }
   }
-  // Position book-call last in coaching; business-brief first in resources.
+  // Position book-call last in coaching.
   const coaching = groupBuckets.get("coaching") ?? [];
   const coachingOrdered = [
     ...coaching.filter((i) => i.to !== "/app/book-call"),
     ...coaching.filter((i) => i.to === "/app/book-call"),
   ];
   groupBuckets.set("coaching", coachingOrdered);
-  const resources = groupBuckets.get("resources") ?? [];
-  const resourcesOrdered = [
-    ...resources.filter((i) => i.to === "/app/business-brief"),
-    ...resources.filter((i) => i.to !== "/app/business-brief"),
-  ];
-  groupBuckets.set("resources", resourcesOrdered);
 
   async function handleSignOut() {
     await queryClient.cancelQueries();
