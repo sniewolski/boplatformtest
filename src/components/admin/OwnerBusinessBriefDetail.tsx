@@ -86,10 +86,10 @@ const MONTHS = [
 /**
  * Mirrors the Will AI brief-block goal formatting: no amount → no line at
  * all; a missing period or target date simply drops that piece.
- * Currency: the owner's own currency setting isn't available on the admin
- * screen, so the platform default "£" is used.
+ * Currency symbol is the owner's own currency, falling back to "£" only when
+ * the setting is not loaded or not set.
  */
-function formatGoalLine(b: BusinessBrief): string | null {
+function formatGoalLine(b: BusinessBrief, symbol: string): string | null {
   const amount = b.goal_amount === null || b.goal_amount === undefined ? null : Number(b.goal_amount);
   if (amount === null || !Number.isFinite(amount)) return null;
   const period =
@@ -104,7 +104,7 @@ function formatGoalLine(b: BusinessBrief): string | null {
     const y = b.goal_by.slice(0, 4);
     if (m >= 1 && m <= 12) by = ` by ${MONTHS[m - 1]} ${y}`;
   }
-  return `£${amount.toLocaleString("en-GB")}${period}${by}`;
+  return `${symbol}${amount.toLocaleString("en-GB")}${period}${by}`;
 }
 
 function hasAny(b: BusinessBrief): boolean {
