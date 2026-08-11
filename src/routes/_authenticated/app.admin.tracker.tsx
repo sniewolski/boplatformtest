@@ -92,6 +92,15 @@ type VideoAggregate = {
   lastActivity: string;
 };
 
+type OtherAggregate = {
+  sourceType: string;
+  views: number;
+  clicks: number;
+  bookings: number;
+  lastActivity: string;
+};
+
+
 function formatInt(n: number): string {
   return n.toLocaleString("en-US");
 }
