@@ -535,6 +535,25 @@ function TrackerAdmin() {
                   </tr>
                 );
               })}
+              {otherAggregates.map((row) => (
+                <tr key={`src-${row.sourceType}`} className="border-t border-border">
+                  <td className="px-4 py-3 text-ink-muted">{row.sourceType}</td>
+                  <td className="px-4 py-3" />
+                  <td className="px-4 py-3 align-middle text-ink">
+                    {row.sourceType.charAt(0).toUpperCase() + row.sourceType.slice(1)}
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums">—</td>
+                  <td className="px-4 py-3 text-right tabular-nums">{row.views}</td>
+                  <td className="px-4 py-3 text-right tabular-nums">{row.clicks}</td>
+                  <td className="px-4 py-3 text-right tabular-nums">{row.bookings}</td>
+                  <td className="px-4 py-3 text-right tabular-nums">—</td>
+                  <td className="px-4 py-3 text-right tabular-nums">
+                    {formatRatio(row.bookings, row.views)}
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums">—</td>
+                </tr>
+              ))}
+
               {directRow && (
                 <tr className="border-t border-border bg-[var(--surface-raised)]">
                   <td className="px-4 py-3 text-ink-muted">—</td>
