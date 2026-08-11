@@ -42,13 +42,21 @@
     return id;
   }
   function readSourceFromUrl(){
-    for (var p in SOURCE_PARAMS){
-      if (!SOURCE_PARAMS.hasOwnProperty(p)) continue;
-      var v = param(p);
-      if (v) return { type: SOURCE_PARAMS[p], value: v, ts: Date.now() };
+    // ?video= always wins.
+    var vid = param(VIDEO_PARAM);
+    if (vid) return { type: "video", value: vid, ts: Date.now() };
+
+    var raw = param(GENERIC_SOURCE_PARAM);
+    if (raw){
+      var name = String(raw).trim().toLowerCase();
+      if (GENERIC_SOURCE_RE.test(name)){
+        return { type: name, value: name, ts: Date.now() };
+      }
+      // junk / tampered name -> ignore, treat as direct
     }
     return null;
   }
+
   function storeSource(src){ try { setItem(K_SOURCE, JSON.stringify(src)); } catch(e){} }
   function effectiveSource(){
     var s = null;
