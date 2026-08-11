@@ -341,7 +341,9 @@ function TrackerAdmin() {
     (videosQuery.data ?? []).map((v) => [v.video_id, v]),
   );
   const loading = eventsQuery.isLoading || videosQuery.isLoading;
-  const hasRows = videoAggregates.length > 0 || !!directRow;
+  const hasRows =
+    videoAggregates.length > 0 || otherAggregates.length > 0 || !!directRow;
+
 
   return (
     <div className="mx-auto w-full max-w-[1600px] px-6 py-16 flex flex-col gap-8">
