@@ -103,7 +103,7 @@ function formatRatio(num: number, den: number | null | undefined): string {
   return `${pct.toFixed(1)}%`;
 }
 
-type RangePreset = "30" | "90" | "360" | "custom";
+type RangePreset = "7" | "30" | "90" | "360" | "custom";
 
 // ---------- Component ----------------------------------------------------
 
@@ -123,7 +123,8 @@ function TrackerAdmin() {
     if (preset === "custom") {
       return { effectiveFrom: fromDate, effectiveTo: toDate };
     }
-    const days = preset === "30" ? 30 : preset === "90" ? 90 : 360;
+    const days =
+      preset === "7" ? 7 : preset === "30" ? 30 : preset === "90" ? 90 : 360;
     const to = new Date();
     const from = new Date();
     from.setDate(from.getDate() - days);
