@@ -6,8 +6,13 @@
   var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6bXRwdGZwdHl6b3hxbWNnZWJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMTgyMjIsImV4cCI6MjA5NzY5NDIyMn0.sdrVKgzHjL9N_BA8j3NIdSZWNONsMahfdK5vrPEIiFw"; // public anon JWT — safe in a public file
   var ENDPOINT = SUPABASE_URL + "/rest/v1/tracker_events";
 
-  // URL params that carry a tracked source. V1: only ?video=. Add lines later.
-  var SOURCE_PARAMS = { video: "video" };      // paramName -> source_type
+  // URL params that carry a tracked source.
+  //   ?video=<id>     -> source_type "video",  source_value <id>
+  //   ?source=<name>  -> source_type <name>,   source_value <name>
+  var VIDEO_PARAM = "video";
+  var GENERIC_SOURCE_PARAM = "source";
+  var GENERIC_SOURCE_RE = /^[a-z0-9_-]{1,32}$/;
+
 
   // Calendly param holding the unique booking id (confirm on first real booking).
   var BOOKING_ID_PARAM = "invitee_uuid";
