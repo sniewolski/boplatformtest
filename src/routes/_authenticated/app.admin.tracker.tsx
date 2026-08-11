@@ -168,8 +168,9 @@ function TrackerAdmin() {
     },
   });
 
-  const { videoAggregates, directRow, totals } = useMemo(() => {
+  const { videoAggregates, otherAggregates, directRow, totals } = useMemo(() => {
     const map = new Map<string, VideoAggregate>();
+    const others = new Map<string, OtherAggregate>();
     let directViews = 0;
     let directClicks = 0;
     let directBookings = 0;
@@ -192,7 +193,23 @@ function TrackerAdmin() {
         else if (ev.event_type === "booking") agg.bookings += 1;
         if (ev.created_at > agg.lastActivity) agg.lastActivity = ev.created_at;
         map.set(key, agg);
-      } else if (!ev.source_type || !ev.source_value) {
+      } else if (ev.source_type) {
+        const key = ev.source_type;
+        const agg =
+          others.get(key) ??
+          ({
+            sourceType: key,
+            views: 0,
+            clicks: 0,
+            bookings: 0,
+            lastActivity: ev.created_at,
+          } as OtherAggregate);
+        if (ev.event_type === "click") agg.views += 1;
+        else if (ev.event_type === "book_button") agg.clicks += 1;
+        else if (ev.event_type === "booking") agg.bookings += 1;
+        if (ev.created_at > agg.lastActivity) agg.lastActivity = ev.created_at;
+        others.set(key, agg);
+      } else {
         if (ev.event_type === "click") directViews += 1;
         else if (ev.event_type === "book_button") directClicks += 1;
         else if (ev.event_type === "booking") directBookings += 1;
@@ -202,21 +219,25 @@ function TrackerAdmin() {
     const list = Array.from(map.values()).sort((a, b) =>
       a.lastActivity < b.lastActivity ? 1 : -1,
     );
+    const otherList = Array.from(others.values()).sort((a, b) =>
+      a.lastActivity < b.lastActivity ? 1 : -1,
+    );
     const hasDirect = directViews + directClicks + directBookings > 0;
-    const totalViews =
-      list.reduce((s, r) => s + r.views, 0) + directViews;
-    const totalClicks =
-      list.reduce((s, r) => s + r.clicks, 0) + directClicks;
-    const totalBookings =
-      list.reduce((s, r) => s + r.bookings, 0) + directBookings;
+    const sum = (k: "views" | "clicks" | "bookings") =>
+      list.reduce((s, r) => s + r[k], 0) + otherList.reduce((s, r) => s + r[k], 0);
+    const totalViews = sum("views") + directViews;
+    const totalClicks = sum("clicks") + directClicks;
+    const totalBookings = sum("bookings") + directBookings;
     return {
       videoAggregates: list,
+      otherAggregates: otherList,
       directRow: hasDirect
         ? { views: directViews, clicks: directClicks, bookings: directBookings }
         : null,
       totals: { views: totalViews, clicks: totalClicks, bookings: totalBookings },
     };
   }, [eventsQuery.data]);
+
 
   // ---- Windowed YouTube views (Analytics API v2, live, no cache) ----
   const startYmd = useMemo(() => toYmd(effectiveFrom), [effectiveFrom]);
