@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode, type ComponentType } from "react";
+import { useEffect, useRef, type ReactNode, type ComponentType } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Check, LayoutDashboard, Lock, Shield, ClipboardList, FileText, LogOut, CalendarDays, MessagesSquare, Briefcase, Radio } from "lucide-react";
@@ -97,6 +97,34 @@ export function AppShell({
       body.style.height = previousBodyHeight;
     };
   }, []);
+
+  // Track authenticated route changes and emit one tool_view event per path.
+  const lastLoggedPathRef = useRef<string | null>(null);
+  useEffect(() => {
+    const path = router.state.location.pathname;
+    if (lastLoggedPathRef.current === path) return;
+
+    let sessionId = sessionStorage.getItem("activity_session_id");
+    if (!sessionId) {
+      sessionId = crypto.randomUUID();
+      try {
+        sessionStorage.setItem("activity_session_id", sessionId);
+      } catch {
+        // storage failures should not block the app
+      }
+    }
+
+    logEvent({
+      data: {
+        session_id: sessionId,
+        event_type: "tool_view",
+        metadata: { path },
+      },
+    }).catch(() => {});
+
+    lastLoggedPathRef.current = path;
+  }, [logEvent, router.state.location.pathname]);
+
 
   const AUDIT_KEYS = new Set([
     "conversion",
