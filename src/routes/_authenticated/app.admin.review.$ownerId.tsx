@@ -9,6 +9,7 @@ import { OwnerAuditDetail } from "@/components/admin/OwnerAuditDetail";
 import { OwnerSalesCodeDetail } from "@/components/admin/OwnerSalesCodeDetail";
 import { OwnerBusinessBriefDetail } from "@/components/admin/OwnerBusinessBriefDetail";
 import { OwnerDailyLogDetail } from "@/components/admin/OwnerDailyLogDetail";
+import { OwnerActivityDetail } from "@/components/admin/OwnerActivityDetail";
 
 export const Route = createFileRoute(
   "/_authenticated/app/admin/review/$ownerId",
@@ -21,6 +22,7 @@ const SLOTS = [
   { key: "salescode", label: "SalesCode" },
   { key: "brief", label: "Business Brief" },
   { key: "daily-log", label: "Daily Log" },
+  { key: "activity", label: "Activity" },
 ] as const;
 
 type SlotKey = (typeof SLOTS)[number]["key"];
@@ -90,6 +92,7 @@ function OwnerReviewDetail() {
         {slot === "salescode" && <OwnerSalesCodeDetail ownerId={ownerId} />}
         {slot === "brief" && <OwnerBusinessBriefDetail ownerId={ownerId} />}
         {slot === "daily-log" && <OwnerDailyLogDetail ownerId={ownerId} />}
+        {slot === "activity" && <OwnerActivityDetail ownerId={ownerId} />}
       </div>
     </div>
   );
