@@ -5,7 +5,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const inputSchema = z.object({
   session_id: z.string().uuid(),
-  event_type: z.enum(["login", "heartbeat", "resource_open"]),
+  event_type: z.enum(["login", "heartbeat", "resource_open", "tool_view"]),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
