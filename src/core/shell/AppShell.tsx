@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode, type ComponentType } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { Check, LayoutDashboard, Lock, Shield, ClipboardList, FileText, LogOut, CalendarDays, MessagesSquare, Briefcase, Radio } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -8,6 +9,7 @@ import { useMyRoles } from "@/core/roles/useMyRoles";
 import { useBookingReadiness } from "@/lib/useBookingReadiness";
 import { useWillAiSettings } from "@/lib/useWillAiSettings";
 import { useBusinessBriefNeedsAttention } from "@/core/business-brief/useBusinessBrief";
+import { logActivityEvent } from "@/lib/activity.functions";
 import { Button } from "@/components/ui/button";
 import logoAsset from "@/assets/logo.png.asset.json";
 
@@ -40,6 +42,7 @@ export function AppShell({
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const logEvent = useServerFn(logActivityEvent);
   const { data: roles = [] } = useMyRoles(userId);
   const isAdmin = roles.includes("admin");
   const isMentor = roles.includes("mentor");
@@ -49,19 +52,29 @@ export function AppShell({
   const willAiPausedForOwner =
     willAiSettings?.owner_access_enabled === false && !isAdmin;
 
+  // Background activity heartbeat: log every 60s while the shell is mounted.
+  useEffect(() => {
+    const SESSION_KEY = "activity_session_id";
+    const HEARTBEAT_INTERVAL = 60000;
 
-  const AUDIT_KEYS = new Set([
-    "conversion",
-    "pipeline",
-    "process",
-    "activity",
-    "messaging",
-    "alignment",
-  ]);
-  const incompleteKeys = new Set(incomplete.map((i) => i.key));
-  const auditComplete =
-    !readinessLoading && ![...AUDIT_KEYS].some((k) => incompleteKeys.has(k));
-  const salescodeComplete = !readinessLoading && !incompleteKeys.has("salescode");
+    let sessionId = sessionStorage.getItem(SESSION_KEY);
+    if (!sessionId) {
+      try {
+        sessionId = crypto.randomUUID();
+        sessionStorage.setItem(SESSION_KEY, sessionId);
+      } catch {
+        sessionId = crypto.randomUUID();
+      }
+    }
+
+    const beat = () => {
+      logEvent({ data: { session_id: sessionId, event_type: "heartbeat" } }).catch(() => {});
+    };
+
+    beat();
+    const intervalId = setInterval(beat, HEARTBEAT_INTERVAL);
+    return () => clearInterval(intervalId);
+  }, [logEvent]);
 
   useEffect(() => {
     const html = document.documentElement;
@@ -84,6 +97,19 @@ export function AppShell({
       body.style.height = previousBodyHeight;
     };
   }, []);
+
+  const AUDIT_KEYS = new Set([
+    "conversion",
+    "pipeline",
+    "process",
+    "activity",
+    "messaging",
+    "alignment",
+  ]);
+  const incompleteKeys = new Set(incomplete.map((i) => i.key));
+  const auditComplete =
+    !readinessLoading && ![...AUDIT_KEYS].some((k) => incompleteKeys.has(k));
+  const salescodeComplete = !readinessLoading && !incompleteKeys.has("salescode");
 
   const briefNeedsAttention = useBusinessBriefNeedsAttention();
 
