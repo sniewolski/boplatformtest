@@ -177,14 +177,14 @@ function SessionCard({ session }: { session: ActivitySession }) {
 }
 
 function EventRow({ event }: { event: ActivityTimelineEvent }) {
-  const icon = EVENT_ICON[event.type] ?? LogIn;
+  const Icon = EVENT_ICON[event.type] ?? LogIn;
   const label = EVENT_LABEL[event.type] ?? event.type;
   const meta = event.meta ?? {};
 
   return (
     <li className="flex items-start gap-3 text-sm">
       <div className="mt-0.5">
-        <icon. className="size-3.5 text-ink-muted" aria-hidden />
+        <Icon className="size-3.5 text-ink-muted" aria-hidden />
       </div>
       <div className="flex flex-col gap-0.5">
         <span className="text-ink">
