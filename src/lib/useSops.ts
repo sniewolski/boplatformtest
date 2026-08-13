@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { createSop, deleteSop, replaceSopFile } from "@/lib/sops.functions";
+import { logActivityEvent } from "@/lib/activity.functions";
 
 export const SOPS_BUCKET = "sops";
 export const SOPS_MAX_BYTES = 20 * 1024 * 1024;
