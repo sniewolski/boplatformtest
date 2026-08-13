@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, useRouter, Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivityEvent } from "@/lib/activity.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -61,6 +62,15 @@ function LoginPage() {
         type: "email",
       });
       if (verifyErr) throw new Error(verifyErr.message);
+      try {
+        const sessionId = crypto.randomUUID();
+        sessionStorage.setItem("activity_session_id", sessionId);
+        void logActivityEvent({
+          data: { session_id: sessionId, event_type: "login" },
+        }).catch(() => {});
+      } catch {
+        // never block login
+      }
       router.navigate({ to: "/app" });
     } catch (err) {
       setError(
