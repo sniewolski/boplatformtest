@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode, type ComponentType } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { Check, LayoutDashboard, Lock, Shield, ClipboardList, FileText, LogOut, CalendarDays, MessagesSquare, Briefcase, Radio } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -8,6 +9,7 @@ import { useMyRoles } from "@/core/roles/useMyRoles";
 import { useBookingReadiness } from "@/lib/useBookingReadiness";
 import { useWillAiSettings } from "@/lib/useWillAiSettings";
 import { useBusinessBriefNeedsAttention } from "@/core/business-brief/useBusinessBrief";
+import { logActivityEvent } from "@/lib/activity.functions";
 import { Button } from "@/components/ui/button";
 import logoAsset from "@/assets/logo.png.asset.json";
 
