@@ -98,6 +98,19 @@ export function AppShell({
     };
   }, []);
 
+  const AUDIT_KEYS = new Set([
+    "conversion",
+    "pipeline",
+    "process",
+    "activity",
+    "messaging",
+    "alignment",
+  ]);
+  const incompleteKeys = new Set(incomplete.map((i) => i.key));
+  const auditComplete =
+    !readinessLoading && ![...AUDIT_KEYS].some((k) => incompleteKeys.has(k));
+  const salescodeComplete = !readinessLoading && !incompleteKeys.has("salescode");
+
   const briefNeedsAttention = useBusinessBriefNeedsAttention();
 
   // Build items from the registry; grouping is driven by navEntry.navGroup.
