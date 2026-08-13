@@ -246,5 +246,28 @@ export async function getSopSignedUrl(
     .from(SOPS_BUCKET)
     .createSignedUrl(storagePath, expiresIn);
   if (error) return null;
-  return data?.signedUrl ?? null;
+  const signedUrl = data?.signedUrl ?? null;
+
+  // Log that the SOP resource was opened; fire-and-forget so it never blocks.
+  if (signedUrl) {
+    try {
+      const SESSION_KEY = "activity_session_id";
+      let sessionId = sessionStorage.getItem(SESSION_KEY);
+      if (!sessionId) {
+        sessionId = crypto.randomUUID();
+        sessionStorage.setItem(SESSION_KEY, sessionId);
+      }
+      void logActivityEvent({
+        data: {
+          session_id: sessionId,
+          event_type: "resource_open",
+          metadata: { file_path: storagePath },
+        },
+      }).catch(() => {});
+    } catch {
+      // swallow any logging error; the open must succeed regardless
+    }
+  }
+
+  return signedUrl;
 }
