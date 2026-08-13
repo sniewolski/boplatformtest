@@ -232,14 +232,15 @@ function EventRow({ event }: { event: ActivityTimelineEvent }) {
 
 const TOOL_NAMES: Record<string, string> = {
   "/app": "Dashboard",
-  "/app/selling-systems-audit": "Selling Systems Audit",
-  "/app/salescode": "SalesCode",
+  "/app/tools/selling-systems-audit": "Selling Systems Audit",
   "/app/tools/salescode": "SalesCode",
-  "/app/sops": "SOPs",
-  "/app/will-ai": "Will AI",
-  "/app/daily-log": "Daily Log",
+  "/app/tools/sops": "SOPs",
+  "/app/tools/will-ai": "Will AI",
+  "/app/tools/daily-log": "Daily Log",
   "/app/business-brief": "Business Brief",
-  "/app/settings": "Settings",
+  "/app/book-call": "Book a 1:1 call",
+  "/app/admin": "Admin",
+  "/app/admin/review": "Admin — Review",
 };
 
 function friendlyToolName(path: string): string {
