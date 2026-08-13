@@ -28,7 +28,7 @@ export type ActivityEventType = "login" | "resource_open" | "tool_view";
 export type ActivityTimelineEvent = {
   type: ActivityEventType;
   at: string;
-  meta: Record<string, unknown> | null;
+  meta: Record<string, string | number | boolean | null> | null;
 };
 
 export type ActivitySession = {
@@ -57,7 +57,7 @@ type Row = {
   session_id: string;
   event_type: string;
   ip: string | null;
-  metadata: Record<string, unknown> | null;
+  metadata: Record<string, string | number | boolean | null> | null;
   created_at: string;
 };
 
