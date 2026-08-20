@@ -617,6 +617,11 @@ function TrackerAdmin() {
                         0,
                       );
                 const denom = totalYtViews ?? 0;
+                const effectiveTotals = {
+                  views: totals.views - (includeDirect ? 0 : directRow?.views ?? 0),
+                  clicks: totals.clicks - (includeDirect ? 0 : directRow?.clicks ?? 0),
+                  bookings: totals.bookings - (includeDirect ? 0 : directRow?.bookings ?? 0),
+                };
                 return (
                   <tr className="border-t border-border bg-[var(--surface-raised)] font-medium">
                     <td className="px-4 py-2">TOTAL</td>
@@ -633,21 +638,22 @@ function TrackerAdmin() {
                         "—"
                       )}
                     </td>
-                    <td className="px-4 py-2 text-right tabular-nums">{totals.views}</td>
-                    <td className="px-4 py-2 text-right tabular-nums">{totals.clicks}</td>
-                    <td className="px-4 py-2 text-right tabular-nums">{totals.bookings}</td>
+                    <td className="px-4 py-2 text-right tabular-nums">{effectiveTotals.views}</td>
+                    <td className="px-4 py-2 text-right tabular-nums">{effectiveTotals.clicks}</td>
+                    <td className="px-4 py-2 text-right tabular-nums">{effectiveTotals.bookings}</td>
                     <td className="px-4 py-2 text-right tabular-nums">
-                      {formatRatio(totals.views, denom)}
+                      {formatRatio(effectiveTotals.views, denom)}
                     </td>
                     <td className="px-4 py-2 text-right tabular-nums">
-                      {formatRatio(totals.bookings, totals.views)}
+                      {formatRatio(effectiveTotals.bookings, effectiveTotals.views)}
                     </td>
                     <td className="px-4 py-2 text-right tabular-nums">
-                      {formatRatio(totals.bookings, denom)}
+                      {formatRatio(effectiveTotals.bookings, denom)}
                     </td>
                   </tr>
                 );
               })()}
+
               {sortedVideoAggregates.map((row) => {
                 const meta = videosById.get(row.videoId);
                 const resolving = !meta || !meta.resolved_at;
