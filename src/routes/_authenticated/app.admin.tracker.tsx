@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMyRoles } from "@/core/roles/useMyRoles";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Popover,
   PopoverContent,
@@ -20,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/_authenticated/app/admin/tracker")({
   component: TrackerAdmin,
@@ -215,12 +217,14 @@ function TrackerAdmin() {
   const { data: roles, isLoading: rolesLoading } = useMyRoles(user.id);
 
   const [preset, setPreset] = useState<RangePreset>("30");
+  const [includeDirect, setIncludeDirect] = useState(true);
   const [toDate, setToDate] = useState<Date>(() => new Date());
   const [fromDate, setFromDate] = useState<Date>(() => {
     const d = new Date();
     d.setDate(d.getDate() - 30);
     return d;
   });
+
 
   const { effectiveFrom, effectiveTo } = useMemo(() => {
     if (preset === "custom") {
@@ -613,6 +617,11 @@ function TrackerAdmin() {
                         0,
                       );
                 const denom = totalYtViews ?? 0;
+                const effectiveTotals = {
+                  views: totals.views - (includeDirect ? 0 : directRow?.views ?? 0),
+                  clicks: totals.clicks - (includeDirect ? 0 : directRow?.clicks ?? 0),
+                  bookings: totals.bookings - (includeDirect ? 0 : directRow?.bookings ?? 0),
+                };
                 return (
                   <tr className="border-t border-border bg-[var(--surface-raised)] font-medium">
                     <td className="px-4 py-2">TOTAL</td>
@@ -629,21 +638,22 @@ function TrackerAdmin() {
                         "—"
                       )}
                     </td>
-                    <td className="px-4 py-2 text-right tabular-nums">{totals.views}</td>
-                    <td className="px-4 py-2 text-right tabular-nums">{totals.clicks}</td>
-                    <td className="px-4 py-2 text-right tabular-nums">{totals.bookings}</td>
+                    <td className="px-4 py-2 text-right tabular-nums">{effectiveTotals.views}</td>
+                    <td className="px-4 py-2 text-right tabular-nums">{effectiveTotals.clicks}</td>
+                    <td className="px-4 py-2 text-right tabular-nums">{effectiveTotals.bookings}</td>
                     <td className="px-4 py-2 text-right tabular-nums">
-                      {formatRatio(totals.views, denom)}
+                      {formatRatio(effectiveTotals.views, denom)}
                     </td>
                     <td className="px-4 py-2 text-right tabular-nums">
-                      {formatRatio(totals.bookings, totals.views)}
+                      {formatRatio(effectiveTotals.bookings, effectiveTotals.views)}
                     </td>
                     <td className="px-4 py-2 text-right tabular-nums">
-                      {formatRatio(totals.bookings, denom)}
+                      {formatRatio(effectiveTotals.bookings, denom)}
                     </td>
                   </tr>
                 );
               })()}
+
               {sortedVideoAggregates.map((row) => {
                 const meta = videosById.get(row.videoId);
                 const resolving = !meta || !meta.resolved_at;
@@ -727,10 +737,16 @@ function TrackerAdmin() {
               ))}
 
               {directRow && (
-                <tr className="border-t border-border bg-[var(--surface-raised)]">
-                  <td className="px-4 py-3 text-ink-muted">—</td>
+                <tr className={cn("border-t border-border bg-[var(--surface-raised)]", !includeDirect && "text-[var(--ink-muted)]")}>
+                  <td className="px-4 py-3">
+                    <Checkbox
+                      checked={includeDirect}
+                      onCheckedChange={(v) => setIncludeDirect(v === true)}
+                      aria-label="Include direct and unattributed traffic in totals"
+                    />
+                  </td>
                   <td className="px-4 py-3" />
-                  <td className="px-4 py-3 text-ink-muted italic">
+                  <td className="px-4 py-3 italic">
                     Direct / unattributed
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums">—</td>
@@ -744,6 +760,7 @@ function TrackerAdmin() {
                   <td className="px-4 py-3 text-right tabular-nums">—</td>
                 </tr>
               )}
+
             </tbody>
           </table>
         </div>
