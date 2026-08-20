@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMyRoles } from "@/core/roles/useMyRoles";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Popover,
   PopoverContent,
@@ -20,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/_authenticated/app/admin/tracker")({
   component: TrackerAdmin,
