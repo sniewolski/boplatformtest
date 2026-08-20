@@ -217,12 +217,14 @@ function TrackerAdmin() {
   const { data: roles, isLoading: rolesLoading } = useMyRoles(user.id);
 
   const [preset, setPreset] = useState<RangePreset>("30");
+  const [includeDirect, setIncludeDirect] = useState(true);
   const [toDate, setToDate] = useState<Date>(() => new Date());
   const [fromDate, setFromDate] = useState<Date>(() => {
     const d = new Date();
     d.setDate(d.getDate() - 30);
     return d;
   });
+
 
   const { effectiveFrom, effectiveTo } = useMemo(() => {
     if (preset === "custom") {
