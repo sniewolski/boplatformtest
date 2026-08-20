@@ -737,10 +737,16 @@ function TrackerAdmin() {
               ))}
 
               {directRow && (
-                <tr className="border-t border-border bg-[var(--surface-raised)]">
-                  <td className="px-4 py-3 text-ink-muted">—</td>
+                <tr className={cn("border-t border-border bg-[var(--surface-raised)]", !includeDirect && "text-[var(--ink-muted)]")}>
+                  <td className="px-4 py-3">
+                    <Checkbox
+                      checked={includeDirect}
+                      onCheckedChange={(v) => setIncludeDirect(v === true)}
+                      aria-label="Include direct and unattributed traffic in totals"
+                    />
+                  </td>
                   <td className="px-4 py-3" />
-                  <td className="px-4 py-3 text-ink-muted italic">
+                  <td className="px-4 py-3 italic">
                     Direct / unattributed
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums">—</td>
@@ -754,6 +760,7 @@ function TrackerAdmin() {
                   <td className="px-4 py-3 text-right tabular-nums">—</td>
                 </tr>
               )}
+
             </tbody>
           </table>
         </div>
