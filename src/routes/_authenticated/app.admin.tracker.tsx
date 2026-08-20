@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, ChevronDown, ChevronUp } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useMyRoles } from "@/core/roles/useMyRoles";
@@ -113,6 +113,100 @@ function formatRatio(num: number, den: number | null | undefined): string {
 }
 
 type RangePreset = "7" | "30" | "90" | "360" | "custom";
+
+// ---------- Sorting (reusable pattern) -----------------------------------
+
+type SortKey =
+  | "title"
+  | "category"
+  | "ytViews"
+  | "visits"
+  | "clicks"
+  | "bookings"
+  | "viewsToVisits"
+  | "visitsToBookings"
+  | "viewsToBookings";
+
+type SortDir = "asc" | "desc";
+type SortState = { key: SortKey; dir: SortDir };
+
+const TEXT_SORT_KEYS = new Set<SortKey>(["title", "category"]);
+
+/** Same null condition formatRatio uses to emit "—". */
+function ratioValue(num: number, den: number | null | undefined): number | null {
+  if (!den || den <= 0 || !Number.isFinite(den)) return null;
+  const v = num / den;
+  return Number.isFinite(v) ? v : null;
+}
+
+/** Nulls always last, in both directions. */
+function compareBy(
+  a: string | number | null,
+  b: string | number | null,
+  dir: SortDir,
+): number {
+  const aNull = a === null || a === "";
+  const bNull = b === null || b === "";
+  if (aNull && bNull) return 0;
+  if (aNull) return 1;
+  if (bNull) return -1;
+  const sign = dir === "asc" ? 1 : -1;
+  if (typeof a === "string" || typeof b === "string") {
+    return (
+      sign *
+      String(a).localeCompare(String(b), undefined, { sensitivity: "base" })
+    );
+  }
+  return sign * ((a as number) - (b as number));
+}
+
+function SortHeader({
+  label,
+  sortKey,
+  sort,
+  onSort,
+  align = "left",
+  className,
+}: {
+  label: string;
+  sortKey: SortKey;
+  sort: SortState | null;
+  onSort: (key: SortKey) => void;
+  align?: "left" | "right";
+  className?: string;
+}) {
+  const active = sort?.key === sortKey;
+  return (
+    <th
+      className={cn(
+        "px-4 py-3 font-medium",
+        align === "right" && "text-right",
+        className,
+      )}
+      aria-sort={active ? (sort!.dir === "asc" ? "ascending" : "descending") : "none"}
+    >
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className={cn(
+          "inline-flex w-full items-center gap-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+          align === "right" ? "justify-end" : "justify-start",
+        )}
+      >
+        <span>{label}</span>
+        <span className="inline-flex w-4 shrink-0 justify-center">
+          {active ? (
+            sort!.dir === "asc" ? (
+              <ChevronUp className="size-3.5 text-[var(--ink-muted)]" />
+            ) : (
+              <ChevronDown className="size-3.5 text-[var(--ink-muted)]" />
+            )
+          ) : null}
+        </span>
+      </button>
+    </th>
+  );
+}
 
 // ---------- Component ----------------------------------------------------
 
@@ -284,6 +378,84 @@ function TrackerAdmin() {
   const viewsLoading = videoIds.length > 0 && viewsQuery.isLoading;
   const viewsError = viewsQuery.error as Error | null;
 
+  // ---- Sort state (default: existing lastActivity desc order) ----
+  const [sort, setSort] = useState<SortState | null>(null);
+  const onSort = (key: SortKey) =>
+    setSort((prev) =>
+      prev && prev.key === key
+        ? { key, dir: prev.dir === "asc" ? "desc" : "asc" }
+        : { key, dir: TEXT_SORT_KEYS.has(key) ? "asc" : "desc" },
+    );
+
+  const { sortedVideoAggregates, sortedOtherAggregates } = useMemo(() => {
+    if (!sort) {
+      return {
+        sortedVideoAggregates: videoAggregates,
+        sortedOtherAggregates: otherAggregates,
+      };
+    }
+    const titles = new Map(
+      (videosQuery.data ?? []).map((v) => [
+        v.video_id,
+        v.resolved_at ? v.title ?? "" : "",
+      ]),
+    );
+    const yt = (id: string): number | null =>
+      viewsError || !viewsMap ? null : viewsMap[id] ?? 0;
+
+    const videoKey = (r: VideoAggregate): string | number | null => {
+      switch (sort.key) {
+        case "title":
+          return titles.get(r.videoId) ?? "";
+        case "category":
+          return "video";
+        case "ytViews":
+          return yt(r.videoId);
+        case "visits":
+          return r.views;
+        case "clicks":
+          return r.clicks;
+        case "bookings":
+          return r.bookings;
+        case "viewsToVisits":
+          return ratioValue(r.views, yt(r.videoId));
+        case "visitsToBookings":
+          return ratioValue(r.bookings, r.views);
+        case "viewsToBookings":
+          return ratioValue(r.bookings, yt(r.videoId));
+      }
+    };
+
+    const otherKey = (r: OtherAggregate): string | number | null => {
+      switch (sort.key) {
+        case "title":
+          return r.sourceType.charAt(0).toUpperCase() + r.sourceType.slice(1);
+        case "category":
+          return r.sourceType;
+        case "visits":
+          return r.views;
+        case "clicks":
+          return r.clicks;
+        case "bookings":
+          return r.bookings;
+        case "visitsToBookings":
+          return ratioValue(r.bookings, r.views);
+        default:
+          return null;
+      }
+    };
+
+    return {
+      sortedVideoAggregates: [...videoAggregates].sort((a, b) =>
+        compareBy(videoKey(a), videoKey(b), sort.dir),
+      ),
+      sortedOtherAggregates: [...otherAggregates].sort((a, b) =>
+        compareBy(otherKey(a), otherKey(b), sort.dir),
+      ),
+    };
+  }, [sort, videoAggregates, otherAggregates, videosQuery.data, viewsMap, viewsError]);
+
+
   const queryClient = useQueryClient();
   useEffect(() => {
     const videos = videosQuery.data;
@@ -419,16 +591,16 @@ function TrackerAdmin() {
           <table className="w-full text-sm">
             <thead className="bg-[var(--surface-raised)] text-ink-muted">
               <tr className="text-left">
-                <th className="px-4 py-3 font-medium w-[110px]">Category</th>
+                <SortHeader label="Category" sortKey="category" sort={sort} onSort={onSort} className="w-[110px]" />
                 <th className="px-4 py-3 font-medium w-[120px]">Thumbnail</th>
-                <th className="px-4 py-3 font-medium">Title</th>
-                <th className="px-4 py-3 font-medium text-right w-[110px]">Views</th>
-                <th className="px-4 py-3 font-medium text-right w-[90px]">Visits</th>
-                <th className="px-4 py-3 font-medium text-right w-[110px]">Button Clicks</th>
-                <th className="px-4 py-3 font-medium text-right w-[100px]">Bookings</th>
-                <th className="px-4 py-3 font-medium text-right w-[120px]">Views→Visits</th>
-                <th className="px-4 py-3 font-medium text-right w-[140px]">Visits→Bookings</th>
-                <th className="px-4 py-3 font-medium text-right w-[130px]">Views→Bookings</th>
+                <SortHeader label="Title" sortKey="title" sort={sort} onSort={onSort} />
+                <SortHeader label="Views" sortKey="ytViews" sort={sort} onSort={onSort} align="right" className="w-[110px]" />
+                <SortHeader label="Visits" sortKey="visits" sort={sort} onSort={onSort} align="right" className="w-[90px]" />
+                <SortHeader label="Button Clicks" sortKey="clicks" sort={sort} onSort={onSort} align="right" className="w-[110px]" />
+                <SortHeader label="Bookings" sortKey="bookings" sort={sort} onSort={onSort} align="right" className="w-[100px]" />
+                <SortHeader label="Views→Visits" sortKey="viewsToVisits" sort={sort} onSort={onSort} align="right" className="w-[120px]" />
+                <SortHeader label="Visits→Bookings" sortKey="visitsToBookings" sort={sort} onSort={onSort} align="right" className="w-[140px]" />
+                <SortHeader label="Views→Bookings" sortKey="viewsToBookings" sort={sort} onSort={onSort} align="right" className="w-[130px]" />
               </tr>
             </thead>
             <tbody>
@@ -472,7 +644,7 @@ function TrackerAdmin() {
                   </tr>
                 );
               })()}
-              {videoAggregates.map((row) => {
+              {sortedVideoAggregates.map((row) => {
                 const meta = videosById.get(row.videoId);
                 const resolving = !meta || !meta.resolved_at;
                 const title = resolving
@@ -535,7 +707,7 @@ function TrackerAdmin() {
                   </tr>
                 );
               })}
-              {otherAggregates.map((row) => (
+              {sortedOtherAggregates.map((row) => (
                 <tr key={`src-${row.sourceType}`} className="border-t border-border">
                   <td className="px-4 py-3 text-ink-muted">{row.sourceType}</td>
                   <td className="px-4 py-3" />
