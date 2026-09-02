@@ -178,7 +178,6 @@ export function TrackerTrendsCharts({
   endYmd: string;
 }) {
   const [bucket, setBucket] = useState<Bucket>("week");
-  const [source, setSource] = useState<SourceSel>("all");
   const [metric, setMetric] = useState<Metric>("clicks");
 
   const videosById = useMemo(
@@ -216,12 +215,44 @@ export function TrackerTrendsCharts({
     return withTitle;
   }, [videoIds, videosById]);
 
-  const isVideoScope = source === "all" || source.startsWith("video:");
-  const scopedVideoIds = useMemo(
-    () =>
-      source.startsWith("video:") ? [source.slice("video:".length)] : videoIds,
-    [source, videoIds],
+  // ---- Multi-select selection ------------------------------------------
+  //
+  // `selRaw === null` means "nothing touched yet" and resolves to every
+  // currently-available key. Once the user interacts we materialise an
+  // explicit Set, so an empty selection stays empty.
+  const videoKeys = useMemo(
+    () => orderedVideoIds.map((v) => `video:${v.id}`),
+    [orderedVideoIds],
   );
+  const otherKeys = useMemo(
+    () => sourceTypes.map((t) => `source:${t}`),
+    [sourceTypes],
+  );
+  const allKeys = useMemo(
+    () => [...videoKeys, ...otherKeys, ...(hasDirect ? ["direct"] : [])],
+    [videoKeys, otherKeys, hasDirect],
+  );
+
+  const [selRaw, setSelRaw] = useState<Set<string> | null>(null);
+  const selected = useMemo(
+    () => selRaw ?? new Set(allKeys),
+    [selRaw, allKeys],
+  );
+  const selectionSig = useMemo(
+    () => Array.from(selected).sort().join("|"),
+    [selected],
+  );
+
+  const scopedVideoIds = useMemo(
+    () => videoIds.filter((id) => selected.has(`video:${id}`)),
+    [videoIds, selected],
+  );
+  const hasNonVideoSelected = useMemo(
+    () => Array.from(selected).some((k) => !k.startsWith("video:")),
+    [selected],
+  );
+  const nothingSelected = selected.size === 0;
+
 
   // ---- Per-day YouTube views ------------------------------------------
   const viewsQuery = useQuery({
