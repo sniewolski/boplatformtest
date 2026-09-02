@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
@@ -84,7 +86,25 @@ type Bucket = "week" | "day";
 /** "all" | "video:<id>" | "source:<type>" | "direct" */
 type SourceSel = string;
 
-type Point = { key: string; label: string; value: number };
+type Metric = "views" | "clicks" | "bookings";
+
+type SourceSlice = { key: string; label: string; value: number };
+
+type BucketPoint = {
+  bucketKey: string;
+  label: string;
+  total: number;
+  bySource: SourceSlice[];
+};
+
+/** Stable key for an event's source: "video:<id>" | "source:<type>" | "direct". */
+function eventSourceKey(ev: TrackerEventRow): string {
+  if (ev.source_type === "video" && ev.source_value) {
+    return `video:${ev.source_value}`;
+  }
+  if (ev.source_type) return `source:${ev.source_type}`;
+  return "direct";
+}
 
 export function TrackerTrendsCharts({
   events,
@@ -107,6 +127,7 @@ export function TrackerTrendsCharts({
 }) {
   const [bucket, setBucket] = useState<Bucket>("week");
   const [source, setSource] = useState<SourceSel>("all");
+  const [metric, setMetric] = useState<Metric>("clicks");
 
   const videosById = useMemo(
     () => new Map((videos ?? []).map((v) => [v.video_id, v])),
@@ -201,68 +222,101 @@ export function TrackerTrendsCharts({
 
   const bucketOf = (ymd: string) => (bucket === "week" ? weekStartYmd(ymd) : ymd);
 
-  const emptySeries = (): Map<string, number> =>
-    new Map(bucketKeys.map((k) => [k, 0]));
+  // ---- Per-bucket aggregation with per-source breakdown ----------------
+  //
+  // Each bucket carries its total plus a descending-sorted bySource array.
+  // Clicks/bookings come from the events prop (scoped by the Source
+  // dropdown); views come from the day-mode views response and are
+  // video-only by construction — non-video sources and Direct never appear
+  // in the views breakdown.
+  const buildSeries = useMemo(() => {
+    return (metricKey: Metric): BucketPoint[] => {
+      // bucketKey -> sourceKey -> value
+      const byBucket = new Map<string, Map<string, number>>();
+      for (const k of bucketKeys) byBucket.set(k, new Map());
 
-  const { clicksSeries, bookingsSeries } = useMemo(() => {
-    const clicks = emptySeries();
-    const bookings = emptySeries();
-    for (const ev of events ?? []) {
-      // Scope filter
-      if (source !== "all") {
-        if (source === "direct") {
-          if (ev.source_type) continue;
-        } else if (source.startsWith("video:")) {
-          if (
-            ev.source_type !== "video" ||
-            ev.source_value !== source.slice("video:".length)
-          )
-            continue;
-        } else if (source.startsWith("source:")) {
-          if (ev.source_type !== source.slice("source:".length)) continue;
+      const add = (bucketKey: string, sourceKey: string, value: number) => {
+        const m = byBucket.get(bucketKey);
+        if (!m) return;
+        m.set(sourceKey, (m.get(sourceKey) ?? 0) + value);
+      };
+
+      if (metricKey === "views") {
+        const data = viewsQuery.data;
+        if (data && isVideoScope) {
+          for (const id of scopedVideoIds) {
+            const byDay = data[id];
+            if (!byDay) continue;
+            for (const [day, count] of Object.entries(byDay)) {
+              add(bucketOf(day), `video:${id}`, count);
+            }
+          }
+        }
+      } else {
+        const wantedType = metricKey === "clicks" ? "click" : "booking";
+        for (const ev of events ?? []) {
+          if (ev.event_type !== wantedType) continue;
+          // Scope filter
+          if (source !== "all") {
+            if (source === "direct") {
+              if (ev.source_type) continue;
+            } else if (source.startsWith("video:")) {
+              if (
+                ev.source_type !== "video" ||
+                ev.source_value !== source.slice("video:".length)
+              )
+                continue;
+            } else if (source.startsWith("source:")) {
+              if (ev.source_type !== source.slice("source:".length)) continue;
+            }
+          }
+          add(bucketOf(londonYmd(ev.created_at)), eventSourceKey(ev), 1);
         }
       }
-      const key = bucketOf(londonYmd(ev.created_at));
-      if (ev.event_type === "click") {
-        if (clicks.has(key)) clicks.set(key, (clicks.get(key) ?? 0) + 1);
-      } else if (ev.event_type === "booking") {
-        if (bookings.has(key)) bookings.set(key, (bookings.get(key) ?? 0) + 1);
-      }
-    }
-    return { clicksSeries: clicks, bookingsSeries: bookings };
+
+      const sourceLabel = (key: string): string => {
+        if (key.startsWith("video:")) {
+          const id = key.slice("video:".length);
+          return videosById.get(id)?.title || id;
+        }
+        if (key.startsWith("source:")) return key.slice("source:".length);
+        return "Direct / unattributed";
+      };
+
+      return bucketKeys.map((k) => {
+        const m = byBucket.get(k) ?? new Map<string, number>();
+        const bySource: SourceSlice[] = Array.from(m.entries())
+          .map(([key, value]) => ({ key, label: sourceLabel(key), value }))
+          .sort((a, b) => b.value - a.value);
+        const total = bySource.reduce((s, x) => s + x.value, 0);
+        return { bucketKey: k, label: labelForBucket(k, bucket), total, bySource };
+      });
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [events, source, bucketKeys, bucket]);
+  }, [events, source, bucketKeys, bucket, viewsQuery.data, scopedVideoIds, isVideoScope, videosById]);
 
-  const viewsSeries = useMemo(() => {
-    const series = emptySeries();
-    const data = viewsQuery.data;
-    if (!data || !isVideoScope) return series;
-    for (const id of scopedVideoIds) {
-      const byDay = data[id];
-      if (!byDay) continue;
-      for (const [day, count] of Object.entries(byDay)) {
-        const key = bucketOf(day);
-        if (series.has(key)) series.set(key, (series.get(key) ?? 0) + count);
-      }
-    }
-    return series;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewsQuery.data, scopedVideoIds, bucketKeys, bucket, isVideoScope]);
+  const viewsData = useMemo(() => buildSeries("views"), [buildSeries]);
+  const clicksData = useMemo(() => buildSeries("clicks"), [buildSeries]);
+  const bookingsData = useMemo(() => buildSeries("bookings"), [buildSeries]);
 
-  const toPoints = (m: Map<string, number>): Point[] =>
-    bucketKeys.map((k) => ({
-      key: k,
-      label: labelForBucket(k, bucket),
-      value: m.get(k) ?? 0,
-    }));
+  const total = (d: BucketPoint[]) => d.reduce((s, p) => s + p.total, 0);
 
-  const viewsData = toPoints(viewsSeries);
-  const clicksData = toPoints(clicksSeries);
-  const bookingsData = toPoints(bookingsSeries);
+  const totals: Record<Metric, number | null> = {
+    views: isVideoScope ? total(viewsData) : null,
+    clicks: total(clicksData),
+    bookings: total(bookingsData),
+  };
 
-  const total = (d: Point[]) => d.reduce((s, p) => s + p.value, 0);
+  const activeData =
+    metric === "views" ? viewsData : metric === "clicks" ? clicksData : bookingsData;
 
   const loading = eventsLoading || videosLoading;
+
+  const METRICS: { key: Metric; label: string }[] = [
+    { key: "views", label: "Views" },
+    { key: "clicks", label: "Clicks" },
+    { key: "bookings", label: "Bookings" },
+  ];
 
   return (
     <div className="flex flex-col gap-6">
@@ -337,115 +391,138 @@ export function TrackerTrendsCharts({
         </div>
       </div>
 
+      {/* Metric cards */}
+      <div className="grid grid-cols-3 gap-3">
+        {METRICS.map((m) => {
+          const selected = metric === m.key;
+          const value = totals[m.key];
+          return (
+            <button
+              key={m.key}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => setMetric(m.key)}
+              className={cn(
+                "flex flex-col gap-1 rounded-xl border bg-[var(--surface-raised)] px-4 py-3 text-left",
+                selected ? "border-2 border-[var(--red)]" : "border-border",
+              )}
+            >
+              <span className="text-xs text-ink-muted">{m.label}</span>
+              <span className="text-lg font-medium text-ink">
+                {value === null ? "—" : formatInt(value)}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       {loading ? (
         <p className="text-sm text-ink-muted">Loading…</p>
-      ) : (
-        <div className="flex flex-col gap-6">
-          <Panel
-            label="Views"
-            total={isVideoScope ? total(viewsData) : null}
-            empty={
-              !isVideoScope
-                ? "View data is only available for YouTube sources."
-                : null
-            }
-            data={viewsData}
-            colour="var(--ink-muted)"
-            showXAxis={false}
-          />
-          <Panel
-            label="Clicks"
-            total={total(clicksData)}
-            empty={null}
-            data={clicksData}
-            colour="var(--ink)"
-            showXAxis={false}
-          />
-          <Panel
-            label="Bookings"
-            total={total(bookingsData)}
-            empty={null}
-            data={bookingsData}
-            colour="var(--red)"
-            showXAxis
-          />
+      ) : metric === "views" && !isVideoScope ? (
+        <div className="rounded-md border border-border bg-[var(--surface-raised)] px-6 py-10 text-center">
+          <p className="text-sm text-ink-muted">
+            View data is only available for YouTube sources.
+          </p>
         </div>
+      ) : (
+        <SingleChart metric={metric} data={activeData} />
       )}
     </div>
   );
 }
 
+// ---------- Single chart --------------------------------------------------
+
 const CHART_MARGIN = { top: 4, right: 8, left: 8, bottom: 0 };
 const Y_AXIS_WIDTH = 44;
 
-function Panel({
-  label,
-  total,
-  empty,
-  data,
-  colour,
-  showXAxis,
-}: {
-  label: string;
-  total: number | null;
-  empty: string | null;
-  data: Point[];
-  colour: string;
-  showXAxis: boolean;
-}) {
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-baseline justify-between">
-        <span className="text-xs text-ink-muted">{label}</span>
-        {total !== null && (
-          <span className="text-xs text-ink-muted">{formatInt(total)}</span>
-        )}
+const AXIS_TICK = { fontSize: 11, fill: "var(--ink-muted)" };
+
+const TOOLTIP_STYLE = {
+  fontSize: 12,
+  borderRadius: 8,
+  border: "1px solid var(--border)",
+  background: "var(--background)",
+  color: "var(--ink)",
+};
+
+function SingleChart({ metric, data }: { metric: Metric; data: BucketPoint[] }) {
+  const label = metric === "views" ? "Views" : metric === "clicks" ? "Clicks" : "Bookings";
+
+  if (metric === "bookings") {
+    return (
+      <div className="h-[240px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} margin={CHART_MARGIN} barCategoryGap="20%">
+            <CartesianGrid vertical={false} stroke="var(--border)" />
+            <XAxis
+              dataKey="label"
+              tickLine={false}
+              axisLine={false}
+              interval="preserveStartEnd"
+              tick={AXIS_TICK}
+            />
+            <YAxis
+              width={Y_AXIS_WIDTH}
+              tickLine={false}
+              axisLine={false}
+              allowDecimals={false}
+              domain={[0, "auto"]}
+              tick={AXIS_TICK}
+            />
+            <Tooltip
+              cursor={{ fill: "var(--surface-raised)" }}
+              formatter={(value: number) => [formatInt(value), label]}
+              contentStyle={TOOLTIP_STYLE}
+            />
+            <Bar
+              dataKey="total"
+              fill="var(--red)"
+              isAnimationActive={false}
+              radius={[2, 2, 0, 0]}
+            />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
-      {empty ? (
-        <div className="rounded-md border border-border bg-[var(--surface-raised)] px-6 py-10 text-center">
-          <p className="text-sm text-ink-muted">{empty}</p>
-        </div>
-      ) : (
-        <div className={showXAxis ? "h-[200px]" : "h-[160px]"}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={CHART_MARGIN} barCategoryGap="20%">
-              <CartesianGrid vertical={false} stroke="var(--border)" />
-              <XAxis
-                dataKey="label"
-                hide={!showXAxis}
-                tickLine={false}
-                axisLine={false}
-                interval="preserveStartEnd"
-                tick={{ fontSize: 11, fill: "var(--ink-muted)" }}
-              />
-              <YAxis
-                width={Y_AXIS_WIDTH}
-                tickLine={false}
-                axisLine={false}
-                allowDecimals={false}
-                tick={{ fontSize: 11, fill: "var(--ink-muted)" }}
-              />
-              <Tooltip
-                cursor={{ fill: "var(--surface-raised)" }}
-                formatter={(value: number) => [formatInt(value), label]}
-                contentStyle={{
-                  fontSize: 12,
-                  borderRadius: 8,
-                  border: "1px solid var(--border)",
-                  background: "var(--background)",
-                  color: "var(--ink)",
-                }}
-              />
-              <Bar
-                dataKey="value"
-                fill={colour}
-                isAnimationActive={false}
-                radius={[2, 2, 0, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      )}
+    );
+  }
+
+  return (
+    <div className="h-[240px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={data} margin={CHART_MARGIN}>
+          <CartesianGrid vertical={false} stroke="var(--border)" />
+          <XAxis
+            dataKey="label"
+            tickLine={false}
+            axisLine={false}
+            interval="preserveStartEnd"
+            tick={AXIS_TICK}
+          />
+          <YAxis
+            width={Y_AXIS_WIDTH}
+            tickLine={false}
+            axisLine={false}
+            allowDecimals={false}
+            domain={[0, "auto"]}
+            tick={AXIS_TICK}
+          />
+          <Tooltip
+            cursor={{ fill: "var(--surface-raised)" }}
+            formatter={(value: number) => [formatInt(value), label]}
+            contentStyle={TOOLTIP_STYLE}
+          />
+          <Area
+            type="monotone"
+            dataKey="total"
+            stroke="var(--red)"
+            strokeWidth={2}
+            fill="var(--red)"
+            fillOpacity={0.1}
+            isAnimationActive={false}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
     </div>
   );
 }
