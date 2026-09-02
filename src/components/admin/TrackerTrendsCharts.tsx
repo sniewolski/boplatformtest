@@ -425,7 +425,7 @@ export function TrackerTrendsCharts({
           </p>
         </div>
       ) : (
-        <SingleChart metric={metric} data={activeData} />
+        <SingleChart metric={metric} bucket={bucket} data={activeData} />
       )}
     </div>
   );
