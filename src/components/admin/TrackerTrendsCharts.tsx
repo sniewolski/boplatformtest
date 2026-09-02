@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Area,
@@ -6,11 +6,13 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
+
 import { supabase } from "@/integrations/supabase/client";
 import {
   Select,
@@ -65,9 +67,56 @@ function eachDay(startYmd: string, endYmd: string): string[] {
   return out;
 }
 
+/** Europe/London midnight for a calendar day, as a UTC ISO instant. */
+function londonDayStartUtcISO(ymd: string): string {
+  for (const hourGuess of [0, -1]) {
+    const d = new Date(`${ymd}T00:00:00Z`);
+    d.setUTCHours(hourGuess);
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Europe/London",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(d);
+    const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+    if (
+      `${get("year")}-${get("month")}-${get("day")}` === ymd &&
+      get("hour") === "00" &&
+      get("minute") === "00"
+    ) {
+      return d.toISOString();
+    }
+  }
+  return new Date(`${ymd}T00:00:00Z`).toISOString();
+}
+
+/** Exclusive end instant of a London calendar day. */
+function londonDayEndExclusiveUtcISO(ymd: string): string {
+  return londonDayStartUtcISO(addDaysYmd(ymd, 1));
+}
+
+/** Inclusive day count between two calendar days. */
+function dayCount(startYmd: string, endYmd: string): number {
+  const a = Date.parse(`${startYmd}T00:00:00Z`);
+  const b = Date.parse(`${endYmd}T00:00:00Z`);
+  return Math.max(1, Math.round((b - a) / 86400000) + 1);
+}
+
 function formatInt(n: number): string {
   return n.toLocaleString("en-US");
 }
+
+function formatDelta(current: number, previous: number): string {
+  if (previous <= 0) return "no prior data";
+  const pct = ((current - previous) / previous) * 100;
+  if (!Number.isFinite(pct)) return "no prior data";
+  const sign = pct >= 0 ? "+" : "\u2212";
+  return `${sign}${Math.abs(pct).toFixed(1)}% vs prev`;
+}
+
 
 function labelForBucket(key: string, bucket: Bucket): string {
   const d = new Date(`${key}T00:00:00Z`);
@@ -204,6 +253,63 @@ export function TrackerTrendsCharts({
 
   const viewsError = viewsQuery.error as Error | null;
 
+  // ---- Previous period (same length, ending the day before) ------------
+  const { prevStartYmd, prevEndYmd } = useMemo(() => {
+    const len = dayCount(startYmd, endYmd);
+    const pEnd = addDaysYmd(startYmd, -1);
+    return { prevStartYmd: addDaysYmd(pEnd, -(len - 1)), prevEndYmd: pEnd };
+  }, [startYmd, endYmd]);
+
+  const prevEventsQuery = useQuery({
+    queryKey: ["tracker-events", "prev", prevStartYmd, prevEndYmd],
+    refetchOnWindowFocus: false,
+    queryFn: async (): Promise<TrackerEventRow[]> => {
+      const { data, error } = await supabase
+        .from("tracker_events")
+        .select(
+          "id, event_type, visitor_id, source_type, source_value, booking_id, created_at",
+        )
+        .gte("created_at", londonDayStartUtcISO(prevStartYmd))
+        .lt("created_at", londonDayEndExclusiveUtcISO(prevEndYmd))
+        .order("created_at", { ascending: false })
+        .limit(10000);
+      if (error) throw error;
+      return (data ?? []) as TrackerEventRow[];
+    },
+  });
+
+  const prevViewsQuery = useQuery({
+    queryKey: [
+      "tracker-yt-views",
+      "day",
+      "prev",
+      prevStartYmd,
+      prevEndYmd,
+      scopedVideoIds.slice().sort().join(","),
+    ],
+    enabled: isVideoScope && scopedVideoIds.length > 0,
+    refetchOnWindowFocus: false,
+    queryFn: async (): Promise<Record<string, Record<string, number>>> => {
+      const { data, error } = await supabase.functions.invoke(
+        "tracker-video-views",
+        {
+          body: {
+            video_ids: scopedVideoIds,
+            start_date: prevStartYmd,
+            end_date: prevEndYmd,
+            granularity: "day",
+          },
+        },
+      );
+      if (error) throw error;
+      if (!data?.ok) {
+        throw new Error(data?.error ?? "Unknown error from tracker-video-views");
+      }
+      return (data.views ?? {}) as Record<string, Record<string, number>>;
+    },
+  });
+
+
   // ---- Buckets ---------------------------------------------------------
   const bucketKeys = useMemo(() => {
     const days = eachDay(startYmd, endYmd);
@@ -307,10 +413,69 @@ export function TrackerTrendsCharts({
     bookings: total(bookingsData),
   };
 
+  // ---- Previous-period totals (same source scope) ----------------------
+  const inScope = (ev: TrackerEventRow): boolean => {
+    if (source === "all") return true;
+    if (source === "direct") return !ev.source_type;
+    if (source.startsWith("video:")) {
+      return (
+        ev.source_type === "video" &&
+        ev.source_value === source.slice("video:".length)
+      );
+    }
+    if (source.startsWith("source:")) {
+      return ev.source_type === source.slice("source:".length);
+    }
+    return true;
+  };
+
+  const prevTotals: Record<Metric, number | null> = useMemo(() => {
+    const rows = prevEventsQuery.data;
+    let clicks: number | null = null;
+    let bookings: number | null = null;
+    if (rows) {
+      clicks = 0;
+      bookings = 0;
+      for (const ev of rows) {
+        if (!inScope(ev)) continue;
+        if (ev.event_type === "click") clicks += 1;
+        else if (ev.event_type === "booking") bookings += 1;
+      }
+    }
+    let views: number | null = null;
+    if (isVideoScope && prevViewsQuery.data) {
+      views = 0;
+      for (const id of scopedVideoIds) {
+        const byDay = prevViewsQuery.data[id];
+        if (!byDay) continue;
+        for (const v of Object.values(byDay)) views += v;
+      }
+    }
+    return { views, clicks, bookings };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prevEventsQuery.data, prevViewsQuery.data, source, isVideoScope, scopedVideoIds]);
+
   const activeData =
     metric === "views" ? viewsData : metric === "clicks" ? clicksData : bookingsData;
 
+  // ---- Pinned bucket ----------------------------------------------------
+  const [pinnedKey, setPinnedKey] = useState<string | null>(null);
+  useEffect(() => {
+    setPinnedKey(null);
+  }, [metric, bucket, source, startYmd, endYmd]);
+
+  const pinnedPoint =
+    pinnedKey === null
+      ? null
+      : (activeData.find((p) => p.bucketKey === pinnedKey) ?? null);
+
+  const togglePin = (key: string | undefined) => {
+    if (!key) return;
+    setPinnedKey((cur) => (cur === key ? null : key));
+  };
+
   const loading = eventsLoading || videosLoading;
+
 
   const METRICS: { key: Metric; label: string }[] = [
     { key: "views", label: "Views" },
@@ -396,6 +561,15 @@ export function TrackerTrendsCharts({
         {METRICS.map((m) => {
           const selected = metric === m.key;
           const value = totals[m.key];
+          const prev = prevTotals[m.key];
+          const deltaLoading =
+            m.key === "views"
+              ? isVideoScope && prevViewsQuery.isLoading
+              : prevEventsQuery.isLoading;
+          const deltaText =
+            deltaLoading || value === null || prev === null
+              ? ""
+              : formatDelta(value, prev);
           return (
             <button
               key={m.key}
@@ -411,6 +585,10 @@ export function TrackerTrendsCharts({
               <span className="text-lg font-medium text-ink">
                 {value === null ? "—" : formatInt(value)}
               </span>
+              {/* Fixed-height slot so cards don't resize when deltas arrive */}
+              <span className="h-4 text-xs leading-4 text-ink-muted">
+                {deltaText}
+              </span>
             </button>
           );
         })}
@@ -425,8 +603,25 @@ export function TrackerTrendsCharts({
           </p>
         </div>
       ) : (
-        <SingleChart metric={metric} bucket={bucket} data={activeData} />
+        <div className="flex flex-col gap-4">
+          <SingleChart
+            metric={metric}
+            bucket={bucket}
+            data={activeData}
+            pinnedKey={pinnedKey}
+            onPick={togglePin}
+          />
+          {pinnedPoint && (
+            <BucketDetailPanel
+              point={pinnedPoint}
+              metric={metric}
+              bucket={bucket}
+              onClose={() => setPinnedKey(null)}
+            />
+          )}
+        </div>
       )}
+
     </div>
   );
 }
@@ -487,22 +682,134 @@ function CustomTooltip({
   );
 }
 
+function metricLabel(metric: Metric): string {
+  return metric === "views" ? "Views" : metric === "clicks" ? "Clicks" : "Bookings";
+}
+
+/** Full breakdown for the pinned bucket. Rendered directly below the chart. */
+function BucketDetailPanel({
+  point,
+  metric,
+  bucket,
+  onClose,
+}: {
+  point: BucketPoint;
+  metric: Metric;
+  bucket: Bucket;
+  onClose: () => void;
+}) {
+  const dateLine =
+    bucket === "week"
+      ? `Week of ${formatTooltipDate(point.bucketKey)}`
+      : formatTooltipDate(point.bucketKey);
+  const rows = point.bySource.slice().sort((a, b) => b.value - a.value);
+  const max = rows.reduce((m, r) => Math.max(m, r.value), 0);
+
+  return (
+    <div className="rounded-xl border border-border bg-[var(--surface-raised)] p-4">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs text-ink-muted">{dateLine}</p>
+          <p className="text-sm font-medium text-ink">
+            {formatInt(point.total)} {metricLabel(metric).toLowerCase()}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close breakdown"
+          className="rounded-md px-2 py-1 text-xs text-ink-muted hover:text-ink"
+        >
+          Close
+        </button>
+      </div>
+
+      {point.total === 0 || rows.length === 0 ? (
+        <p className="mt-3 text-xs text-ink-muted">
+          Nothing recorded in this {bucket === "week" ? "week" : "day"}.
+        </p>
+      ) : (
+        <ul className="mt-3 flex flex-col gap-2">
+          {rows.map((r) => {
+            const pct = max > 0 ? (r.value / max) * 100 : 0;
+            const unattributed = r.key === "direct";
+            return (
+              <li key={r.key} className="flex items-center gap-3">
+                <span
+                  className="w-[40%] truncate text-xs text-ink-muted"
+                  title={r.label}
+                >
+                  {r.label}
+                </span>
+                <span className="h-2 flex-1 overflow-hidden rounded-full bg-[var(--surface)]">
+                  <span
+                    className="block h-full rounded-full"
+                    style={{
+                      width: `${pct}%`,
+                      backgroundColor: unattributed
+                        ? "var(--ink-muted)"
+                        : "var(--red)",
+                    }}
+                  />
+                </span>
+                <span className="w-14 shrink-0 text-right text-xs tabular-nums text-ink">
+                  {formatInt(r.value)}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function SingleChart({
   metric,
   bucket,
   data,
+  pinnedKey,
+  onPick,
 }: {
   metric: Metric;
   bucket: Bucket;
   data: BucketPoint[];
+  pinnedKey: string | null;
+  onPick: (bucketKey: string | undefined) => void;
 }) {
-  const label = metric === "views" ? "Views" : metric === "clicks" ? "Clicks" : "Bookings";
+  const pinnedLabel =
+    pinnedKey === null
+      ? null
+      : (data.find((p) => p.bucketKey === pinnedKey)?.label ?? null);
+
+  const handleClick = (state: unknown) => {
+    const s = state as
+      | { activePayload?: Array<{ payload?: BucketPoint }> }
+      | undefined;
+    onPick(s?.activePayload?.[0]?.payload?.bucketKey);
+  };
+
+  const pinMarker =
+    pinnedLabel !== null ? (
+      <ReferenceLine
+        x={pinnedLabel}
+        stroke="var(--ink-muted)"
+        strokeDasharray="3 3"
+        isFront
+      />
+    ) : null;
 
   if (metric === "bookings") {
     return (
       <div className="h-[240px]">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={CHART_MARGIN} barCategoryGap="20%">
+          <BarChart
+            data={data}
+            margin={CHART_MARGIN}
+            barCategoryGap="20%"
+            onClick={handleClick}
+            style={{ cursor: "pointer" }}
+          >
             <CartesianGrid vertical={false} stroke="var(--border)" />
             <XAxis
               dataKey="label"
@@ -523,6 +830,7 @@ function SingleChart({
               cursor={{ fill: "var(--surface-raised)" }}
               content={<CustomTooltip metric={metric} bucket={bucket} />}
             />
+            {pinMarker}
             <Bar
               dataKey="total"
               fill="var(--red)"
@@ -538,7 +846,12 @@ function SingleChart({
   return (
     <div className="h-[240px]">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={CHART_MARGIN}>
+        <AreaChart
+          data={data}
+          margin={CHART_MARGIN}
+          onClick={handleClick}
+          style={{ cursor: "pointer" }}
+        >
           <CartesianGrid vertical={false} stroke="var(--border)" />
           <XAxis
             dataKey="label"
@@ -559,6 +872,7 @@ function SingleChart({
             cursor={{ fill: "var(--surface-raised)" }}
             content={<CustomTooltip metric={metric} bucket={bucket} />}
           />
+          {pinMarker}
           <Area
             type="monotone"
             dataKey="total"
@@ -573,3 +887,4 @@ function SingleChart({
     </div>
   );
 }
+
