@@ -561,6 +561,15 @@ export function TrackerTrendsCharts({
         {METRICS.map((m) => {
           const selected = metric === m.key;
           const value = totals[m.key];
+          const prev = prevTotals[m.key];
+          const deltaLoading =
+            m.key === "views"
+              ? isVideoScope && prevViewsQuery.isLoading
+              : prevEventsQuery.isLoading;
+          const deltaText =
+            deltaLoading || value === null || prev === null
+              ? ""
+              : formatDelta(value, prev);
           return (
             <button
               key={m.key}
@@ -576,6 +585,10 @@ export function TrackerTrendsCharts({
               <span className="text-lg font-medium text-ink">
                 {value === null ? "—" : formatInt(value)}
               </span>
+              {/* Fixed-height slot so cards don't resize when deltas arrive */}
+              <span className="h-4 text-xs leading-4 text-ink-muted">
+                {deltaText}
+              </span>
             </button>
           );
         })}
@@ -590,8 +603,25 @@ export function TrackerTrendsCharts({
           </p>
         </div>
       ) : (
-        <SingleChart metric={metric} bucket={bucket} data={activeData} />
+        <div className="flex flex-col gap-4">
+          <SingleChart
+            metric={metric}
+            bucket={bucket}
+            data={activeData}
+            pinnedKey={pinnedKey}
+            onPick={togglePin}
+          />
+          {pinnedPoint && (
+            <BucketDetailPanel
+              point={pinnedPoint}
+              metric={metric}
+              bucket={bucket}
+              onClose={() => setPinnedKey(null)}
+            />
+          )}
+        </div>
       )}
+
     </div>
   );
 }
