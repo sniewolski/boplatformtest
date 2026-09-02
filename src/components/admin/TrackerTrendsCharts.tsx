@@ -384,7 +384,7 @@ export function TrackerTrendsCharts({
 
       if (metricKey === "views") {
         const data = viewsQuery.data;
-        if (data && isVideoScope) {
+        if (data) {
           for (const id of scopedVideoIds) {
             const byDay = data[id];
             if (!byDay) continue;
@@ -397,23 +397,11 @@ export function TrackerTrendsCharts({
         const wantedType = metricKey === "clicks" ? "click" : "booking";
         for (const ev of events ?? []) {
           if (ev.event_type !== wantedType) continue;
-          // Scope filter
-          if (source !== "all") {
-            if (source === "direct") {
-              if (ev.source_type) continue;
-            } else if (source.startsWith("video:")) {
-              if (
-                ev.source_type !== "video" ||
-                ev.source_value !== source.slice("video:".length)
-              )
-                continue;
-            } else if (source.startsWith("source:")) {
-              if (ev.source_type !== source.slice("source:".length)) continue;
-            }
-          }
+          if (!selected.has(eventSourceKey(ev))) continue;
           add(bucketOf(londonYmd(ev.created_at)), eventSourceKey(ev), 1);
         }
       }
+
 
       const sourceLabel = (key: string): string => {
         if (key.startsWith("video:")) {
