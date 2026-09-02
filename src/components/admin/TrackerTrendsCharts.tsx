@@ -263,7 +263,8 @@ export function TrackerTrendsCharts({
       endYmd,
       scopedVideoIds.slice().sort().join(","),
     ],
-    enabled: isVideoScope && scopedVideoIds.length > 0,
+    enabled: scopedVideoIds.length > 0,
+
     refetchOnWindowFocus: false,
     queryFn: async (): Promise<Record<string, Record<string, number>>> => {
       const { data, error } = await supabase.functions.invoke(
