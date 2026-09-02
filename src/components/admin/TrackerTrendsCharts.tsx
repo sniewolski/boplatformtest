@@ -413,10 +413,69 @@ export function TrackerTrendsCharts({
     bookings: total(bookingsData),
   };
 
+  // ---- Previous-period totals (same source scope) ----------------------
+  const inScope = (ev: TrackerEventRow): boolean => {
+    if (source === "all") return true;
+    if (source === "direct") return !ev.source_type;
+    if (source.startsWith("video:")) {
+      return (
+        ev.source_type === "video" &&
+        ev.source_value === source.slice("video:".length)
+      );
+    }
+    if (source.startsWith("source:")) {
+      return ev.source_type === source.slice("source:".length);
+    }
+    return true;
+  };
+
+  const prevTotals: Record<Metric, number | null> = useMemo(() => {
+    const rows = prevEventsQuery.data;
+    let clicks: number | null = null;
+    let bookings: number | null = null;
+    if (rows) {
+      clicks = 0;
+      bookings = 0;
+      for (const ev of rows) {
+        if (!inScope(ev)) continue;
+        if (ev.event_type === "click") clicks += 1;
+        else if (ev.event_type === "booking") bookings += 1;
+      }
+    }
+    let views: number | null = null;
+    if (isVideoScope && prevViewsQuery.data) {
+      views = 0;
+      for (const id of scopedVideoIds) {
+        const byDay = prevViewsQuery.data[id];
+        if (!byDay) continue;
+        for (const v of Object.values(byDay)) views += v;
+      }
+    }
+    return { views, clicks, bookings };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prevEventsQuery.data, prevViewsQuery.data, source, isVideoScope, scopedVideoIds]);
+
   const activeData =
     metric === "views" ? viewsData : metric === "clicks" ? clicksData : bookingsData;
 
+  // ---- Pinned bucket ----------------------------------------------------
+  const [pinnedKey, setPinnedKey] = useState<string | null>(null);
+  useEffect(() => {
+    setPinnedKey(null);
+  }, [metric, bucket, source, startYmd, endYmd]);
+
+  const pinnedPoint =
+    pinnedKey === null
+      ? null
+      : (activeData.find((p) => p.bucketKey === pinnedKey) ?? null);
+
+  const togglePin = (key: string | undefined) => {
+    if (!key) return;
+    setPinnedKey((cur) => (cur === key ? null : key));
+  };
+
   const loading = eventsLoading || videosLoading;
+
 
   const METRICS: { key: Metric; label: string }[] = [
     { key: "views", label: "Views" },
