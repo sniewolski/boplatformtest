@@ -1,5 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import {
   Area,
   AreaChart,
@@ -14,18 +23,12 @@ import {
 } from "recharts";
 
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import type {
   TrackerEventRow,
   TrackedVideoRow,
 } from "@/components/admin/TrackerBreakdownTable";
+
 
 // ---------- London-day helpers (must agree with the route's boundaries) ---
 
@@ -132,8 +135,8 @@ function labelForBucket(key: string, bucket: Bucket): string {
 
 type Bucket = "week" | "day";
 
-/** "all" | "video:<id>" | "source:<type>" | "direct" */
-type SourceSel = string;
+
+
 
 type Metric = "views" | "clicks" | "bookings";
 
@@ -175,7 +178,6 @@ export function TrackerTrendsCharts({
   endYmd: string;
 }) {
   const [bucket, setBucket] = useState<Bucket>("week");
-  const [source, setSource] = useState<SourceSel>("all");
   const [metric, setMetric] = useState<Metric>("clicks");
 
   const videosById = useMemo(
@@ -213,12 +215,44 @@ export function TrackerTrendsCharts({
     return withTitle;
   }, [videoIds, videosById]);
 
-  const isVideoScope = source === "all" || source.startsWith("video:");
-  const scopedVideoIds = useMemo(
-    () =>
-      source.startsWith("video:") ? [source.slice("video:".length)] : videoIds,
-    [source, videoIds],
+  // ---- Multi-select selection ------------------------------------------
+  //
+  // `selRaw === null` means "nothing touched yet" and resolves to every
+  // currently-available key. Once the user interacts we materialise an
+  // explicit Set, so an empty selection stays empty.
+  const videoKeys = useMemo(
+    () => orderedVideoIds.map((v) => `video:${v.id}`),
+    [orderedVideoIds],
   );
+  const otherKeys = useMemo(
+    () => sourceTypes.map((t) => `source:${t}`),
+    [sourceTypes],
+  );
+  const allKeys = useMemo(
+    () => [...videoKeys, ...otherKeys, ...(hasDirect ? ["direct"] : [])],
+    [videoKeys, otherKeys, hasDirect],
+  );
+
+  const [selRaw, setSelRaw] = useState<Set<string> | null>(null);
+  const selected = useMemo(
+    () => selRaw ?? new Set(allKeys),
+    [selRaw, allKeys],
+  );
+  const selectionSig = useMemo(
+    () => Array.from(selected).sort().join("|"),
+    [selected],
+  );
+
+  const scopedVideoIds = useMemo(
+    () => videoIds.filter((id) => selected.has(`video:${id}`)),
+    [videoIds, selected],
+  );
+  const hasNonVideoSelected = useMemo(
+    () => Array.from(selected).some((k) => !k.startsWith("video:")),
+    [selected],
+  );
+  const nothingSelected = selected.size === 0;
+
 
   // ---- Per-day YouTube views ------------------------------------------
   const viewsQuery = useQuery({
@@ -229,7 +263,8 @@ export function TrackerTrendsCharts({
       endYmd,
       scopedVideoIds.slice().sort().join(","),
     ],
-    enabled: isVideoScope && scopedVideoIds.length > 0,
+    enabled: scopedVideoIds.length > 0,
+
     refetchOnWindowFocus: false,
     queryFn: async (): Promise<Record<string, Record<string, number>>> => {
       const { data, error } = await supabase.functions.invoke(
@@ -287,7 +322,7 @@ export function TrackerTrendsCharts({
       prevEndYmd,
       scopedVideoIds.slice().sort().join(","),
     ],
-    enabled: isVideoScope && scopedVideoIds.length > 0,
+    enabled: scopedVideoIds.length > 0,
     refetchOnWindowFocus: false,
     queryFn: async (): Promise<Record<string, Record<string, number>>> => {
       const { data, error } = await supabase.functions.invoke(
@@ -349,7 +384,7 @@ export function TrackerTrendsCharts({
 
       if (metricKey === "views") {
         const data = viewsQuery.data;
-        if (data && isVideoScope) {
+        if (data) {
           for (const id of scopedVideoIds) {
             const byDay = data[id];
             if (!byDay) continue;
@@ -362,23 +397,11 @@ export function TrackerTrendsCharts({
         const wantedType = metricKey === "clicks" ? "click" : "booking";
         for (const ev of events ?? []) {
           if (ev.event_type !== wantedType) continue;
-          // Scope filter
-          if (source !== "all") {
-            if (source === "direct") {
-              if (ev.source_type) continue;
-            } else if (source.startsWith("video:")) {
-              if (
-                ev.source_type !== "video" ||
-                ev.source_value !== source.slice("video:".length)
-              )
-                continue;
-            } else if (source.startsWith("source:")) {
-              if (ev.source_type !== source.slice("source:".length)) continue;
-            }
-          }
+          if (!selected.has(eventSourceKey(ev))) continue;
           add(bucketOf(londonYmd(ev.created_at)), eventSourceKey(ev), 1);
         }
       }
+
 
       const sourceLabel = (key: string): string => {
         if (key.startsWith("video:")) {
@@ -399,7 +422,7 @@ export function TrackerTrendsCharts({
       });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [events, source, bucketKeys, bucket, viewsQuery.data, scopedVideoIds, isVideoScope, videosById]);
+  }, [events, selectionSig, bucketKeys, bucket, viewsQuery.data, scopedVideoIds, videosById]);
 
   const viewsData = useMemo(() => buildSeries("views"), [buildSeries]);
   const clicksData = useMemo(() => buildSeries("clicks"), [buildSeries]);
@@ -407,28 +430,13 @@ export function TrackerTrendsCharts({
 
   const total = (d: BucketPoint[]) => d.reduce((s, p) => s + p.total, 0);
 
-  const totals: Record<Metric, number | null> = {
-    views: isVideoScope ? total(viewsData) : null,
+  const totals: Record<Metric, number> = {
+    views: total(viewsData),
     clicks: total(clicksData),
     bookings: total(bookingsData),
   };
 
-  // ---- Previous-period totals (same source scope) ----------------------
-  const inScope = (ev: TrackerEventRow): boolean => {
-    if (source === "all") return true;
-    if (source === "direct") return !ev.source_type;
-    if (source.startsWith("video:")) {
-      return (
-        ev.source_type === "video" &&
-        ev.source_value === source.slice("video:".length)
-      );
-    }
-    if (source.startsWith("source:")) {
-      return ev.source_type === source.slice("source:".length);
-    }
-    return true;
-  };
-
+  // ---- Previous-period totals (same selection scope) -------------------
   const prevTotals: Record<Metric, number | null> = useMemo(() => {
     const rows = prevEventsQuery.data;
     let clicks: number | null = null;
@@ -437,13 +445,15 @@ export function TrackerTrendsCharts({
       clicks = 0;
       bookings = 0;
       for (const ev of rows) {
-        if (!inScope(ev)) continue;
+        if (!selected.has(eventSourceKey(ev))) continue;
         if (ev.event_type === "click") clicks += 1;
         else if (ev.event_type === "booking") bookings += 1;
       }
     }
     let views: number | null = null;
-    if (isVideoScope && prevViewsQuery.data) {
+    if (scopedVideoIds.length === 0) {
+      views = 0;
+    } else if (prevViewsQuery.data) {
       views = 0;
       for (const id of scopedVideoIds) {
         const byDay = prevViewsQuery.data[id];
@@ -453,7 +463,7 @@ export function TrackerTrendsCharts({
     }
     return { views, clicks, bookings };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prevEventsQuery.data, prevViewsQuery.data, source, isVideoScope, scopedVideoIds]);
+  }, [prevEventsQuery.data, prevViewsQuery.data, selectionSig, scopedVideoIds]);
 
   const activeData =
     metric === "views" ? viewsData : metric === "clicks" ? clicksData : bookingsData;
@@ -462,7 +472,8 @@ export function TrackerTrendsCharts({
   const [pinnedKey, setPinnedKey] = useState<string | null>(null);
   useEffect(() => {
     setPinnedKey(null);
-  }, [metric, bucket, source, startYmd, endYmd]);
+  }, [metric, bucket, selectionSig, startYmd, endYmd]);
+
 
   const pinnedPoint =
     pinnedKey === null
@@ -532,59 +543,49 @@ export function TrackerTrendsCharts({
 
         <div className="flex flex-col gap-1">
           <span className="text-xs text-ink-muted">Source</span>
-          <Select value={source} onValueChange={setSource}>
-            <SelectTrigger className="w-[280px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All sources</SelectItem>
-              {orderedVideoIds.map((v) => (
-                <SelectItem key={v.id} value={`video:${v.id}`}>
-                  {v.title || v.id}
-                </SelectItem>
-              ))}
-              {sourceTypes.map((t) => (
-                <SelectItem key={t} value={`source:${t}`}>
-                  {t}
-                </SelectItem>
-              ))}
-              {hasDirect && (
-                <SelectItem value="direct">Direct / unattributed</SelectItem>
-              )}
-            </SelectContent>
-          </Select>
+          <SourceMultiSelect
+            videos={orderedVideoIds}
+            sourceTypes={sourceTypes}
+            hasDirect={hasDirect}
+            selected={selected}
+            onChange={(next) => setSelRaw(next)}
+          />
         </div>
       </div>
 
       {/* Metric cards */}
       <div className="grid grid-cols-3 gap-3">
         {METRICS.map((m) => {
-          const selected = metric === m.key;
+          const active = metric === m.key;
           const value = totals[m.key];
           const prev = prevTotals[m.key];
           const deltaLoading =
             m.key === "views"
-              ? isVideoScope && prevViewsQuery.isLoading
+              ? scopedVideoIds.length > 0 && prevViewsQuery.isLoading
               : prevEventsQuery.isLoading;
           const deltaText =
-            deltaLoading || value === null || prev === null
-              ? ""
-              : formatDelta(value, prev);
+            deltaLoading || prev === null ? "" : formatDelta(value, prev);
+          const showViewsNote = m.key === "views" && hasNonVideoSelected;
           return (
             <button
               key={m.key}
               type="button"
-              aria-pressed={selected}
+              aria-pressed={active}
               onClick={() => setMetric(m.key)}
               className={cn(
                 "flex flex-col gap-1 rounded-xl border bg-[var(--surface-raised)] px-4 py-3 text-left",
-                selected ? "border-2 border-[var(--red)]" : "border-border",
+                active ? "border-2 border-[var(--red)]" : "border-border",
               )}
             >
               <span className="text-xs text-ink-muted">{m.label}</span>
               <span className="text-lg font-medium text-ink">
-                {value === null ? "—" : formatInt(value)}
+                {formatInt(value)}
               </span>
+              {showViewsNote && (
+                <span className="text-xs leading-4 text-ink-muted">
+                  YouTube views only
+                </span>
+              )}
               {/* Fixed-height slot so cards don't resize when deltas arrive */}
               <span className="h-4 text-xs leading-4 text-ink-muted">
                 {deltaText}
@@ -596,12 +597,13 @@ export function TrackerTrendsCharts({
 
       {loading ? (
         <p className="text-sm text-ink-muted">Loading…</p>
-      ) : metric === "views" && !isVideoScope ? (
+      ) : nothingSelected ? (
         <div className="rounded-md border border-border bg-[var(--surface-raised)] px-6 py-10 text-center">
           <p className="text-sm text-ink-muted">
-            View data is only available for YouTube sources.
+            Select at least one source to see the chart.
           </p>
         </div>
+
       ) : (
         <div className="flex flex-col gap-4">
           <SingleChart
@@ -888,3 +890,302 @@ function SingleChart({
   );
 }
 
+
+// ---------- Grouped multi-select -----------------------------------------
+
+type VideoOpt = { id: string; title: string };
+
+/** Real checkbox input with indeterminate support and a --red fill. */
+function TriCheckbox({
+  checked,
+  indeterminate,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  indeterminate?: boolean;
+  onChange: () => void;
+  label: string;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  useLayoutEffect(() => {
+    if (ref.current) ref.current.indeterminate = !!indeterminate && !checked;
+  }, [indeterminate, checked]);
+  return (
+    <input
+      ref={ref}
+      type="checkbox"
+      checked={checked}
+      aria-checked={indeterminate && !checked ? "mixed" : checked}
+      aria-label={label}
+      onChange={onChange}
+      className="size-4 shrink-0 cursor-pointer rounded border border-border"
+      style={{ accentColor: "var(--red)" }}
+    />
+  );
+}
+
+function SourceMultiSelect({
+  videos,
+  sourceTypes,
+  hasDirect,
+  selected,
+  onChange,
+}: {
+  videos: VideoOpt[];
+  sourceTypes: string[];
+  hasDirect: boolean;
+  selected: Set<string>;
+  onChange: (next: Set<string>) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [openYouTube, setOpenYouTube] = useState(true);
+  const [openOther, setOpenOther] = useState(true);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [rect, setRect] = useState<{ top: number; left: number; width: number } | null>(
+    null,
+  );
+
+  const videoRows = useMemo(
+    () => videos.map((v) => ({ key: `video:${v.id}`, label: v.title || v.id })),
+    [videos],
+  );
+  const otherRows = useMemo(
+    () => sourceTypes.map((t) => ({ key: `source:${t}`, label: t })),
+    [sourceTypes],
+  );
+  const directRow = hasDirect
+    ? { key: "direct", label: "Direct / unattributed" }
+    : null;
+
+  const allRows = useMemo(
+    () => [...videoRows, ...otherRows, ...(directRow ? [directRow] : [])],
+    [videoRows, otherRows, directRow],
+  );
+
+  const q = query.trim().toLowerCase();
+  const match = (label: string) => q === "" || label.toLowerCase().includes(q);
+  const visibleVideos = videoRows.filter((r) => match(r.label));
+  const visibleOthers = otherRows.filter((r) => match(r.label));
+  const directVisible = directRow ? match(directRow.label) : false;
+
+  // ---- Label -----------------------------------------------------------
+  const selCount = selected.size;
+  const groupFull = (rows: { key: string }[]) =>
+    rows.length > 0 && rows.every((r) => selected.has(r.key));
+
+  let triggerLabel: string;
+  if (allRows.length > 0 && selCount === allRows.length) {
+    triggerLabel = "All sources";
+  } else if (selCount === 0) {
+    triggerLabel = "No sources";
+  } else if (selCount === 1) {
+    const only = Array.from(selected)[0];
+    triggerLabel = allRows.find((r) => r.key === only)?.label ?? "1 source";
+  } else if (groupFull(videoRows) && selCount === videoRows.length) {
+    triggerLabel = "YouTube";
+  } else if (groupFull(otherRows) && selCount === otherRows.length) {
+    triggerLabel = "Other sources";
+  } else {
+    triggerLabel = `${selCount} sources`;
+  }
+
+  // ---- Positioning + dismiss -------------------------------------------
+  const place = useCallback(() => {
+    const el = triggerRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    setRect({ top: r.bottom + 4, left: r.left, width: Math.max(r.width, 320) });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [open, place]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (panelRef.current?.contains(t) || triggerRef.current?.contains(t)) return;
+      setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  // ---- Mutations (always operate on the FULL group, not the filtered view)
+  const toggleKey = (key: string) => {
+    const next = new Set(selected);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    onChange(next);
+  };
+
+  const toggleGroup = (rows: { key: string }[]) => {
+    const next = new Set(selected);
+    const all = rows.every((r) => next.has(r.key));
+    for (const r of rows) {
+      if (all) next.delete(r.key);
+      else next.add(r.key);
+    }
+    onChange(next);
+  };
+
+  const Row = ({ rowKey, label }: { rowKey: string; label: string }) => (
+    <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-ink hover:bg-[var(--surface)]">
+      <TriCheckbox
+        checked={selected.has(rowKey)}
+        onChange={() => toggleKey(rowKey)}
+        label={label}
+      />
+      <span className="truncate" title={label}>
+        {label}
+      </span>
+    </label>
+  );
+
+  const GroupHeader = ({
+    title,
+    rows,
+    expanded,
+    setExpanded,
+  }: {
+    title: string;
+    rows: { key: string }[];
+    expanded: boolean;
+    setExpanded: (v: boolean) => void;
+  }) => {
+    const count = rows.filter((r) => selected.has(r.key)).length;
+    return (
+      <div className="flex items-center gap-2 px-2 py-1.5">
+        <TriCheckbox
+          checked={rows.length > 0 && count === rows.length}
+          indeterminate={count > 0 && count < rows.length}
+          onChange={() => toggleGroup(rows)}
+          label={`Select all in ${title}`}
+        />
+        <button
+          type="button"
+          onClick={() => setExpanded(!expanded)}
+          aria-expanded={expanded}
+          className="flex flex-1 items-center gap-1 text-left text-xs font-medium uppercase tracking-wide text-ink-muted hover:text-ink"
+        >
+          {expanded ? (
+            <ChevronDown className="size-3.5" />
+          ) : (
+            <ChevronRight className="size-3.5" />
+          )}
+          {title}
+        </button>
+      </div>
+    );
+  };
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        className="flex h-9 w-[280px] items-center justify-between gap-2 rounded-md border border-border bg-[var(--surface-raised)] px-3 text-sm text-ink"
+      >
+        <span className="truncate" title={triggerLabel}>
+          {triggerLabel}
+        </span>
+        <ChevronDown className="size-4 shrink-0 text-ink-muted" />
+      </button>
+
+      {open &&
+        rect &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            ref={panelRef}
+            role="dialog"
+            aria-label="Select sources"
+            style={{
+              position: "fixed",
+              top: rect.top,
+              left: rect.left,
+              width: rect.width,
+              zIndex: 60,
+            }}
+            className="rounded-xl border border-border bg-[var(--surface-raised)] p-2 shadow-lg"
+          >
+            <input
+              autoFocus
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search sources…"
+              aria-label="Search sources"
+              className="mb-2 w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-ink outline-none placeholder:text-ink-muted"
+            />
+            <div className="max-h-[320px] overflow-y-auto">
+              {visibleVideos.length > 0 && (
+                <div className="mb-1">
+                  <GroupHeader
+                    title="YouTube"
+                    rows={videoRows}
+                    expanded={openYouTube}
+                    setExpanded={setOpenYouTube}
+                  />
+                  {openYouTube &&
+                    visibleVideos.map((r) => (
+                      <div key={r.key} className="pl-6">
+                        <Row rowKey={r.key} label={r.label} />
+                      </div>
+                    ))}
+                </div>
+              )}
+
+              {visibleOthers.length > 0 && (
+                <div className="mb-1">
+                  <GroupHeader
+                    title="Other sources"
+                    rows={otherRows}
+                    expanded={openOther}
+                    setExpanded={setOpenOther}
+                  />
+                  {openOther &&
+                    visibleOthers.map((r) => (
+                      <div key={r.key} className="pl-6">
+                        <Row rowKey={r.key} label={r.label} />
+                      </div>
+                    ))}
+                </div>
+              )}
+
+              {directRow && directVisible && (
+                <Row rowKey={directRow.key} label={directRow.label} />
+              )}
+
+              {visibleVideos.length === 0 &&
+                visibleOthers.length === 0 &&
+                !directVisible && (
+                  <p className="px-2 py-3 text-xs text-ink-muted">No matches.</p>
+                )}
+            </div>
+          </div>,
+          document.body,
+        )}
+    </>
+  );
+}
