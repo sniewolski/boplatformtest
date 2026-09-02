@@ -682,22 +682,134 @@ function CustomTooltip({
   );
 }
 
+function metricLabel(metric: Metric): string {
+  return metric === "views" ? "Views" : metric === "clicks" ? "Clicks" : "Bookings";
+}
+
+/** Full breakdown for the pinned bucket. Rendered directly below the chart. */
+function BucketDetailPanel({
+  point,
+  metric,
+  bucket,
+  onClose,
+}: {
+  point: BucketPoint;
+  metric: Metric;
+  bucket: Bucket;
+  onClose: () => void;
+}) {
+  const dateLine =
+    bucket === "week"
+      ? `Week of ${formatTooltipDate(point.bucketKey)}`
+      : formatTooltipDate(point.bucketKey);
+  const rows = point.bySource.slice().sort((a, b) => b.value - a.value);
+  const max = rows.reduce((m, r) => Math.max(m, r.value), 0);
+
+  return (
+    <div className="rounded-xl border border-border bg-[var(--surface-raised)] p-4">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs text-ink-muted">{dateLine}</p>
+          <p className="text-sm font-medium text-ink">
+            {formatInt(point.total)} {metricLabel(metric).toLowerCase()}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close breakdown"
+          className="rounded-md px-2 py-1 text-xs text-ink-muted hover:text-ink"
+        >
+          Close
+        </button>
+      </div>
+
+      {point.total === 0 || rows.length === 0 ? (
+        <p className="mt-3 text-xs text-ink-muted">
+          Nothing recorded in this {bucket === "week" ? "week" : "day"}.
+        </p>
+      ) : (
+        <ul className="mt-3 flex flex-col gap-2">
+          {rows.map((r) => {
+            const pct = max > 0 ? (r.value / max) * 100 : 0;
+            const unattributed = r.key === "direct";
+            return (
+              <li key={r.key} className="flex items-center gap-3">
+                <span
+                  className="w-[40%] truncate text-xs text-ink-muted"
+                  title={r.label}
+                >
+                  {r.label}
+                </span>
+                <span className="h-2 flex-1 overflow-hidden rounded-full bg-[var(--surface)]">
+                  <span
+                    className="block h-full rounded-full"
+                    style={{
+                      width: `${pct}%`,
+                      backgroundColor: unattributed
+                        ? "var(--ink-muted)"
+                        : "var(--red)",
+                    }}
+                  />
+                </span>
+                <span className="w-14 shrink-0 text-right text-xs tabular-nums text-ink">
+                  {formatInt(r.value)}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function SingleChart({
   metric,
   bucket,
   data,
+  pinnedKey,
+  onPick,
 }: {
   metric: Metric;
   bucket: Bucket;
   data: BucketPoint[];
+  pinnedKey: string | null;
+  onPick: (bucketKey: string | undefined) => void;
 }) {
-  const label = metric === "views" ? "Views" : metric === "clicks" ? "Clicks" : "Bookings";
+  const pinnedLabel =
+    pinnedKey === null
+      ? null
+      : (data.find((p) => p.bucketKey === pinnedKey)?.label ?? null);
+
+  const handleClick = (state: unknown) => {
+    const s = state as
+      | { activePayload?: Array<{ payload?: BucketPoint }> }
+      | undefined;
+    onPick(s?.activePayload?.[0]?.payload?.bucketKey);
+  };
+
+  const pinMarker =
+    pinnedLabel !== null ? (
+      <ReferenceLine
+        x={pinnedLabel}
+        stroke="var(--ink-muted)"
+        strokeDasharray="3 3"
+        isFront
+      />
+    ) : null;
 
   if (metric === "bookings") {
     return (
       <div className="h-[240px]">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={CHART_MARGIN} barCategoryGap="20%">
+          <BarChart
+            data={data}
+            margin={CHART_MARGIN}
+            barCategoryGap="20%"
+            onClick={handleClick}
+            style={{ cursor: "pointer" }}
+          >
             <CartesianGrid vertical={false} stroke="var(--border)" />
             <XAxis
               dataKey="label"
@@ -718,6 +830,7 @@ function SingleChart({
               cursor={{ fill: "var(--surface-raised)" }}
               content={<CustomTooltip metric={metric} bucket={bucket} />}
             />
+            {pinMarker}
             <Bar
               dataKey="total"
               fill="var(--red)"
@@ -733,7 +846,12 @@ function SingleChart({
   return (
     <div className="h-[240px]">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={CHART_MARGIN}>
+        <AreaChart
+          data={data}
+          margin={CHART_MARGIN}
+          onClick={handleClick}
+          style={{ cursor: "pointer" }}
+        >
           <CartesianGrid vertical={false} stroke="var(--border)" />
           <XAxis
             dataKey="label"
@@ -754,6 +872,7 @@ function SingleChart({
             cursor={{ fill: "var(--surface-raised)" }}
             content={<CustomTooltip metric={metric} bucket={bucket} />}
           />
+          {pinMarker}
           <Area
             type="monotone"
             dataKey="total"
@@ -768,3 +887,4 @@ function SingleChart({
     </div>
   );
 }
+
