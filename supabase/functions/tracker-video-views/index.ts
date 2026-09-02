@@ -12,6 +12,7 @@ const CORS = {
 const JSON_HEADERS = { "Content-Type": "application/json", ...CORS };
 
 const BATCH_SIZE = 500;
+const MAX_RESULTS = 200;
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
@@ -47,6 +48,7 @@ Deno.serve(async (req) => {
       : [];
     const startDate: string | undefined = body?.start_date;
     const endDate: string | undefined = body?.end_date;
+    const granularity: string = body?.granularity === "day" ? "day" : "total";
 
     if (videoIds.length === 0) {
       return json({ ok: false, error: "video_ids is required" }, 400);
@@ -102,61 +104,98 @@ Deno.serve(async (req) => {
 
     // Step 2 — query Analytics API in batches of 500 ids
     const views: Record<string, number> = {};
-    for (const id of videoIds) views[id] = 0;
+    const viewsByDay: Record<string, Record<string, number>> = {};
+    for (const id of videoIds) {
+      views[id] = 0;
+      viewsByDay[id] = {};
+    }
 
     let totalRows = 0;
     for (let i = 0; i < videoIds.length; i += BATCH_SIZE) {
       const batch = videoIds.slice(i, i + BATCH_SIZE);
-      const url = new URL("https://youtubeanalytics.googleapis.com/v2/reports");
-      url.searchParams.set("ids", "channel==MINE");
-      url.searchParams.set("startDate", startDate);
-      url.searchParams.set("endDate", endDate);
-      url.searchParams.set("metrics", "views");
-      url.searchParams.set("dimensions", "video");
-      url.searchParams.set("filters", `video==${batch.join(",")}`);
-      url.searchParams.set("maxResults", "200");
 
-      const res = await fetch(url.toString(), {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      console.log(
-        "[yt-analytics] analytics request status",
-        res.status,
-        "batch size",
-        batch.length,
-      );
-
-      const text = await res.text();
-      if (!res.ok) {
-        console.error("[yt-analytics] analytics request failed body:", text);
-        return json(
-          {
-            ok: false,
-            error: `YouTube Analytics request failed (${res.status}): ${text}`,
-          },
-          500,
+      // Page through the full result set within each batch. With the "day"
+      // dimension the row count is ~videos × days and can exceed maxResults,
+      // so keep requesting with startIndex until a page returns fewer rows.
+      let startIndex = 1;
+      while (true) {
+        const url = new URL("https://youtubeanalytics.googleapis.com/v2/reports");
+        url.searchParams.set("ids", "channel==MINE");
+        url.searchParams.set("startDate", startDate);
+        url.searchParams.set("endDate", endDate);
+        url.searchParams.set("metrics", "views");
+        url.searchParams.set(
+          "dimensions",
+          granularity === "day" ? "video,day" : "video",
         );
-      }
+        url.searchParams.set("filters", `video==${batch.join(",")}`);
+        url.searchParams.set("maxResults", String(MAX_RESULTS));
+        url.searchParams.set("startIndex", String(startIndex));
 
-      let payload: any;
-      try {
-        payload = JSON.parse(text);
-      } catch {
-        console.error("[yt-analytics] unparseable analytics body:", text);
-        return json(
-          { ok: false, error: `Unparseable analytics response: ${text}` },
-          500,
+        const res = await fetch(url.toString(), {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        console.log(
+          "[yt-analytics] analytics request status",
+          res.status,
+          "batch size",
+          batch.length,
+          "startIndex",
+          startIndex,
         );
-      }
 
-      const rows: any[] = Array.isArray(payload?.rows) ? payload.rows : [];
-      totalRows += rows.length;
-      for (const row of rows) {
-        const videoId = row?.[0];
-        const count = Number(row?.[1]);
-        if (typeof videoId === "string" && Number.isFinite(count)) {
-          views[videoId] = (views[videoId] ?? 0) + count;
+        const text = await res.text();
+        if (!res.ok) {
+          console.error("[yt-analytics] analytics request failed body:", text);
+          return json(
+            {
+              ok: false,
+              error: `YouTube Analytics request failed (${res.status}): ${text}`,
+            },
+            500,
+          );
         }
+
+        let payload: any;
+        try {
+          payload = JSON.parse(text);
+        } catch {
+          console.error("[yt-analytics] unparseable analytics body:", text);
+          return json(
+            { ok: false, error: `Unparseable analytics response: ${text}` },
+            500,
+          );
+        }
+
+        const rows: any[] = Array.isArray(payload?.rows) ? payload.rows : [];
+        totalRows += rows.length;
+
+        if (granularity === "day") {
+          for (const row of rows) {
+            const videoId = row?.[0];
+            const day = row?.[1];
+            const count = Number(row?.[2]);
+            if (
+              typeof videoId === "string" &&
+              typeof day === "string" &&
+              Number.isFinite(count)
+            ) {
+              viewsByDay[videoId][day] = (viewsByDay[videoId][day] ?? 0) + count;
+            }
+          }
+        } else {
+          for (const row of rows) {
+            const videoId = row?.[0];
+            const count = Number(row?.[1]);
+            if (typeof videoId === "string" && Number.isFinite(count)) {
+              views[videoId] = (views[videoId] ?? 0) + count;
+            }
+          }
+        }
+
+        // Terminate when a page returns fewer rows than maxResults.
+        if (rows.length < MAX_RESULTS) break;
+        startIndex += rows.length;
       }
     }
 
@@ -165,7 +204,18 @@ Deno.serve(async (req) => {
       videoIds.length,
       "rows returned",
       totalRows,
+      "granularity",
+      granularity,
     );
+
+    if (granularity === "day") {
+      return json({
+        ok: true,
+        views: viewsByDay,
+        start_date: startDate,
+        end_date: endDate,
+      });
+    }
 
     return json({
       ok: true,
