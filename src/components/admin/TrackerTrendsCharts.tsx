@@ -67,9 +67,56 @@ function eachDay(startYmd: string, endYmd: string): string[] {
   return out;
 }
 
+/** Europe/London midnight for a calendar day, as a UTC ISO instant. */
+function londonDayStartUtcISO(ymd: string): string {
+  for (const hourGuess of [0, -1]) {
+    const d = new Date(`${ymd}T00:00:00Z`);
+    d.setUTCHours(hourGuess);
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Europe/London",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(d);
+    const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+    if (
+      `${get("year")}-${get("month")}-${get("day")}` === ymd &&
+      get("hour") === "00" &&
+      get("minute") === "00"
+    ) {
+      return d.toISOString();
+    }
+  }
+  return new Date(`${ymd}T00:00:00Z`).toISOString();
+}
+
+/** Exclusive end instant of a London calendar day. */
+function londonDayEndExclusiveUtcISO(ymd: string): string {
+  return londonDayStartUtcISO(addDaysYmd(ymd, 1));
+}
+
+/** Inclusive day count between two calendar days. */
+function dayCount(startYmd: string, endYmd: string): number {
+  const a = Date.parse(`${startYmd}T00:00:00Z`);
+  const b = Date.parse(`${endYmd}T00:00:00Z`);
+  return Math.max(1, Math.round((b - a) / 86400000) + 1);
+}
+
 function formatInt(n: number): string {
   return n.toLocaleString("en-US");
 }
+
+function formatDelta(current: number, previous: number): string {
+  if (previous <= 0) return "no prior data";
+  const pct = ((current - previous) / previous) * 100;
+  if (!Number.isFinite(pct)) return "no prior data";
+  const sign = pct >= 0 ? "+" : "\u2212";
+  return `${sign}${Math.abs(pct).toFixed(1)}% vs prev`;
+}
+
 
 function labelForBucket(key: string, bucket: Bucket): string {
   const d = new Date(`${key}T00:00:00Z`);
