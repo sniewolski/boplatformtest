@@ -543,59 +543,49 @@ export function TrackerTrendsCharts({
 
         <div className="flex flex-col gap-1">
           <span className="text-xs text-ink-muted">Source</span>
-          <Select value={source} onValueChange={setSource}>
-            <SelectTrigger className="w-[280px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All sources</SelectItem>
-              {orderedVideoIds.map((v) => (
-                <SelectItem key={v.id} value={`video:${v.id}`}>
-                  {v.title || v.id}
-                </SelectItem>
-              ))}
-              {sourceTypes.map((t) => (
-                <SelectItem key={t} value={`source:${t}`}>
-                  {t}
-                </SelectItem>
-              ))}
-              {hasDirect && (
-                <SelectItem value="direct">Direct / unattributed</SelectItem>
-              )}
-            </SelectContent>
-          </Select>
+          <SourceMultiSelect
+            videos={orderedVideoIds}
+            sourceTypes={sourceTypes}
+            hasDirect={hasDirect}
+            selected={selected}
+            onChange={(next) => setSelRaw(next)}
+          />
         </div>
       </div>
 
       {/* Metric cards */}
       <div className="grid grid-cols-3 gap-3">
         {METRICS.map((m) => {
-          const selected = metric === m.key;
+          const active = metric === m.key;
           const value = totals[m.key];
           const prev = prevTotals[m.key];
           const deltaLoading =
             m.key === "views"
-              ? isVideoScope && prevViewsQuery.isLoading
+              ? scopedVideoIds.length > 0 && prevViewsQuery.isLoading
               : prevEventsQuery.isLoading;
           const deltaText =
-            deltaLoading || value === null || prev === null
-              ? ""
-              : formatDelta(value, prev);
+            deltaLoading || prev === null ? "" : formatDelta(value, prev);
+          const showViewsNote = m.key === "views" && hasNonVideoSelected;
           return (
             <button
               key={m.key}
               type="button"
-              aria-pressed={selected}
+              aria-pressed={active}
               onClick={() => setMetric(m.key)}
               className={cn(
                 "flex flex-col gap-1 rounded-xl border bg-[var(--surface-raised)] px-4 py-3 text-left",
-                selected ? "border-2 border-[var(--red)]" : "border-border",
+                active ? "border-2 border-[var(--red)]" : "border-border",
               )}
             >
               <span className="text-xs text-ink-muted">{m.label}</span>
               <span className="text-lg font-medium text-ink">
-                {value === null ? "—" : formatInt(value)}
+                {formatInt(value)}
               </span>
+              {showViewsNote && (
+                <span className="text-xs leading-4 text-ink-muted">
+                  YouTube views only
+                </span>
+              )}
               {/* Fixed-height slot so cards don't resize when deltas arrive */}
               <span className="h-4 text-xs leading-4 text-ink-muted">
                 {deltaText}
@@ -607,12 +597,13 @@ export function TrackerTrendsCharts({
 
       {loading ? (
         <p className="text-sm text-ink-muted">Loading…</p>
-      ) : metric === "views" && !isVideoScope ? (
+      ) : nothingSelected ? (
         <div className="rounded-md border border-border bg-[var(--surface-raised)] px-6 py-10 text-center">
           <p className="text-sm text-ink-muted">
-            View data is only available for YouTube sources.
+            Select at least one source to see the chart.
           </p>
         </div>
+
       ) : (
         <div className="flex flex-col gap-4">
           <SingleChart
