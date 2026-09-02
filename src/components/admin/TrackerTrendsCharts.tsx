@@ -425,7 +425,7 @@ export function TrackerTrendsCharts({
           </p>
         </div>
       ) : (
-        <SingleChart metric={metric} data={activeData} />
+        <SingleChart metric={metric} bucket={bucket} data={activeData} />
       )}
     </div>
   );
@@ -438,15 +438,64 @@ const Y_AXIS_WIDTH = 44;
 
 const AXIS_TICK = { fontSize: 11, fill: "var(--ink-muted)" };
 
-const TOOLTIP_STYLE = {
-  fontSize: 12,
-  borderRadius: 8,
-  border: "1px solid var(--border)",
-  background: "var(--background)",
-  color: "var(--ink)",
-};
+function formatTooltipDate(bucketKey: string): string {
+  const d = new Date(`${bucketKey}T00:00:00Z`);
+  return d.toLocaleDateString("en-GB", {
+    timeZone: "UTC",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
 
-function SingleChart({ metric, data }: { metric: Metric; data: BucketPoint[] }) {
+function CustomTooltip({
+  active,
+  payload,
+  metric,
+  bucket,
+}: {
+  active?: boolean;
+  payload?: Array<{ payload: BucketPoint }>;
+  metric: Metric;
+  bucket: Bucket;
+}) {
+  if (!active || !payload || payload.length === 0) return null;
+  const point = payload[0].payload;
+  const label = metric === "views" ? "Views" : metric === "clicks" ? "Clicks" : "Bookings";
+  const dateLine =
+    bucket === "week" ? `Week of ${formatTooltipDate(point.bucketKey)}` : formatTooltipDate(point.bucketKey);
+
+  return (
+    <div className="rounded-xl border border-border bg-[var(--surface-raised)] px-3 py-2 shadow-sm">
+      <p className="text-xs text-ink-muted">{dateLine}</p>
+      <p className="text-sm font-medium text-ink">
+        {formatInt(point.total)} {label.toLowerCase()}
+      </p>
+      {point.total > 0 && point.bySource.length > 0 && (
+        <ul className="mt-2 flex flex-col gap-0.5 border-t border-border pt-1.5">
+          {point.bySource.slice(0, 3).map((s) => (
+            <li key={s.key} className="flex items-center justify-between gap-4 text-xs">
+              <span className="truncate text-ink-muted" title={s.label}>
+                {s.label}
+              </span>
+              <span className="shrink-0 tabular-nums text-ink">{formatInt(s.value)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function SingleChart({
+  metric,
+  bucket,
+  data,
+}: {
+  metric: Metric;
+  bucket: Bucket;
+  data: BucketPoint[];
+}) {
   const label = metric === "views" ? "Views" : metric === "clicks" ? "Clicks" : "Bookings";
 
   if (metric === "bookings") {
@@ -472,8 +521,7 @@ function SingleChart({ metric, data }: { metric: Metric; data: BucketPoint[] }) 
             />
             <Tooltip
               cursor={{ fill: "var(--surface-raised)" }}
-              formatter={(value: number) => [formatInt(value), label]}
-              contentStyle={TOOLTIP_STYLE}
+              content={<CustomTooltip metric={metric} bucket={bucket} />}
             />
             <Bar
               dataKey="total"
@@ -509,8 +557,7 @@ function SingleChart({ metric, data }: { metric: Metric; data: BucketPoint[] }) 
           />
           <Tooltip
             cursor={{ fill: "var(--surface-raised)" }}
-            formatter={(value: number) => [formatInt(value), label]}
-            contentStyle={TOOLTIP_STYLE}
+            content={<CustomTooltip metric={metric} bucket={bucket} />}
           />
           <Area
             type="monotone"
