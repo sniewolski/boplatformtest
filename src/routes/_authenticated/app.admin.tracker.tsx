@@ -25,6 +25,7 @@ import {
   type TrackerEventRow,
   type TrackedVideoRow,
 } from "@/components/admin/TrackerBreakdownTable";
+import { TrackerTrendsCharts } from "@/components/admin/TrackerTrendsCharts";
 
 type TrackerTab = "breakdown" | "trends";
 
@@ -315,11 +316,16 @@ function TrackerAdmin() {
           endYmd={endYmd}
         />
       ) : (
-        <div className="rounded-md border border-border bg-[var(--surface-raised)] px-6 py-10 text-center">
-          <p className="text-sm text-ink-muted">
-            Trends coming soon.
-          </p>
-        </div>
+        <TrackerTrendsCharts
+          events={eventsQuery.data}
+          eventsLoading={eventsQuery.isLoading}
+          eventsError={eventsQuery.error as Error | null}
+          videos={videosQuery.data}
+          videosLoading={videosQuery.isLoading}
+          videosError={videosQuery.error as Error | null}
+          startYmd={startYmd}
+          endYmd={endYmd}
+        />
       )}
     </div>
   );
