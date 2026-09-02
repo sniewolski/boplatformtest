@@ -1,5 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import {
   Area,
   AreaChart,
@@ -14,18 +23,12 @@ import {
 } from "recharts";
 
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import type {
   TrackerEventRow,
   TrackedVideoRow,
 } from "@/components/admin/TrackerBreakdownTable";
+
 
 // ---------- London-day helpers (must agree with the route's boundaries) ---
 
