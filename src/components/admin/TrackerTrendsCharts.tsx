@@ -890,3 +890,302 @@ function SingleChart({
   );
 }
 
+
+// ---------- Grouped multi-select -----------------------------------------
+
+type VideoOpt = { id: string; title: string };
+
+/** Real checkbox input with indeterminate support and a --red fill. */
+function TriCheckbox({
+  checked,
+  indeterminate,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  indeterminate?: boolean;
+  onChange: () => void;
+  label: string;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  useLayoutEffect(() => {
+    if (ref.current) ref.current.indeterminate = !!indeterminate && !checked;
+  }, [indeterminate, checked]);
+  return (
+    <input
+      ref={ref}
+      type="checkbox"
+      checked={checked}
+      aria-checked={indeterminate && !checked ? "mixed" : checked}
+      aria-label={label}
+      onChange={onChange}
+      className="size-4 shrink-0 cursor-pointer rounded border border-border"
+      style={{ accentColor: "var(--red)" }}
+    />
+  );
+}
+
+function SourceMultiSelect({
+  videos,
+  sourceTypes,
+  hasDirect,
+  selected,
+  onChange,
+}: {
+  videos: VideoOpt[];
+  sourceTypes: string[];
+  hasDirect: boolean;
+  selected: Set<string>;
+  onChange: (next: Set<string>) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [openYouTube, setOpenYouTube] = useState(true);
+  const [openOther, setOpenOther] = useState(true);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [rect, setRect] = useState<{ top: number; left: number; width: number } | null>(
+    null,
+  );
+
+  const videoRows = useMemo(
+    () => videos.map((v) => ({ key: `video:${v.id}`, label: v.title || v.id })),
+    [videos],
+  );
+  const otherRows = useMemo(
+    () => sourceTypes.map((t) => ({ key: `source:${t}`, label: t })),
+    [sourceTypes],
+  );
+  const directRow = hasDirect
+    ? { key: "direct", label: "Direct / unattributed" }
+    : null;
+
+  const allRows = useMemo(
+    () => [...videoRows, ...otherRows, ...(directRow ? [directRow] : [])],
+    [videoRows, otherRows, directRow],
+  );
+
+  const q = query.trim().toLowerCase();
+  const match = (label: string) => q === "" || label.toLowerCase().includes(q);
+  const visibleVideos = videoRows.filter((r) => match(r.label));
+  const visibleOthers = otherRows.filter((r) => match(r.label));
+  const directVisible = directRow ? match(directRow.label) : false;
+
+  // ---- Label -----------------------------------------------------------
+  const selCount = selected.size;
+  const groupFull = (rows: { key: string }[]) =>
+    rows.length > 0 && rows.every((r) => selected.has(r.key));
+
+  let triggerLabel: string;
+  if (allRows.length > 0 && selCount === allRows.length) {
+    triggerLabel = "All sources";
+  } else if (selCount === 0) {
+    triggerLabel = "No sources";
+  } else if (selCount === 1) {
+    const only = Array.from(selected)[0];
+    triggerLabel = allRows.find((r) => r.key === only)?.label ?? "1 source";
+  } else if (groupFull(videoRows) && selCount === videoRows.length) {
+    triggerLabel = "YouTube";
+  } else if (groupFull(otherRows) && selCount === otherRows.length) {
+    triggerLabel = "Other sources";
+  } else {
+    triggerLabel = `${selCount} sources`;
+  }
+
+  // ---- Positioning + dismiss -------------------------------------------
+  const place = useCallback(() => {
+    const el = triggerRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    setRect({ top: r.bottom + 4, left: r.left, width: Math.max(r.width, 320) });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [open, place]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (panelRef.current?.contains(t) || triggerRef.current?.contains(t)) return;
+      setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  // ---- Mutations (always operate on the FULL group, not the filtered view)
+  const toggleKey = (key: string) => {
+    const next = new Set(selected);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    onChange(next);
+  };
+
+  const toggleGroup = (rows: { key: string }[]) => {
+    const next = new Set(selected);
+    const all = rows.every((r) => next.has(r.key));
+    for (const r of rows) {
+      if (all) next.delete(r.key);
+      else next.add(r.key);
+    }
+    onChange(next);
+  };
+
+  const Row = ({ rowKey, label }: { rowKey: string; label: string }) => (
+    <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-ink hover:bg-[var(--surface)]">
+      <TriCheckbox
+        checked={selected.has(rowKey)}
+        onChange={() => toggleKey(rowKey)}
+        label={label}
+      />
+      <span className="truncate" title={label}>
+        {label}
+      </span>
+    </label>
+  );
+
+  const GroupHeader = ({
+    title,
+    rows,
+    expanded,
+    setExpanded,
+  }: {
+    title: string;
+    rows: { key: string }[];
+    expanded: boolean;
+    setExpanded: (v: boolean) => void;
+  }) => {
+    const count = rows.filter((r) => selected.has(r.key)).length;
+    return (
+      <div className="flex items-center gap-2 px-2 py-1.5">
+        <TriCheckbox
+          checked={rows.length > 0 && count === rows.length}
+          indeterminate={count > 0 && count < rows.length}
+          onChange={() => toggleGroup(rows)}
+          label={`Select all in ${title}`}
+        />
+        <button
+          type="button"
+          onClick={() => setExpanded(!expanded)}
+          aria-expanded={expanded}
+          className="flex flex-1 items-center gap-1 text-left text-xs font-medium uppercase tracking-wide text-ink-muted hover:text-ink"
+        >
+          {expanded ? (
+            <ChevronDown className="size-3.5" />
+          ) : (
+            <ChevronRight className="size-3.5" />
+          )}
+          {title}
+        </button>
+      </div>
+    );
+  };
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        className="flex h-9 w-[280px] items-center justify-between gap-2 rounded-md border border-border bg-[var(--surface-raised)] px-3 text-sm text-ink"
+      >
+        <span className="truncate" title={triggerLabel}>
+          {triggerLabel}
+        </span>
+        <ChevronDown className="size-4 shrink-0 text-ink-muted" />
+      </button>
+
+      {open &&
+        rect &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            ref={panelRef}
+            role="dialog"
+            aria-label="Select sources"
+            style={{
+              position: "fixed",
+              top: rect.top,
+              left: rect.left,
+              width: rect.width,
+              zIndex: 60,
+            }}
+            className="rounded-xl border border-border bg-[var(--surface-raised)] p-2 shadow-lg"
+          >
+            <input
+              autoFocus
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search sources…"
+              aria-label="Search sources"
+              className="mb-2 w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-ink outline-none placeholder:text-ink-muted"
+            />
+            <div className="max-h-[320px] overflow-y-auto">
+              {visibleVideos.length > 0 && (
+                <div className="mb-1">
+                  <GroupHeader
+                    title="YouTube"
+                    rows={videoRows}
+                    expanded={openYouTube}
+                    setExpanded={setOpenYouTube}
+                  />
+                  {openYouTube &&
+                    visibleVideos.map((r) => (
+                      <div key={r.key} className="pl-6">
+                        <Row rowKey={r.key} label={r.label} />
+                      </div>
+                    ))}
+                </div>
+              )}
+
+              {visibleOthers.length > 0 && (
+                <div className="mb-1">
+                  <GroupHeader
+                    title="Other sources"
+                    rows={otherRows}
+                    expanded={openOther}
+                    setExpanded={setOpenOther}
+                  />
+                  {openOther &&
+                    visibleOthers.map((r) => (
+                      <div key={r.key} className="pl-6">
+                        <Row rowKey={r.key} label={r.label} />
+                      </div>
+                    ))}
+                </div>
+              )}
+
+              {directRow && directVisible && (
+                <Row rowKey={directRow.key} label={directRow.label} />
+              )}
+
+              {visibleVideos.length === 0 &&
+                visibleOthers.length === 0 &&
+                !directVisible && (
+                  <p className="px-2 py-3 text-xs text-ink-muted">No matches.</p>
+                )}
+            </div>
+          </div>,
+          document.body,
+        )}
+    </>
+  );
+}
