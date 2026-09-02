@@ -135,8 +135,8 @@ function labelForBucket(key: string, bucket: Bucket): string {
 
 type Bucket = "week" | "day";
 
-/** "all" | "video:<id>" | "source:<type>" | "direct" */
-type SourceSel = string;
+
+
 
 type Metric = "views" | "clicks" | "bookings";
 
