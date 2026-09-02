@@ -422,7 +422,7 @@ export function TrackerTrendsCharts({
       });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [events, source, bucketKeys, bucket, viewsQuery.data, scopedVideoIds, isVideoScope, videosById]);
+  }, [events, selectionSig, bucketKeys, bucket, viewsQuery.data, scopedVideoIds, videosById]);
 
   const viewsData = useMemo(() => buildSeries("views"), [buildSeries]);
   const clicksData = useMemo(() => buildSeries("clicks"), [buildSeries]);
@@ -430,28 +430,13 @@ export function TrackerTrendsCharts({
 
   const total = (d: BucketPoint[]) => d.reduce((s, p) => s + p.total, 0);
 
-  const totals: Record<Metric, number | null> = {
-    views: isVideoScope ? total(viewsData) : null,
+  const totals: Record<Metric, number> = {
+    views: total(viewsData),
     clicks: total(clicksData),
     bookings: total(bookingsData),
   };
 
-  // ---- Previous-period totals (same source scope) ----------------------
-  const inScope = (ev: TrackerEventRow): boolean => {
-    if (source === "all") return true;
-    if (source === "direct") return !ev.source_type;
-    if (source.startsWith("video:")) {
-      return (
-        ev.source_type === "video" &&
-        ev.source_value === source.slice("video:".length)
-      );
-    }
-    if (source.startsWith("source:")) {
-      return ev.source_type === source.slice("source:".length);
-    }
-    return true;
-  };
-
+  // ---- Previous-period totals (same selection scope) -------------------
   const prevTotals: Record<Metric, number | null> = useMemo(() => {
     const rows = prevEventsQuery.data;
     let clicks: number | null = null;
@@ -460,13 +445,15 @@ export function TrackerTrendsCharts({
       clicks = 0;
       bookings = 0;
       for (const ev of rows) {
-        if (!inScope(ev)) continue;
+        if (!selected.has(eventSourceKey(ev))) continue;
         if (ev.event_type === "click") clicks += 1;
         else if (ev.event_type === "booking") bookings += 1;
       }
     }
     let views: number | null = null;
-    if (isVideoScope && prevViewsQuery.data) {
+    if (scopedVideoIds.length === 0) {
+      views = 0;
+    } else if (prevViewsQuery.data) {
       views = 0;
       for (const id of scopedVideoIds) {
         const byDay = prevViewsQuery.data[id];
@@ -476,7 +463,7 @@ export function TrackerTrendsCharts({
     }
     return { views, clicks, bookings };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prevEventsQuery.data, prevViewsQuery.data, source, isVideoScope, scopedVideoIds]);
+  }, [prevEventsQuery.data, prevViewsQuery.data, selectionSig, scopedVideoIds]);
 
   const activeData =
     metric === "views" ? viewsData : metric === "clicks" ? clicksData : bookingsData;
@@ -485,7 +472,8 @@ export function TrackerTrendsCharts({
   const [pinnedKey, setPinnedKey] = useState<string | null>(null);
   useEffect(() => {
     setPinnedKey(null);
-  }, [metric, bucket, source, startYmd, endYmd]);
+  }, [metric, bucket, selectionSig, startYmd, endYmd]);
+
 
   const pinnedPoint =
     pinnedKey === null
