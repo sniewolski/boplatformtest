@@ -253,6 +253,63 @@ export function TrackerTrendsCharts({
 
   const viewsError = viewsQuery.error as Error | null;
 
+  // ---- Previous period (same length, ending the day before) ------------
+  const { prevStartYmd, prevEndYmd } = useMemo(() => {
+    const len = dayCount(startYmd, endYmd);
+    const pEnd = addDaysYmd(startYmd, -1);
+    return { prevStartYmd: addDaysYmd(pEnd, -(len - 1)), prevEndYmd: pEnd };
+  }, [startYmd, endYmd]);
+
+  const prevEventsQuery = useQuery({
+    queryKey: ["tracker-events", "prev", prevStartYmd, prevEndYmd],
+    refetchOnWindowFocus: false,
+    queryFn: async (): Promise<TrackerEventRow[]> => {
+      const { data, error } = await supabase
+        .from("tracker_events")
+        .select(
+          "id, event_type, visitor_id, source_type, source_value, booking_id, created_at",
+        )
+        .gte("created_at", londonDayStartUtcISO(prevStartYmd))
+        .lt("created_at", londonDayEndExclusiveUtcISO(prevEndYmd))
+        .order("created_at", { ascending: false })
+        .limit(10000);
+      if (error) throw error;
+      return (data ?? []) as TrackerEventRow[];
+    },
+  });
+
+  const prevViewsQuery = useQuery({
+    queryKey: [
+      "tracker-yt-views",
+      "day",
+      "prev",
+      prevStartYmd,
+      prevEndYmd,
+      scopedVideoIds.slice().sort().join(","),
+    ],
+    enabled: isVideoScope && scopedVideoIds.length > 0,
+    refetchOnWindowFocus: false,
+    queryFn: async (): Promise<Record<string, Record<string, number>>> => {
+      const { data, error } = await supabase.functions.invoke(
+        "tracker-video-views",
+        {
+          body: {
+            video_ids: scopedVideoIds,
+            start_date: prevStartYmd,
+            end_date: prevEndYmd,
+            granularity: "day",
+          },
+        },
+      );
+      if (error) throw error;
+      if (!data?.ok) {
+        throw new Error(data?.error ?? "Unknown error from tracker-video-views");
+      }
+      return (data.views ?? {}) as Record<string, Record<string, number>>;
+    },
+  });
+
+
   // ---- Buckets ---------------------------------------------------------
   const bucketKeys = useMemo(() => {
     const days = eachDay(startYmd, endYmd);
