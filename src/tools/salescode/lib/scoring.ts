@@ -1,16 +1,20 @@
 /**
- * SalesCode scoring — pure, deterministic, ID-keyed.
+ * SalesCode scoring — verbatim port of the original PHP scoring engine.
  *
- * Source of truth: salescode-content-and-scoring.md §4. All formulas here
- * match the spec verbatim, with the locked bug-fixes:
+ * Apparent inversions and inconsistencies in the formulas below are
+ * INTENTIONAL replications of the source engine, not bugs. Do not
+ * "correct", normalise, recalibrate or tidy any offset, sign, divisor,
+ * threshold or comparator. No formula in this file may be changed
+ * without a matching change to the source of truth.
  *
- *   - Q6 = A[6] on the F_T axis (legacy double-counted Q8).
- *   - Four-item traits: corrected polarity so x > 0 ⇒ strength.
- *   - Percentage rollups dropped; categorical outcomes only.
- *
- * The two I/E formulas are intentional, not a bug: the type axis (I_E) and
- * the standalone introvert/extrovert *trait* use different signed forms
- * from the source.
+ * Known deliberate quirks:
+ *   - F_T uses A8 where the pattern would suggest A6 (see computeAxes).
+ *   - Four-item traits 10–14 use "> 0" while 15–18 use ">= 0"
+ *     (see FOUR_ITEM_TRAITS).
+ *   - industry-expert is computed by the source but excluded from the
+ *     results list (commented out there, 23-06-2023), so it is not
+ *     emitted here either. Questions 189–192 remain in the bank and
+ *     are still asked.
  */
 
 import type {
@@ -33,18 +37,22 @@ function a(answers: AnswerMap, id: number): number {
   return v == null ? 3 : v;
 }
 
-/** x = Qa − Qb + Qc − Qd. Corrected polarity: x > 0 ⇒ strength. */
+/** x = Qa − Qb + Qc − Qd. */
 function fourItem(answers: AnswerMap, qa: number, qb: number, qc: number, qd: number): number {
   return a(answers, qa) - a(answers, qb) + a(answers, qc) - a(answers, qd);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
- * 4a. SalesCode type (four letters)
+ * Four-letter type
  *
- *   I_E = 30 − Q3 − Q7 − Q11 + Q15 − Q19 + Q23 + Q27 − Q31   → E if > 24 else I
- *   S_N = 12 + Q4 + Q8 + Q12 + Q16 + Q20 − Q24 − Q28 + Q32    → N if > 24 else S
- *   F_T = 30 − Q2 + Q6 + Q10 − Q14 − Q18 + Q22 − Q26 − Q30    → T if > 24 else F  (Q6 fix)
- *   J_P = 18 + Q1 + Q5 − Q9 + Q13 − Q17 + Q21 − Q25 + Q29     → P if > 24 else J
+ *   I_E = 30 − A3 − A7 − A11 + A15 − A19 + A23 + A27 − A31   → E if > 24 else I
+ *   S_N = 12 + A4 + A8 + A12 + A16 + A20 − A24 − A28 + A32   → N if > 24 else S
+ *   F_T = 30 − A2 + A8 + A10 − A14 − A18 + A22 − A26 − A30   → T if > 24 else F
+ *   J_P = 18 + A1 + A5 − A9 + A13 − A17 + A21 − A25 + A29    → P if > 24 else J
+ *
+ * F_T uses A8, NOT A6: in the source, Q6 is assigned the value of A[8],
+ * so Q6 never reaches the type and Q8 is counted twice. This is an
+ * intentional replication of the source engine.
  * ────────────────────────────────────────────────────────────────────── */
 
 const AXIS_THRESHOLD = 24;
@@ -58,8 +66,10 @@ export function computeAxes(answers: AnswerMap) {
     12 + a(answers, 4) + a(answers, 8) + a(answers, 12) + a(answers, 16)
        + a(answers, 20) - a(answers, 24) - a(answers, 28) + a(answers, 32);
 
+  // F_T uses A8, NOT A6: in the source, Q6 is assigned the value of A[8],
+  // so Q6 never reaches the type and Q8 is counted twice. Intentional.
   const F_T =
-    30 - a(answers, 2) + a(answers, 6) + a(answers, 10) - a(answers, 14)
+    30 - a(answers, 2) + a(answers, 8) + a(answers, 10) - a(answers, 14)
        - a(answers, 18) + a(answers, 22) - a(answers, 26) - a(answers, 30);
 
   const J_P =
@@ -81,10 +91,10 @@ export function computeType(answers: AnswerMap): { type: string; letters: AxisLe
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
- * 4b. Trait profile
+ * Trait profile — 18 traits, emitted in the source's order.
  * ────────────────────────────────────────────────────────────────────── */
 
-/** Threshold-trait spec. raw = numerator/denominator; outcome is `raw > threshold`. */
+/** Threshold-trait spec. raw = (offset + signed sum) / divisor. */
 type ThresholdSpec = {
   key: TraitKey;
   /** Constant offset added to the signed sum. */
@@ -98,218 +108,221 @@ type ThresholdSpec = {
   /** Label when raw is on the "below-threshold" side. */
   belowLabel: string;
   /**
-   * Which side is the strength. "above" means raw > threshold ⇒ strength.
-   * "below" handles the people-pleaser case (raw < threshold ⇒ strength).
+   * Which side is the strength. "above" means the above-threshold label is
+   * the strength. "below" handles the people-pleaser case (the
+   * below-threshold label is the strength).
    */
   strengthSide: "above" | "below";
   /**
-   * Comparator. Most traits use `>`; goal-setting and personal accountability
-   * use `≥`; people-pleaser uses `<`.
+   * Comparator. Most traits use `>`; people-pleaser uses `<`.
+   * The boundary case (raw === threshold) always lands on the
+   * below/not-strength side.
    */
-  compare?: ">" | ">=" | "<";
+  compare?: ">" | "<";
 };
 
 const THRESHOLD_TRAITS: ReadonlyArray<ThresholdSpec> = [
-  // Introvert / Extrovert — Extrovert sits on the "above" side of the threshold.
+  // 1. Introvert / Extrovert — Extrovert sits on the "above" side.
   {
     key: "introvert-extrovert",
-    offset: 18,
+    offset: 38,
     weights: [
-      [3, 1], [7, 1], [11, 1], [15, -1],
-      [19, 1], [23, -1], [27, -1], [31, 1],
+      [3, -1], [7, 1], [11, -1], [15, 1],
+      [19, -1], [23, 1], [27, -1], [31, -1],
     ],
     divisor: 8,
-    threshold: 3.42,
+    threshold: 3,
     aboveLabel: "Extrovert",
     belowLabel: "Introvert",
     strengthSide: "above",
   },
-  // Assertiveness
+  // 2. Assertiveness
   {
     key: "assertiveness",
-    offset: 36,
+    offset: 25,
     weights: [
-      [81, -1], [82, -1], [83, -1], [84, -1], [85, -1], [86, -1],
-      [87, 1], [88, 1], [89, 1], [90, 1], [91, 1], [92, 1],
+      [81, 1], [82, 1], [83, 1], [84, 1], [85, 1], [86, 1],
+      [87, -1], [88, -1], [89, -1], [90, -1], [91, -1], [92, -1],
     ],
     divisor: 12,
-    threshold: 4.14,
+    threshold: 3,
     aboveLabel: "Assertive",
     belowLabel: "Not assertive",
     strengthSide: "above",
   },
-  // Comfortable with money
+  // 3. Comfortable with money
   {
     key: "comfortable-with-money",
-    offset: 18,
+    offset: 13,
     weights: [
-      [115, -1], [116, -1], [117, -1],
-      [118, 1], [119, 1], [120, 1],
+      [115, 1], [116, 1], [117, 1],
+      [118, -1], [119, -1], [120, -1],
     ],
     divisor: 6,
-    threshold: 3.8,
+    threshold: 2,
     aboveLabel: "Comfortable with money",
     belowLabel: "Not comfortable with money",
     strengthSide: "above",
   },
-  // Emotional intelligence
+  // 4. Emotional intelligence
   {
     key: "emotional-intelligence",
-    offset: 18,
+    offset: 58,
     weights: [
-      [41, 1], [42, 1], [43, 1], [44, 1], [45, -1],
-      [46, 1], [47, 1], [48, 1], [49, 1], [50, 1], [51, 1],
-      [52, -1], [53, 1], [54, 1], [55, -1],
+      [41, -1], [42, -1], [43, -1], [44, -1], [45, 1],
+      [46, -1], [47, -1], [48, -1], [49, -1], [50, -1], [51, -1],
+      [52, 1], [53, -1], [54, -1], [55, 1],
     ],
     divisor: 15,
-    threshold: 4.22,
+    threshold: 2,
     aboveLabel: "High emotional intelligence",
     belowLabel: "Low emotional intelligence",
     strengthSide: "above",
   },
-  // Self-esteem
+  // 5. Self-esteem
   {
     key: "self-esteem",
-    offset: 30,
+    offset: 22,
     weights: [
-      [71, 1], [72, -1], [73, 1], [74, 1], [75, -1],
-      [76, -1], [77, 1], [78, -1], [79, -1], [80, 1],
+      [71, -1], [72, 1], [73, -1], [74, -1], [75, 1],
+      [76, 1], [77, -1], [78, 1], [79, 1], [80, -1],
     ],
     divisor: 10,
-    threshold: 4.55,
+    threshold: 2,
     aboveLabel: "High self-esteem",
     belowLabel: "Low self-esteem",
     strengthSide: "above",
   },
-  // Optimism
+  // 6. Optimism
   {
     key: "optimism",
-    offset: 30,
+    offset: 46,
     weights: [
-      [56, -1], [57, -1], [58, -1], [59, 1], [60, -1],
-      [61, 1], [62, 1], [63, 1], [64, 1], [65, 1],
-      [66, -1], [67, 1], [68, 1], [69, 1], [70, 1],
+      [56, 1], [57, 1], [58, 1], [59, -1], [60, 1],
+      [61, -1], [62, -1], [63, -1], [64, -1], [65, -1],
+      [66, 1], [67, -1], [68, -1], [69, -1], [70, -1],
     ],
     divisor: 15,
-    threshold: 4.21,
+    threshold: 2,
     aboveLabel: "Optimistic",
     belowLabel: "Pessimistic",
     strengthSide: "above",
   },
-  // People-pleaser — INVERTED: raw < 3 ⇒ strength ("not a people-pleaser").
+  // 7. People-pleaser — INVERTED: raw < 4 ⇒ strength ("not a people-pleaser").
   {
     key: "people-pleaser",
-    offset: 24,
+    offset: 38,
     weights: [
       [103, 1], [104, -1], [105, 1], [106, 1], [107, 1],
       [108, -1], [109, -1], [110, 1], [111, 1],
       [112, -1], [113, 1], [114, 1],
     ],
     divisor: 12,
-    threshold: 2.49,
+    threshold: 4,
     aboveLabel: "People-pleaser",
     belowLabel: "Not a people-pleaser",
     strengthSide: "below",
     compare: "<",
   },
-  // Personal accountability
+  // 8. Personal accountability — raw >= 3 ⇒ strength.
   {
     key: "personal-accountability",
     offset: 0,
     weights: [[121, 1], [122, 1], [123, 1], [124, 1], [125, 1]],
     divisor: 5,
-    threshold: 4.21,
+    threshold: 3,
     aboveLabel: "Has personal accountability",
     belowLabel: "Lacks personal accountability",
     strengthSide: "above",
-  },
-  // Goal setting
-  {
-    key: "goal-setting",
-    offset: 12,
-    weights: [[152, 1], [153, -1], [154, 1], [155, 1], [156, -1]],
-    divisor: 5,
-    threshold: 3.92,
-    aboveLabel: "Strong goal-setter",
-    belowLabel: "Weak goal-setter",
-    strengthSide: "above",
-  },
-  // Influence — three positive items, one reverse-keyed (188), so the
-  // fixed four-item formula can't express it. Offset = 6 × 1 reverse item.
-  {
-    key: "influence",
-    offset: 6,
-    weights: [[185, 1], [186, 1], [187, 1], [188, -1]],
-    divisor: 4,
-    threshold: 4.21,
-    aboveLabel: "Influential",
-    belowLabel: "Needs work on influence",
-    strengthSide: "above",
+    compare: "<", // strength when raw >= threshold; see evaluateThreshold
   },
 ];
-
 
 function evaluateThreshold(spec: ThresholdSpec, answers: AnswerMap): TraitOutcome {
   let sum = spec.offset;
   for (const [id, sign] of spec.weights) sum += sign * a(answers, id);
   const raw = sum / spec.divisor;
-  const cmp = spec.compare ?? ">";
-  const isAbove = cmp === ">" ? raw > spec.threshold
-                : cmp === ">=" ? raw >= spec.threshold
-                : raw >= spec.threshold; // for "<" we negate below
-  const above = cmp === "<" ? raw >= spec.threshold : isAbove;
-  // For "<" compare: strength when raw < threshold (i.e. NOT above).
-  const isStrengthSide =
-    spec.strengthSide === "above" ? above : !above;
+  // compare ">": above when raw > threshold.
+  // compare "<": above when raw >= threshold (boundary lands below) — used
+  // for people-pleaser (raw < 4 ⇒ below label) and personal-accountability
+  // (raw >= 3 ⇒ above label), both of which put raw === threshold on the
+  // "above" side as defined here.
+  const above = spec.compare === "<" ? raw >= spec.threshold : raw > spec.threshold;
+  const isStrengthSide = spec.strengthSide === "above" ? above : !above;
   const label = above ? spec.aboveLabel : spec.belowLabel;
   const kind: TraitOutcome["kind"] = isStrengthSide ? "strength" : "development";
   return { key: spec.key, label, kind, raw };
 }
 
-/** Four-item traits — corrected polarity: x > 0 ⇒ strength. */
+/**
+ * Four-item traits. raw = Qa − Qb + Qc − Qd.
+ *
+ * DELIBERATE INCONSISTENCY, preserved from the source: traits 10–14
+ * (objection-handling … productivity) use "> 0" (raw === 0 ⇒ strength),
+ * while traits 15–18 (simplification … habits) use ">= 0"
+ * (raw === 0 ⇒ development). Do not unify these comparators.
+ *
+ * Polarity is also the source's: raw on the positive side ⇒ development,
+ * raw on the negative/zero side ⇒ strength.
+ */
 type FourItemSpec = {
   key: TraitKey;
-  /** Strength when raw > threshold. */
-  threshold: number;
   items: readonly [number, number, number, number];
+  /** "gt" ⇒ development when raw > 0; "gte" ⇒ development when raw >= 0. */
+  compare: "gt" | "gte";
   strengthLabel: string;
   developmentLabel: string;
 };
 
 const FOUR_ITEM_TRAITS: ReadonlyArray<FourItemSpec> = [
-  { key: "objection-handling",       threshold: 3.07, items: [181, 182, 183, 184], strengthLabel: "Strong at objection handling",    developmentLabel: "Needs work on objection handling" },
-  
-  { key: "industry-expert",          threshold: 2.73, items: [189, 190, 191, 192], strengthLabel: "Industry expert",                 developmentLabel: "Not yet an industry expert" },
-  { key: "storytelling",             threshold: 3.93, items: [193, 194, 195, 196], strengthLabel: "Strong storyteller",              developmentLabel: "Needs work on storytelling" },
-  { key: "negotiations",             threshold: 1.67, items: [197, 198, 199, 200], strengthLabel: "Strong negotiator",               developmentLabel: "Needs work on negotiation" },
-  { key: "productivity",             threshold: 1.13, items: [201, 202, 203, 204], strengthLabel: "Productive",                      developmentLabel: "Needs work on productivity" },
-  { key: "simplification",           threshold: 3.67, items: [205, 206, 207, 208], strengthLabel: "Strong at simplification",        developmentLabel: "Needs work on simplification" },
-  { key: "identifying-key-accounts", threshold: 3.33, items: [209, 210, 211, 212], strengthLabel: "Identifies key accounts well",    developmentLabel: "Needs work on identifying key accounts" },
-  { key: "caveman-brain",            threshold: 4.13, items: [213, 214, 215, 216], strengthLabel: "Manages caveman brain well",      developmentLabel: "Needs work on caveman brain" },
-  { key: "habits",                   threshold: 2.93, items: [217, 218, 219, 220], strengthLabel: "Strong sales habits",              developmentLabel: "Needs work on sales habits" },
+  { key: "objection-handling",       items: [181, 182, 183, 184], compare: "gt",  strengthLabel: "Strong at objection handling",    developmentLabel: "Needs work on objection handling" },
+  // Influence is a four-item trait in the source (not a threshold trait);
+  // its position here falls out of the natural order.
+  { key: "influence",                items: [185, 186, 187, 188], compare: "gt",  strengthLabel: "Influential",                     developmentLabel: "Needs work on influence" },
+  { key: "storytelling",             items: [193, 194, 195, 196], compare: "gt",  strengthLabel: "Strong storyteller",              developmentLabel: "Needs work on storytelling" },
+  { key: "negotiations",             items: [197, 198, 199, 200], compare: "gt",  strengthLabel: "Strong negotiator",               developmentLabel: "Needs work on negotiation" },
+  { key: "productivity",             items: [201, 202, 203, 204], compare: "gt",  strengthLabel: "Productive",                      developmentLabel: "Needs work on productivity" },
+  { key: "simplification",           items: [205, 206, 207, 208], compare: "gte", strengthLabel: "Strong at simplification",        developmentLabel: "Needs work on simplification" },
+  { key: "identifying-key-accounts", items: [209, 210, 211, 212], compare: "gte", strengthLabel: "Identifies key accounts well",    developmentLabel: "Needs work on identifying key accounts" },
+  { key: "caveman-brain",            items: [213, 214, 215, 216], compare: "gte", strengthLabel: "Manages caveman brain well",      developmentLabel: "Needs work on caveman brain" },
+  { key: "habits",                   items: [217, 218, 219, 220], compare: "gte", strengthLabel: "Strong sales habits",              developmentLabel: "Needs work on sales habits" },
+  // industry-expert (questions 189–192) is intentionally absent: the
+  // source computes it but excludes it from the results list
+  // (commented out, 23-06-2023). The questions remain in the bank.
 ];
 
 function evaluateFourItem(spec: FourItemSpec, answers: AnswerMap): TraitOutcome {
   const raw = fourItem(answers, spec.items[0], spec.items[1], spec.items[2], spec.items[3]);
-  const isStrength = raw > spec.threshold;
+  const isDevelopment = spec.compare === "gt" ? raw > 0 : raw >= 0;
   return {
     key: spec.key,
-    label: isStrength ? spec.strengthLabel : spec.developmentLabel,
+    label: isDevelopment ? spec.developmentLabel : spec.strengthLabel,
+    kind: isDevelopment ? "development" : "strength",
+    raw,
+  };
+}
+
+/** Goal setting — source form: signed sum with no divisor; raw >= 5 ⇒ strength. */
+function evaluateGoalSetting(answers: AnswerMap): TraitOutcome {
+  const raw =
+    a(answers, 152) - a(answers, 153) + a(answers, 154)
+    + a(answers, 155) - a(answers, 156);
+  const isStrength = raw >= 5;
+  return {
+    key: "goal-setting",
+    label: isStrength ? "Strong goal-setter" : "Weak goal-setter",
     kind: isStrength ? "strength" : "development",
     raw,
   };
 }
 
 export function computeTraits(answers: AnswerMap): TraitOutcome[] {
-  const thresholds = THRESHOLD_TRAITS.map((s) => evaluateThreshold(s, answers));
-  const fourItems = FOUR_ITEM_TRAITS.map((s) => evaluateFourItem(s, answers));
-  // "influence" moved to THRESHOLD_TRAITS but keeps its historical render
-  // position: immediately after "objection-handling" in the four-item block.
-  const influenceIdx = thresholds.findIndex((t) => t.key === "influence");
-  const influence = influenceIdx >= 0 ? thresholds.splice(influenceIdx, 1)[0] : undefined;
-  const objIdx = fourItems.findIndex((t) => t.key === "objection-handling");
-  if (influence) fourItems.splice(objIdx >= 0 ? objIdx + 1 : fourItems.length, 0, influence);
-  return [...thresholds, ...fourItems];
+  const out: TraitOutcome[] = THRESHOLD_TRAITS.map((s) => evaluateThreshold(s, answers));
+  // goal-setting sits between personal-accountability (8) and
+  // objection-handling (10) in the source's order.
+  out.push(evaluateGoalSetting(answers));
+  out.push(...FOUR_ITEM_TRAITS.map((s) => evaluateFourItem(s, answers)));
+  return out;
 }
 
 
@@ -328,10 +341,11 @@ export function verifyScoringReferencesResolve(): { ok: true } | { ok: false; mi
   // Type axes
   [3, 7, 11, 15, 19, 23, 27, 31,
    4, 8, 12, 16, 20, 24, 28, 32,
-   2, 6, 10, 14, 18, 22, 26, 30,
+   2, 8, 10, 14, 18, 22, 26, 30, // F_T deliberately references A8, not A6
    1, 5, 9, 13, 17, 21, 25, 29,
   ].forEach((id) => referenced.add(id));
   for (const t of THRESHOLD_TRAITS) for (const [id] of t.weights) referenced.add(id);
+  [152, 153, 154, 155, 156].forEach((id) => referenced.add(id));
   for (const t of FOUR_ITEM_TRAITS) t.items.forEach((id) => referenced.add(id));
   const missing: number[] = [];
   for (const id of referenced) if (!QUESTIONS_BY_ID.has(id)) missing.push(id);
