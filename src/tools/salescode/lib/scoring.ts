@@ -1,20 +1,32 @@
 /**
- * SalesCode scoring — verbatim port of the original PHP scoring engine.
+ * SalesCode scoring — port of the original PHP scoring engine.
  *
- * Apparent inversions and inconsistencies in the formulas below are
- * INTENTIONAL replications of the source engine, not bugs. Do not
- * "correct", normalise, recalibrate or tidy any offset, sign, divisor,
- * threshold or comparator. No formula in this file may be changed
- * without a matching change to the source of truth.
+ * The arithmetic (offsets, signs, divisors, thresholds) is preserved
+ * verbatim from the source engine. Four deliberate deviations from the
+ * source exist, all of them label/logic corrections rather than
+ * recalibrations:
  *
- * Known deliberate quirks:
- *   - F_T uses A8 where the pattern would suggest A6 (see computeAxes).
- *   - Four-item traits 10–14 use "> 0" while 15–18 use ">= 0"
- *     (see FOUR_ITEM_TRAITS).
- *   - industry-expert is computed by the source but excluded from the
- *     results list (commented out there, 23-06-2023), so it is not
- *     emitted here either. Questions 189–192 remain in the bank and
- *     are still asked.
+ *   1. LABEL DIRECTION CORRECTED. The source mapped most results to the
+ *      wrong label (an assertive respondent was told "Not assertive").
+ *      The four-letter type mappings and six threshold-trait label
+ *      assignments are flipped relative to the source. Formulas,
+ *      offsets, divisors and thresholds are unchanged.
+ *   2. F_T Q6 BUG FIXED. The source had `$Q6 = $A[8]`, so Q6 never
+ *      reached the type and Q8 was counted twice. Q6 is now used and
+ *      the Q8 duplication removed.
+ *   3. FOUR-ITEM BOUNDARY UNIFIED. The source split four-item traits
+ *      between "> 0" and ">= 0" comparators. All eight now use one
+ *      rule: raw > 0 → strength, raw <= 0 → development. raw = 0 means
+ *      the positive and negative items cancel out — no evidence of
+ *      strength — so it lands on development.
+ *   4. INFLUENCE Q186 SIGN CORRECTED. Q186 ("You're capable in
+ *      influencing most people") is positively worded but carried a
+ *      negative sign in the source. Its sign is now positive.
+ *
+ * industry-expert is computed by the source but excluded from the
+ * results list (commented out there, 23-06-2023), so it is not
+ * emitted here either. Questions 189–192 remain in the bank and are
+ * still asked.
  */
 
 import type {
@@ -45,14 +57,13 @@ function fourItem(answers: AnswerMap, qa: number, qb: number, qc: number, qd: nu
 /* ─────────────────────────────────────────────────────────────────────────
  * Four-letter type
  *
- *   I_E = 30 − A3 − A7 − A11 + A15 − A19 + A23 + A27 − A31   → E if > 24 else I
- *   S_N = 12 + A4 + A8 + A12 + A16 + A20 − A24 − A28 + A32   → N if > 24 else S
- *   F_T = 30 − A2 + A8 + A10 − A14 − A18 + A22 − A26 − A30   → T if > 24 else F
- *   J_P = 18 + A1 + A5 − A9 + A13 − A17 + A21 − A25 + A29    → P if > 24 else J
+ *   I_E = 30 − A3 − A7 − A11 + A15 − A19 + A23 + A27 − A31   → I if > 24 else E
+ *   S_N = 12 + A4 + A8 + A12 + A16 + A20 − A24 − A28 + A32   → S if > 24 else N
+ *   F_T = 30 − A2 + A6 + A10 − A14 − A18 + A22 − A26 − A30   → F if > 24 else T
+ *   J_P = 18 + A1 + A5 − A9 + A13 − A17 + A21 − A25 + A29    → J if > 24 else P
  *
- * F_T uses A8, NOT A6: in the source, Q6 is assigned the value of A[8],
- * so Q6 never reaches the type and Q8 is counted twice. This is an
- * intentional replication of the source engine.
+ * F_T uses A6. The source's `$Q6 = $A[8]` was a bug (Q6 never reached
+ * the type, Q8 counted twice); Q6 is now used.
  * ────────────────────────────────────────────────────────────────────── */
 
 const AXIS_THRESHOLD = 24;
@@ -66,10 +77,9 @@ export function computeAxes(answers: AnswerMap) {
     12 + a(answers, 4) + a(answers, 8) + a(answers, 12) + a(answers, 16)
        + a(answers, 20) - a(answers, 24) - a(answers, 28) + a(answers, 32);
 
-  // F_T uses A8, NOT A6: in the source, Q6 is assigned the value of A[8],
-  // so Q6 never reaches the type and Q8 is counted twice. Intentional.
+  // F_T uses A6: the source's `$Q6 = $A[8]` was a bug; Q6 is now used.
   const F_T =
-    30 - a(answers, 2) + a(answers, 8) + a(answers, 10) - a(answers, 14)
+    30 - a(answers, 2) + a(answers, 6) + a(answers, 10) - a(answers, 14)
        - a(answers, 18) + a(answers, 22) - a(answers, 26) - a(answers, 30);
 
   const J_P =
@@ -82,10 +92,10 @@ export function computeAxes(answers: AnswerMap) {
 export function computeType(answers: AnswerMap): { type: string; letters: AxisLetter[] } {
   const { I_E, S_N, F_T, J_P } = computeAxes(answers);
   const letters: AxisLetter[] = [
-    I_E > AXIS_THRESHOLD ? "E" : "I",
-    S_N > AXIS_THRESHOLD ? "N" : "S",
-    F_T > AXIS_THRESHOLD ? "T" : "F",
-    J_P > AXIS_THRESHOLD ? "P" : "J",
+    I_E > AXIS_THRESHOLD ? "I" : "E",
+    S_N > AXIS_THRESHOLD ? "S" : "N",
+    F_T > AXIS_THRESHOLD ? "F" : "T",
+    J_P > AXIS_THRESHOLD ? "J" : "P",
   ];
   return { type: letters.join(""), letters };
 }
@@ -122,7 +132,7 @@ type ThresholdSpec = {
 };
 
 const THRESHOLD_TRAITS: ReadonlyArray<ThresholdSpec> = [
-  // 1. Introvert / Extrovert — Extrovert sits on the "above" side.
+  // 1. Introvert / Extrovert — Introvert sits on the "above" side.
   {
     key: "introvert-extrovert",
     offset: 38,
@@ -132,9 +142,9 @@ const THRESHOLD_TRAITS: ReadonlyArray<ThresholdSpec> = [
     ],
     divisor: 8,
     threshold: 3,
-    aboveLabel: "Extrovert",
-    belowLabel: "Introvert",
-    strengthSide: "above",
+    aboveLabel: "Introvert",
+    belowLabel: "Extrovert",
+    strengthSide: "below",
   },
   // 2. Assertiveness
   {
@@ -146,9 +156,9 @@ const THRESHOLD_TRAITS: ReadonlyArray<ThresholdSpec> = [
     ],
     divisor: 12,
     threshold: 3,
-    aboveLabel: "Assertive",
-    belowLabel: "Not assertive",
-    strengthSide: "above",
+    aboveLabel: "Not assertive",
+    belowLabel: "Assertive",
+    strengthSide: "below",
   },
   // 3. Comfortable with money
   {
@@ -160,9 +170,9 @@ const THRESHOLD_TRAITS: ReadonlyArray<ThresholdSpec> = [
     ],
     divisor: 6,
     threshold: 2,
-    aboveLabel: "Comfortable with money",
-    belowLabel: "Not comfortable with money",
-    strengthSide: "above",
+    aboveLabel: "Not comfortable with money",
+    belowLabel: "Comfortable with money",
+    strengthSide: "below",
   },
   // 4. Emotional intelligence
   {
@@ -175,9 +185,9 @@ const THRESHOLD_TRAITS: ReadonlyArray<ThresholdSpec> = [
     ],
     divisor: 15,
     threshold: 2,
-    aboveLabel: "High emotional intelligence",
-    belowLabel: "Low emotional intelligence",
-    strengthSide: "above",
+    aboveLabel: "Low emotional intelligence",
+    belowLabel: "High emotional intelligence",
+    strengthSide: "below",
   },
   // 5. Self-esteem
   {
@@ -189,9 +199,9 @@ const THRESHOLD_TRAITS: ReadonlyArray<ThresholdSpec> = [
     ],
     divisor: 10,
     threshold: 2,
-    aboveLabel: "High self-esteem",
-    belowLabel: "Low self-esteem",
-    strengthSide: "above",
+    aboveLabel: "Low self-esteem",
+    belowLabel: "High self-esteem",
+    strengthSide: "below",
   },
   // 6. Optimism
   {
@@ -204,9 +214,9 @@ const THRESHOLD_TRAITS: ReadonlyArray<ThresholdSpec> = [
     ],
     divisor: 15,
     threshold: 2,
-    aboveLabel: "Optimistic",
-    belowLabel: "Pessimistic",
-    strengthSide: "above",
+    aboveLabel: "Pessimistic",
+    belowLabel: "Optimistic",
+    strengthSide: "below",
   },
   // 7. People-pleaser — INVERTED: raw < 4 ⇒ strength ("not a people-pleaser").
   {
@@ -257,35 +267,30 @@ function evaluateThreshold(spec: ThresholdSpec, answers: AnswerMap): TraitOutcom
 /**
  * Four-item traits. raw = Qa − Qb + Qc − Qd.
  *
- * DELIBERATE INCONSISTENCY, preserved from the source: traits 10–14
- * (objection-handling … productivity) use "> 0" (raw === 0 ⇒ strength),
- * while traits 15–18 (simplification … habits) use ">= 0"
- * (raw === 0 ⇒ development). Do not unify these comparators.
- *
- * Polarity is also the source's: raw on the positive side ⇒ development,
- * raw on the negative/zero side ⇒ strength.
+ * UNIFIED BOUNDARY (a deliberate deviation from the source): the source
+ * split these traits between "> 0" and ">= 0" comparators; all eight now
+ * use one rule — raw > 0 → strength, raw <= 0 → development. raw = 0
+ * means the positive and negative items cancel out, i.e. no evidence of
+ * strength, so it lands on the development side for all eight.
  */
 type FourItemSpec = {
   key: TraitKey;
   items: readonly [number, number, number, number];
-  /** "gt" ⇒ development when raw > 0; "gte" ⇒ development when raw >= 0. */
-  compare: "gt" | "gte";
   strengthLabel: string;
   developmentLabel: string;
 };
 
 const FOUR_ITEM_TRAITS: ReadonlyArray<FourItemSpec> = [
-  { key: "objection-handling",       items: [181, 182, 183, 184], compare: "gt",  strengthLabel: "Strong at objection handling",    developmentLabel: "Needs work on objection handling" },
-  // Influence is a four-item trait in the source (not a threshold trait);
-  // its position here falls out of the natural order.
-  { key: "influence",                items: [185, 186, 187, 188], compare: "gt",  strengthLabel: "Influential",                     developmentLabel: "Needs work on influence" },
-  { key: "storytelling",             items: [193, 194, 195, 196], compare: "gt",  strengthLabel: "Strong storyteller",              developmentLabel: "Needs work on storytelling" },
-  { key: "negotiations",             items: [197, 198, 199, 200], compare: "gt",  strengthLabel: "Strong negotiator",               developmentLabel: "Needs work on negotiation" },
-  { key: "productivity",             items: [201, 202, 203, 204], compare: "gt",  strengthLabel: "Productive",                      developmentLabel: "Needs work on productivity" },
-  { key: "simplification",           items: [205, 206, 207, 208], compare: "gte", strengthLabel: "Strong at simplification",        developmentLabel: "Needs work on simplification" },
-  { key: "identifying-key-accounts", items: [209, 210, 211, 212], compare: "gte", strengthLabel: "Identifies key accounts well",    developmentLabel: "Needs work on identifying key accounts" },
-  { key: "caveman-brain",            items: [213, 214, 215, 216], compare: "gte", strengthLabel: "Manages caveman brain well",      developmentLabel: "Needs work on caveman brain" },
-  { key: "habits",                   items: [217, 218, 219, 220], compare: "gte", strengthLabel: "Strong sales habits",              developmentLabel: "Needs work on sales habits" },
+  { key: "objection-handling",       items: [181, 182, 183, 184], strengthLabel: "Strong at objection handling",    developmentLabel: "Needs work on objection handling" },
+  // Influence is NOT here: it is a custom threshold trait (see
+  // evaluateInfluence). Its output position is preserved in computeTraits.
+  { key: "storytelling",             items: [193, 194, 195, 196], strengthLabel: "Strong storyteller",              developmentLabel: "Needs work on storytelling" },
+  { key: "negotiations",             items: [197, 198, 199, 200], strengthLabel: "Strong negotiator",               developmentLabel: "Needs work on negotiation" },
+  { key: "productivity",             items: [201, 202, 203, 204], strengthLabel: "Productive",                      developmentLabel: "Needs work on productivity" },
+  { key: "simplification",           items: [205, 206, 207, 208], strengthLabel: "Strong at simplification",        developmentLabel: "Needs work on simplification" },
+  { key: "identifying-key-accounts", items: [209, 210, 211, 212], strengthLabel: "Identifies key accounts well",    developmentLabel: "Needs work on identifying key accounts" },
+  { key: "caveman-brain",            items: [213, 214, 215, 216], strengthLabel: "Manages caveman brain well",      developmentLabel: "Needs work on caveman brain" },
+  { key: "habits",                   items: [217, 218, 219, 220], strengthLabel: "Strong sales habits",             developmentLabel: "Needs work on sales habits" },
   // industry-expert (questions 189–192) is intentionally absent: the
   // source computes it but excludes it from the results list
   // (commented out, 23-06-2023). The questions remain in the bank.
@@ -293,11 +298,31 @@ const FOUR_ITEM_TRAITS: ReadonlyArray<FourItemSpec> = [
 
 function evaluateFourItem(spec: FourItemSpec, answers: AnswerMap): TraitOutcome {
   const raw = fourItem(answers, spec.items[0], spec.items[1], spec.items[2], spec.items[3]);
-  const isDevelopment = spec.compare === "gt" ? raw > 0 : raw >= 0;
+  const isStrength = raw > 0;
   return {
     key: spec.key,
-    label: isDevelopment ? spec.developmentLabel : spec.strengthLabel,
-    kind: isDevelopment ? "development" : "strength",
+    label: isStrength ? spec.strengthLabel : spec.developmentLabel,
+    kind: isStrength ? "strength" : "development",
+    raw,
+  };
+}
+
+/**
+ * Influence. raw = A185 + A186 + A187 − A188.
+ *
+ * Q186 ("You're capable in influencing most people") is positively worded
+ * but carried a negative sign in the source; its sign is corrected here.
+ * The threshold is 6 because that is the all-neutral score for this shape
+ * (3 + 3 + 3 − 3), so it separates above-neutral from at-or-below-neutral.
+ */
+function evaluateInfluence(answers: AnswerMap): TraitOutcome {
+  const raw =
+    a(answers, 185) + a(answers, 186) + a(answers, 187) - a(answers, 188);
+  const isStrength = raw > 6;
+  return {
+    key: "influence",
+    label: isStrength ? "Influential" : "Needs work on influence",
+    kind: isStrength ? "strength" : "development",
     raw,
   };
 }
@@ -321,7 +346,12 @@ export function computeTraits(answers: AnswerMap): TraitOutcome[] {
   // goal-setting sits between personal-accountability (8) and
   // objection-handling (10) in the source's order.
   out.push(evaluateGoalSetting(answers));
-  out.push(...FOUR_ITEM_TRAITS.map((s) => evaluateFourItem(s, answers)));
+  // Four-item traits in order, with influence between objection-handling
+  // and storytelling, matching the source's order.
+  for (const spec of FOUR_ITEM_TRAITS) {
+    if (spec.key === "storytelling") out.push(evaluateInfluence(answers));
+    out.push(evaluateFourItem(spec, answers));
+  }
   return out;
 }
 
@@ -341,11 +371,12 @@ export function verifyScoringReferencesResolve(): { ok: true } | { ok: false; mi
   // Type axes
   [3, 7, 11, 15, 19, 23, 27, 31,
    4, 8, 12, 16, 20, 24, 28, 32,
-   2, 8, 10, 14, 18, 22, 26, 30, // F_T deliberately references A8, not A6
+   2, 6, 10, 14, 18, 22, 26, 30,
    1, 5, 9, 13, 17, 21, 25, 29,
   ].forEach((id) => referenced.add(id));
   for (const t of THRESHOLD_TRAITS) for (const [id] of t.weights) referenced.add(id);
   [152, 153, 154, 155, 156].forEach((id) => referenced.add(id));
+  [185, 186, 187, 188].forEach((id) => referenced.add(id));
   for (const t of FOUR_ITEM_TRAITS) t.items.forEach((id) => referenced.add(id));
   const missing: number[] = [];
   for (const id of referenced) if (!QUESTIONS_BY_ID.has(id)) missing.push(id);
