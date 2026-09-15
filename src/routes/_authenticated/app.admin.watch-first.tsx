@@ -258,7 +258,7 @@ function WatchFirstAdmin() {
         const { data, error } = await supabase
           .from("watch_first_lessons")
           .insert({ ...payload, sort_order: lessons.length })
-          .insert(payload)
+          
           .select("*")
           .single();
         if (error) throw error;
