@@ -169,3 +169,55 @@ export const getActivityForOwner = createServerFn({ method: "GET" })
       sessions,
     };
   });
+
+/**
+ * Watch First onboarding progress for one owner, shown in the Review tab.
+ *
+ * Separate from getActivityForOwner on purpose: this section is safe for
+ * mentors too, so it uses the caller's own RLS-bound client (no service
+ * role, no assertAdmin). RLS already limits lessons to published ones for
+ * owners and exposes all lessons + all progress rows to elevated users.
+ * Only PUBLISHED lessons are returned here — drafts must not appear in an
+ * owner's onboarding progress or inflate the total.
+ */
+export type WatchFirstOnboardingLesson = {
+  id: string;
+  title: string;
+  sort_order: number;
+};
+
+export type WatchFirstOnboardingWatched = {
+  lesson_id: string;
+  watched_at: string;
+};
+
+export type WatchFirstOnboardingForOwner = {
+  lessons: WatchFirstOnboardingLesson[];
+  watched: WatchFirstOnboardingWatched[];
+};
+
+export const getWatchFirstOnboardingForOwner = createServerFn({
+  method: "GET",
+})
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { ownerId: string }) => data)
+  .handler(async ({ data, context }): Promise<WatchFirstOnboardingForOwner> => {
+    const { data: lessons, error } = await context.supabase
+      .from("watch_first_lessons" as any)
+      .select("id, title, sort_order")
+      .eq("is_published", true)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
+    if (error) throw new Error(error.message);
+
+    const { data: progress, error: progressError } = await context.supabase
+      .from("watch_first_lesson_progress" as any)
+      .select("lesson_id, watched_at")
+      .eq("owner_id", data.ownerId);
+    if (progressError) throw new Error(progressError.message);
+
+    return {
+      lessons: (lessons ?? []) as WatchFirstOnboardingLesson[],
+      watched: (progress ?? []) as WatchFirstOnboardingWatched[],
+    };
+  });
