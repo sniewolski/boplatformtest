@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import type { ToolComponentProps } from "@/tools/registry";
 import { Button } from "@/components/ui/button";
 import { MarkdownBody } from "@/components/MarkdownBody";
+import { resolveWistiaEmbed } from "../wistia";
 import { cn } from "@/lib/utils";
 import {
   useMarkLessonWatched,
@@ -145,20 +146,24 @@ export function WatchFirstApp({ splat }: ToolComponentProps) {
       <section className="min-w-0 flex-1 flex flex-col gap-6">
         <h2 className="text-ink text-xl font-semibold">{lesson.title}</h2>
 
-        {lesson.video_embed_url && (
-          <div
-            className="relative w-full overflow-hidden rounded-lg border border-border bg-[var(--surface-raised)]"
-            style={{ aspectRatio: "16 / 9" }}
-          >
-            <iframe
-              src={lesson.video_embed_url}
-              title={lesson.title}
-              allow="autoplay; fullscreen; picture-in-picture"
-              allowFullScreen
-              className="absolute inset-0 w-full h-full"
-            />
-          </div>
-        )}
+        {(() => {
+          const videoSrc = resolveWistiaEmbed(lesson.video_embed_url ?? "");
+          if (!videoSrc) return null;
+          return (
+            <div
+              className="relative w-full overflow-hidden rounded-lg border border-border bg-[var(--surface-raised)]"
+              style={{ aspectRatio: "16 / 9" }}
+            >
+              <iframe
+                src={videoSrc}
+                title={lesson.title}
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+                className="absolute inset-0 w-full h-full"
+              />
+            </div>
+          );
+        })()}
 
         {lesson.body_markdown && (
           <MarkdownBody>{lesson.body_markdown}</MarkdownBody>
