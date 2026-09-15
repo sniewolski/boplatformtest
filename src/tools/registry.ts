@@ -19,6 +19,7 @@ import { salescodeManifest } from "./salescode/manifest";
 import { sopsManifest } from "./sops/manifest";
 import { willAiManifest } from "./will-ai/manifest";
 import { dailyLogManifest } from "./daily-log/manifest";
+import { watchFirstManifest } from "./watch-first/manifest";
 
 export type ToolNavEntry = {
   label: string;
@@ -50,6 +51,7 @@ export type ToolManifest = {
 };
 
 export const toolRegistry: ToolManifest[] = [
+  watchFirstManifest,
   dailyLogManifest,
   sellingSystemsAuditManifest,
   salescodeManifest,
