@@ -337,8 +337,8 @@ function WatchFirstAdmin() {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      void navigator.clipboard.writeText(uploadedUrl);
-                      toast.success("URL copied");
+                      void navigator.clipboard.writeText(`![](${uploadedUrl})`);
+                      toast.success("Markdown image code copied");
                     }}
                   >
                     <Copy className="size-4" />
@@ -347,7 +347,8 @@ function WatchFirstAdmin() {
                 </div>
               )}
               <p className="text-xs text-ink-muted">
-                Paste into the body as <code>![alt](url)</code>.
+                Paste straight into the body — it's already wrapped as{" "}
+                <code>![alt](url)</code>.
               </p>
             </div>
 
