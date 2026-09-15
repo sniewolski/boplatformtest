@@ -945,6 +945,74 @@ export type Database = {
         }
         Relationships: []
       }
+      watch_first_lesson_progress: {
+        Row: {
+          created_at: string
+          id: string
+          lesson_id: string
+          owner_id: string
+          updated_at: string
+          watched_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lesson_id: string
+          owner_id: string
+          updated_at?: string
+          watched_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lesson_id?: string
+          owner_id?: string
+          updated_at?: string
+          watched_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "watch_first_lesson_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "watch_first_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      watch_first_lessons: {
+        Row: {
+          body_markdown: string | null
+          created_at: string
+          id: string
+          is_published: boolean
+          sort_order: number
+          title: string
+          updated_at: string
+          video_embed_url: string | null
+        }
+        Insert: {
+          body_markdown?: string | null
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          sort_order?: number
+          title: string
+          updated_at?: string
+          video_embed_url?: string | null
+        }
+        Update: {
+          body_markdown?: string | null
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          sort_order?: number
+          title?: string
+          updated_at?: string
+          video_embed_url?: string | null
+        }
+        Relationships: []
+      }
       will_ai_canonical_facts: {
         Row: {
           created_at: string
