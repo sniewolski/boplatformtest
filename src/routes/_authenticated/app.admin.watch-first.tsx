@@ -337,8 +337,8 @@ function WatchFirstAdmin() {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      void navigator.clipboard.writeText(uploadedUrl);
-                      toast.success("URL copied");
+                      void navigator.clipboard.writeText(`![](${uploadedUrl})`);
+                      toast.success("Markdown image code copied");
                     }}
                   >
                     <Copy className="size-4" />
