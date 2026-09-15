@@ -217,7 +217,7 @@ export const getWatchFirstOnboardingForOwner = createServerFn({
     if (progressError) throw new Error(progressError.message);
 
     return {
-      lessons: (lessons ?? []) as WatchFirstOnboardingLesson[],
-      watched: (progress ?? []) as WatchFirstOnboardingWatched[],
+      lessons: (lessons ?? []) as unknown as WatchFirstOnboardingLesson[],
+      watched: (progress ?? []) as unknown as WatchFirstOnboardingWatched[],
     };
   });
