@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { LogIn, FileText, LayoutGrid, ChevronRight } from "lucide-react";
+import { Check, LogIn, FileText, LayoutGrid, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   getActivityForOwner,
+  getWatchFirstOnboardingForOwner,
   type ActivityForOwner,
   type ActivitySession,
   type ActivityTimelineEvent,
