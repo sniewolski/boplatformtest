@@ -192,11 +192,58 @@ function WatchFirstAdmin() {
       title: lesson.title,
       video_embed_url: lesson.video_embed_url ?? "",
       body_markdown: lesson.body_markdown ?? "",
-      sort_order: String(lesson.sort_order),
       is_published: lesson.is_published,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const reorderMutation = useMutation({
+    mutationFn: async (ordered: Lesson[]) => {
+      const changed = ordered
+        .map((lesson, index) => ({ lesson, index }))
+        .filter(({ lesson, index }) => lesson.sort_order !== index);
+      if (changed.length === 0) return;
+      const { error } = await supabase
+        .from("watch_first_lessons")
+        .upsert(
+          changed.map(({ lesson, index }) => ({
+            ...lesson,
+            sort_order: index,
+          })),
+        );
+      if (error) throw error;
+    },
+    onError: (e: unknown, _vars, context) => {
+      if (context) qc.setQueryData(QUERY_KEY, context);
+      toast.error(e instanceof Error ? e.message : "Could not save new order");
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEY });
+    },
+  });
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = lessons.findIndex((l) => l.id === active.id);
+    const newIndex = lessons.findIndex((l) => l.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const previous = lessons;
+    const ordered = arrayMove(lessons, oldIndex, newIndex).map(
+      (lesson, index) => ({ ...lesson, sort_order: index }),
+    );
+    qc.setQueryData(QUERY_KEY, ordered);
+    reorderMutation.mutate(ordered, {
+      onError: () => qc.setQueryData(QUERY_KEY, previous),
+    });
+  }
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -204,15 +251,13 @@ function WatchFirstAdmin() {
         title: draft.title.trim(),
         video_embed_url: draft.video_embed_url.trim() || null,
         body_markdown: draft.body_markdown || null,
-        sort_order: Number.isFinite(Number(draft.sort_order))
-          ? Number(draft.sort_order)
-          : 0,
         is_published: draft.is_published,
       };
       if (!payload.title) throw new Error("Title is required");
       if (isNew || !selectedId) {
         const { data, error } = await supabase
           .from("watch_first_lessons")
+          .insert({ ...payload, sort_order: lessons.length })
           .insert(payload)
           .select("*")
           .single();
