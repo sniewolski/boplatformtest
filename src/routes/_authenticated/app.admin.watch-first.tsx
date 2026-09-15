@@ -1,7 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Copy, ImagePlus, Loader2, Plus, Trash2 } from "lucide-react";
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { Copy, GripVertical, ImagePlus, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -45,7 +62,6 @@ type Draft = {
   title: string;
   video_embed_url: string;
   body_markdown: string;
-  sort_order: string;
   is_published: boolean;
 };
 
@@ -53,12 +69,95 @@ const EMPTY_DRAFT: Draft = {
   title: "",
   video_embed_url: "",
   body_markdown: "",
-  sort_order: "0",
   is_published: false,
 };
 
 function safeName(name: string) {
   return name.replace(/[^a-zA-Z0-9._-]/g, "-").slice(-80);
+}
+
+function SortableLessonRow({
+  lesson,
+  index,
+  active,
+  onSelect,
+}: {
+  lesson: Lesson;
+  index: number;
+  active: boolean;
+  onSelect: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: lesson.id });
+
+  return (
+    <li
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
+      className={cn(
+        "group relative flex items-stretch bg-surface",
+        "motion-safe:transition-[background-color,box-shadow,transform] motion-safe:duration-150 motion-safe:ease-out",
+        "[@media(hover:hover)_and_(pointer:fine)]:hover:bg-background",
+        active && "bg-background",
+        isDragging &&
+          "z-10 rounded-md shadow-lg ring-1 ring-border motion-safe:scale-[1.02]",
+      )}
+    >
+      <button
+        type="button"
+        ref={setActivatorNodeRef}
+        aria-label={`Reorder ${lesson.title || "Untitled"}`}
+        className={cn(
+          "flex w-8 shrink-0 cursor-grab touch-none items-center justify-center text-ink-muted/40 outline-none",
+          "motion-safe:transition-colors motion-safe:duration-150 motion-safe:ease-out",
+          "focus-visible:text-ink",
+          "[@media(hover:hover)_and_(pointer:fine)]:group-hover:text-ink-muted",
+          isDragging && "cursor-grabbing text-ink",
+        )}
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="size-4" />
+      </button>
+      <button
+        type="button"
+        onClick={onSelect}
+        className="min-w-0 flex-1 px-3 py-3 text-left"
+      >
+        <div className="flex items-center justify-between gap-2">
+          <span
+            className={cn(
+              "text-sm text-ink truncate",
+              !lesson.is_published && "italic text-ink-muted",
+            )}
+          >
+            {lesson.title || "Untitled"}
+          </span>
+          <span className="text-xs text-ink-muted shrink-0">#{index}</span>
+        </div>
+        <span
+          className={cn(
+            "mt-1 inline-block rounded px-1.5 py-0.5 text-[11px] font-medium",
+            lesson.is_published
+              ? "bg-background text-ink-muted"
+              : "border border-dashed border-border text-ink-muted",
+          )}
+        >
+          {lesson.is_published ? "Published" : "Draft"}
+        </span>
+      </button>
+    </li>
+  );
 }
 
 function WatchFirstAdmin() {
@@ -93,11 +192,58 @@ function WatchFirstAdmin() {
       title: lesson.title,
       video_embed_url: lesson.video_embed_url ?? "",
       body_markdown: lesson.body_markdown ?? "",
-      sort_order: String(lesson.sort_order),
       is_published: lesson.is_published,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const reorderMutation = useMutation({
+    mutationFn: async (ordered: Lesson[]) => {
+      const changed = ordered
+        .map((lesson, index) => ({ lesson, index }))
+        .filter(({ lesson, index }) => lesson.sort_order !== index);
+      if (changed.length === 0) return;
+      const { error } = await supabase
+        .from("watch_first_lessons")
+        .upsert(
+          changed.map(({ lesson, index }) => ({
+            ...lesson,
+            sort_order: index,
+          })),
+        );
+      if (error) throw error;
+    },
+    onError: (e: unknown, _vars, context) => {
+      if (context) qc.setQueryData(QUERY_KEY, context);
+      toast.error(e instanceof Error ? e.message : "Could not save new order");
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEY });
+    },
+  });
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = lessons.findIndex((l) => l.id === active.id);
+    const newIndex = lessons.findIndex((l) => l.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const previous = lessons;
+    const ordered = arrayMove(lessons, oldIndex, newIndex).map(
+      (lesson, index) => ({ ...lesson, sort_order: index }),
+    );
+    qc.setQueryData(QUERY_KEY, ordered);
+    reorderMutation.mutate(ordered, {
+      onError: () => qc.setQueryData(QUERY_KEY, previous),
+    });
+  }
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -105,16 +251,14 @@ function WatchFirstAdmin() {
         title: draft.title.trim(),
         video_embed_url: draft.video_embed_url.trim() || null,
         body_markdown: draft.body_markdown || null,
-        sort_order: Number.isFinite(Number(draft.sort_order))
-          ? Number(draft.sort_order)
-          : 0,
         is_published: draft.is_published,
       };
       if (!payload.title) throw new Error("Title is required");
       if (isNew || !selectedId) {
         const { data, error } = await supabase
           .from("watch_first_lessons")
-          .insert(payload)
+          .insert({ ...payload, sort_order: lessons.length })
+          
           .select("*")
           .single();
         if (error) throw error;
@@ -209,51 +353,32 @@ function WatchFirstAdmin() {
           ) : lessons.length === 0 ? (
             <div className="p-4 text-sm text-ink-muted">No lessons yet.</div>
           ) : (
-            <ul className="divide-y divide-border">
-              {lessons.map((lesson) => {
-                const active = !isNew && lesson.id === selectedId;
-                return (
-                  <li key={lesson.id}>
-                    <button
-                      type="button"
-                      onClick={() => {
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={lessons.map((l) => l.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <ul className="divide-y divide-border">
+                  {lessons.map((lesson, index) => (
+                    <SortableLessonRow
+                      key={lesson.id}
+                      lesson={lesson}
+                      index={index}
+                      active={!isNew && lesson.id === selectedId}
+                      onSelect={() => {
                         setIsNew(false);
                         setSelectedId(lesson.id);
                         setUploadedUrl(null);
                       }}
-                      className={cn(
-                        "w-full text-left px-4 py-3 transition-colors hover:bg-background",
-                        active && "bg-background",
-                      )}
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span
-                          className={cn(
-                            "text-sm text-ink truncate",
-                            !lesson.is_published && "italic text-ink-muted",
-                          )}
-                        >
-                          {lesson.title || "Untitled"}
-                        </span>
-                        <span className="text-xs text-ink-muted shrink-0">
-                          #{lesson.sort_order}
-                        </span>
-                      </div>
-                      <span
-                        className={cn(
-                          "mt-1 inline-block rounded px-1.5 py-0.5 text-[11px] font-medium",
-                          lesson.is_published
-                            ? "bg-background text-ink-muted"
-                            : "border border-dashed border-border text-ink-muted",
-                        )}
-                      >
-                        {lesson.is_published ? "Published" : "Draft"}
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
+                    />
+                  ))}
+                </ul>
+              </SortableContext>
+            </DndContext>
           )}
         </div>
 
@@ -370,18 +495,6 @@ function WatchFirstAdmin() {
             </div>
 
             <div className="flex flex-wrap items-end gap-6">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="wf-sort">Sort order</Label>
-                <Input
-                  id="wf-sort"
-                  type="number"
-                  className="w-28"
-                  value={draft.sort_order}
-                  onChange={(e) =>
-                    setDraft((d) => ({ ...d, sort_order: e.target.value }))
-                  }
-                />
-              </div>
               <div className="flex items-center gap-3 pb-2">
                 <Switch
                   id="wf-published"
