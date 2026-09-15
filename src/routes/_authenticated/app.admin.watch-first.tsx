@@ -495,18 +495,6 @@ function WatchFirstAdmin() {
             </div>
 
             <div className="flex flex-wrap items-end gap-6">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="wf-sort">Sort order</Label>
-                <Input
-                  id="wf-sort"
-                  type="number"
-                  className="w-28"
-                  value={draft.sort_order}
-                  onChange={(e) =>
-                    setDraft((d) => ({ ...d, sort_order: e.target.value }))
-                  }
-                />
-              </div>
               <div className="flex items-center gap-3 pb-2">
                 <Switch
                   id="wf-published"
