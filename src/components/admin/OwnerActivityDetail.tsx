@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { LogIn, FileText, LayoutGrid, ChevronRight } from "lucide-react";
+import { Check, LogIn, FileText, LayoutGrid, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   getActivityForOwner,
+  getWatchFirstOnboardingForOwner,
   type ActivityForOwner,
   type ActivitySession,
   type ActivityTimelineEvent,
@@ -30,46 +31,151 @@ export function OwnerActivityDetail({ ownerId }: { ownerId: string }) {
   }
 
   const data = activity.data;
-  if (!data || data.summary.totalSessions === 0) {
-    return (
-      <p className="text-ink-muted text-sm">
-        No activity recorded for this user.
-      </p>
-    );
-  }
+  const hasActivity = !!data && data.summary.totalSessions > 0;
 
-  const longest = Math.max(
-    1,
-    ...data.sessions.map((s) => s.durationSeconds || 0),
-  );
+  const longest = hasActivity
+    ? Math.max(1, ...data!.sessions.map((s) => s.durationSeconds || 0))
+    : 1;
 
   return (
     <div className="flex flex-col gap-8 max-w-4xl">
-      <SummaryStrip summary={data.summary} />
+      <OnboardingSection ownerId={ownerId} />
 
-      <div className="flex flex-col">
-        <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr_auto] gap-4 px-2 pb-2 text-xs uppercase tracking-wide text-ink-muted border-b border-border">
-          <span>When</span>
-          <span>Duration</span>
-          <span>IP</span>
-          <span>Touched</span>
-          <span />
-        </div>
-        {data.sessions.map((session) => (
-          <SessionRow
-            key={session.session_id}
-            session={session}
-            longest={longest}
-            open={openId === session.session_id}
-            onToggle={() =>
-              setOpenId((cur) =>
-                cur === session.session_id ? null : session.session_id,
-              )
-            }
-          />
-        ))}
-      </div>
+      {!hasActivity ? (
+        <p className="text-ink-muted text-sm">
+          No activity recorded for this user.
+        </p>
+      ) : (
+        <>
+          <SummaryStrip summary={data!.summary} />
+
+          <div className="flex flex-col">
+            <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr_auto] gap-4 px-2 pb-2 text-xs uppercase tracking-wide text-ink-muted border-b border-border">
+              <span>When</span>
+              <span>Duration</span>
+              <span>IP</span>
+              <span>Touched</span>
+              <span />
+            </div>
+            {data!.sessions.map((session) => (
+              <SessionRow
+                key={session.session_id}
+                session={session}
+                longest={longest}
+                open={openId === session.session_id}
+                onToggle={() =>
+                  setOpenId((cur) =>
+                    cur === session.session_id ? null : session.session_id,
+                  )
+                }
+              />
+            ))}
+          </div>
+        </>
+      )}
     </div>
+  );
+}
+
+function OnboardingSection({ ownerId }: { ownerId: string }) {
+  const fetchOnboarding = useServerFn(getWatchFirstOnboardingForOwner);
+  const onboarding = useQuery({
+    queryKey: ["admin", "watch-first-onboarding", ownerId],
+    queryFn: () => fetchOnboarding({ data: { ownerId } }),
+  });
+
+  if (onboarding.isLoading) {
+    return (
+      <section className="border-b border-border pb-5">
+        <h2 className="text-ink text-base font-semibold">Onboarding</h2>
+        <p className="text-ink-muted text-sm mt-2">Loading…</p>
+      </section>
+    );
+  }
+  if (onboarding.error) {
+    return (
+      <section className="border-b border-border pb-5">
+        <h2 className="text-ink text-base font-semibold">Onboarding</h2>
+        <p className="text-sm text-[var(--red)] mt-2">
+          {(onboarding.error as Error).message}
+        </p>
+      </section>
+    );
+  }
+
+  const { lessons, watched } = onboarding.data!;
+
+  if (lessons.length === 0) {
+    return (
+      <section className="border-b border-border pb-5">
+        <h2 className="text-ink text-base font-semibold">Onboarding</h2>
+        <p className="text-ink-muted text-sm mt-2">
+          No onboarding lessons have been published yet.
+        </p>
+      </section>
+    );
+  }
+
+  const watchedByLesson = new Map(
+    watched.map((w) => [w.lesson_id, w.watched_at]),
+  );
+  const watchedCount = lessons.filter((l) => watchedByLesson.has(l.id)).length;
+  const pct = Math.round((watchedCount / lessons.length) * 100);
+
+  return (
+    <section className="border-b border-border pb-5 flex flex-col gap-4">
+      <h2 className="text-ink text-base font-semibold">Onboarding</h2>
+
+      <div className="flex flex-col gap-2">
+        <div
+          className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--surface-raised)]"
+          role="progressbar"
+          aria-valuenow={watchedCount}
+          aria-valuemin={0}
+          aria-valuemax={lessons.length}
+        >
+          <div
+            className="h-full rounded-full bg-ink motion-safe:transition-[width] motion-safe:duration-200"
+            style={{
+              width: `${pct}%`,
+              transitionTimingFunction: "var(--ease-out)",
+            }}
+          />
+        </div>
+        <p className="text-ink-muted text-xs">
+          {watchedCount} of {lessons.length} lessons watched
+        </p>
+      </div>
+
+      <ul className="rounded-xl border border-border overflow-hidden divide-y divide-border">
+        {lessons.map((lesson) => {
+          const watchedAt = watchedByLesson.get(lesson.id);
+          return (
+            <li
+              key={lesson.id}
+              className="flex items-center gap-2.5 px-4 py-3 text-sm"
+            >
+              <span className="size-4 shrink-0">
+                {watchedAt && (
+                  <Check className="size-4 text-ink" aria-label="Watched" />
+                )}
+              </span>
+              <span
+                className={cn(
+                  "min-w-0 break-words",
+                  watchedAt ? "text-ink" : "text-ink-muted",
+                )}
+              >
+                {lesson.title}
+              </span>
+              <span className="ml-auto shrink-0 text-xs text-ink-muted tabular-nums">
+                {watchedAt ? formatDateTime(watchedAt) : "Not yet watched"}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 
