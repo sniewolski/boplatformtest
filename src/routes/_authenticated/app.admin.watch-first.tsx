@@ -347,7 +347,8 @@ function WatchFirstAdmin() {
                 </div>
               )}
               <p className="text-xs text-ink-muted">
-                Paste into the body as <code>![alt](url)</code>.
+                Paste straight into the body — it's already wrapped as{" "}
+                <code>![alt](url)</code>.
               </p>
             </div>
 
