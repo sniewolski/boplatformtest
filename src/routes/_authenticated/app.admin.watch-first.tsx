@@ -107,8 +107,9 @@ function SortableLessonRow({
       className={cn(
         "group relative flex items-stretch bg-surface",
         "motion-safe:transition-[background-color,box-shadow,transform] motion-safe:duration-150 motion-safe:ease-out",
-        "[@media(hover:hover)_and_(pointer:fine)]:hover:bg-background",
-        active && "bg-background",
+        "[@media(hover:hover)_and_(pointer:fine)]:hover:cursor-pointer",
+        "[@media(hover:hover)_and_(pointer:fine)]:hover:bg-muted",
+        active && "bg-background font-medium",
         isDragging &&
           "z-10 rounded-md shadow-lg ring-1 ring-border motion-safe:scale-[1.02]",
       )}
@@ -132,7 +133,7 @@ function SortableLessonRow({
       <button
         type="button"
         onClick={onSelect}
-        className="min-w-0 flex-1 px-3 py-3 text-left"
+        className="min-w-0 flex-1 cursor-pointer px-3 py-3 text-left"
       >
         <div className="flex items-center justify-between gap-2">
           <span
