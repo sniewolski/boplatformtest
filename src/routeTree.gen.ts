@@ -29,6 +29,7 @@ import { Route as ApiPublicRSaveRouteImport } from './routes/api/public/r/save'
 import { Route as ApiPublicRCompleteRouteImport } from './routes/api/public/r/complete'
 import { Route as ApiPublicRCaptureRouteImport } from './routes/api/public/r/capture'
 import { Route as AuthenticatedAppAdminWillAiRouteImport } from './routes/_authenticated/app.admin.will-ai'
+import { Route as AuthenticatedAppAdminWatchFirstRouteImport } from './routes/_authenticated/app.admin.watch-first'
 import { Route as AuthenticatedAppAdminTrackerRouteImport } from './routes/_authenticated/app.admin.tracker'
 import { Route as AuthenticatedAppAdminSopsRouteImport } from './routes/_authenticated/app.admin.sops'
 import { Route as AuthenticatedAppAdminReviewRouteImport } from './routes/_authenticated/app.admin.review'
@@ -141,6 +142,12 @@ const AuthenticatedAppAdminWillAiRoute =
     path: '/will-ai',
     getParentRoute: () => AuthenticatedAppAdminRoute,
   } as any)
+const AuthenticatedAppAdminWatchFirstRoute =
+  AuthenticatedAppAdminWatchFirstRouteImport.update({
+    id: '/watch-first',
+    path: '/watch-first',
+    getParentRoute: () => AuthenticatedAppAdminRoute,
+  } as any)
 const AuthenticatedAppAdminTrackerRoute =
   AuthenticatedAppAdminTrackerRouteImport.update({
     id: '/tracker',
@@ -197,6 +204,7 @@ export interface FileRoutesByFullPath {
   '/app/admin/review': typeof AuthenticatedAppAdminReviewRouteWithChildren
   '/app/admin/sops': typeof AuthenticatedAppAdminSopsRouteWithChildren
   '/app/admin/tracker': typeof AuthenticatedAppAdminTrackerRoute
+  '/app/admin/watch-first': typeof AuthenticatedAppAdminWatchFirstRoute
   '/app/admin/will-ai': typeof AuthenticatedAppAdminWillAiRoute
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
@@ -221,6 +229,7 @@ export interface FileRoutesByTo {
   '/app': typeof AuthenticatedAppIndexRoute
   '/r/$token': typeof RTokenIndexRoute
   '/app/admin/tracker': typeof AuthenticatedAppAdminTrackerRoute
+  '/app/admin/watch-first': typeof AuthenticatedAppAdminWatchFirstRoute
   '/app/admin/will-ai': typeof AuthenticatedAppAdminWillAiRoute
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
@@ -251,6 +260,7 @@ export interface FileRoutesById {
   '/_authenticated/app/admin/review': typeof AuthenticatedAppAdminReviewRouteWithChildren
   '/_authenticated/app/admin/sops': typeof AuthenticatedAppAdminSopsRouteWithChildren
   '/_authenticated/app/admin/tracker': typeof AuthenticatedAppAdminTrackerRoute
+  '/_authenticated/app/admin/watch-first': typeof AuthenticatedAppAdminWatchFirstRoute
   '/_authenticated/app/admin/will-ai': typeof AuthenticatedAppAdminWillAiRoute
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
@@ -281,6 +291,7 @@ export interface FileRouteTypes {
     | '/app/admin/review'
     | '/app/admin/sops'
     | '/app/admin/tracker'
+    | '/app/admin/watch-first'
     | '/app/admin/will-ai'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
@@ -305,6 +316,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/r/$token'
     | '/app/admin/tracker'
+    | '/app/admin/watch-first'
     | '/app/admin/will-ai'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
@@ -334,6 +346,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/admin/review'
     | '/_authenticated/app/admin/sops'
     | '/_authenticated/app/admin/tracker'
+    | '/_authenticated/app/admin/watch-first'
     | '/_authenticated/app/admin/will-ai'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
@@ -507,6 +520,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAdminWillAiRouteImport
       parentRoute: typeof AuthenticatedAppAdminRoute
     }
+    '/_authenticated/app/admin/watch-first': {
+      id: '/_authenticated/app/admin/watch-first'
+      path: '/watch-first'
+      fullPath: '/app/admin/watch-first'
+      preLoaderRoute: typeof AuthenticatedAppAdminWatchFirstRouteImport
+      parentRoute: typeof AuthenticatedAppAdminRoute
+    }
     '/_authenticated/app/admin/tracker': {
       id: '/_authenticated/app/admin/tracker'
       path: '/tracker'
@@ -595,6 +615,7 @@ interface AuthenticatedAppAdminRouteChildren {
   AuthenticatedAppAdminReviewRoute: typeof AuthenticatedAppAdminReviewRouteWithChildren
   AuthenticatedAppAdminSopsRoute: typeof AuthenticatedAppAdminSopsRouteWithChildren
   AuthenticatedAppAdminTrackerRoute: typeof AuthenticatedAppAdminTrackerRoute
+  AuthenticatedAppAdminWatchFirstRoute: typeof AuthenticatedAppAdminWatchFirstRoute
   AuthenticatedAppAdminWillAiRoute: typeof AuthenticatedAppAdminWillAiRoute
   AuthenticatedAppAdminIndexRoute: typeof AuthenticatedAppAdminIndexRoute
 }
@@ -604,6 +625,7 @@ const AuthenticatedAppAdminRouteChildren: AuthenticatedAppAdminRouteChildren = {
     AuthenticatedAppAdminReviewRouteWithChildren,
   AuthenticatedAppAdminSopsRoute: AuthenticatedAppAdminSopsRouteWithChildren,
   AuthenticatedAppAdminTrackerRoute: AuthenticatedAppAdminTrackerRoute,
+  AuthenticatedAppAdminWatchFirstRoute: AuthenticatedAppAdminWatchFirstRoute,
   AuthenticatedAppAdminWillAiRoute: AuthenticatedAppAdminWillAiRoute,
   AuthenticatedAppAdminIndexRoute: AuthenticatedAppAdminIndexRoute,
 }
