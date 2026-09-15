@@ -62,7 +62,6 @@ type Draft = {
   title: string;
   video_embed_url: string;
   body_markdown: string;
-  sort_order: string;
   is_published: boolean;
 };
 
@@ -70,12 +69,95 @@ const EMPTY_DRAFT: Draft = {
   title: "",
   video_embed_url: "",
   body_markdown: "",
-  sort_order: "0",
   is_published: false,
 };
 
 function safeName(name: string) {
   return name.replace(/[^a-zA-Z0-9._-]/g, "-").slice(-80);
+}
+
+function SortableLessonRow({
+  lesson,
+  index,
+  active,
+  onSelect,
+}: {
+  lesson: Lesson;
+  index: number;
+  active: boolean;
+  onSelect: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: lesson.id });
+
+  return (
+    <li
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
+      className={cn(
+        "group relative flex items-stretch bg-surface",
+        "motion-safe:transition-[background-color,box-shadow,transform] motion-safe:duration-150 motion-safe:ease-out",
+        "[@media(hover:hover)_and_(pointer:fine)]:hover:bg-background",
+        active && "bg-background",
+        isDragging &&
+          "z-10 rounded-md shadow-lg ring-1 ring-border motion-safe:scale-[1.02]",
+      )}
+    >
+      <button
+        type="button"
+        ref={setActivatorNodeRef}
+        aria-label={`Reorder ${lesson.title || "Untitled"}`}
+        className={cn(
+          "flex w-8 shrink-0 cursor-grab touch-none items-center justify-center text-ink-muted/40 outline-none",
+          "motion-safe:transition-colors motion-safe:duration-150 motion-safe:ease-out",
+          "focus-visible:text-ink",
+          "[@media(hover:hover)_and_(pointer:fine)]:group-hover:text-ink-muted",
+          isDragging && "cursor-grabbing text-ink",
+        )}
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="size-4" />
+      </button>
+      <button
+        type="button"
+        onClick={onSelect}
+        className="min-w-0 flex-1 px-3 py-3 text-left"
+      >
+        <div className="flex items-center justify-between gap-2">
+          <span
+            className={cn(
+              "text-sm text-ink truncate",
+              !lesson.is_published && "italic text-ink-muted",
+            )}
+          >
+            {lesson.title || "Untitled"}
+          </span>
+          <span className="text-xs text-ink-muted shrink-0">#{index}</span>
+        </div>
+        <span
+          className={cn(
+            "mt-1 inline-block rounded px-1.5 py-0.5 text-[11px] font-medium",
+            lesson.is_published
+              ? "bg-background text-ink-muted"
+              : "border border-dashed border-border text-ink-muted",
+          )}
+        >
+          {lesson.is_published ? "Published" : "Draft"}
+        </span>
+      </button>
+    </li>
+  );
 }
 
 function WatchFirstAdmin() {
