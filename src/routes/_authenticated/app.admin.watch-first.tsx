@@ -20,6 +20,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { MarkdownBody } from "@/components/MarkdownBody";
+import { resolveWistiaEmbed } from "@/tools/watch-first/wistia";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/app/admin/watch-first")({
@@ -276,15 +277,31 @@ function WatchFirstAdmin() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="wf-video">Video embed URL</Label>
+              <Label htmlFor="wf-video">Video — Wistia embed code or URL</Label>
               <Input
                 id="wf-video"
                 value={draft.video_embed_url}
                 onChange={(e) =>
                   setDraft((d) => ({ ...d, video_embed_url: e.target.value }))
                 }
-                placeholder="https://…"
+                placeholder="Paste the Wistia embed code, share URL, or media id…"
               />
+              {(() => {
+                const id = resolveWistiaEmbed(draft.video_embed_url);
+                if (id) {
+                  return (
+                    <p className="text-xs text-ink-muted">
+                      Wistia video detected — id{" "}
+                      <span className="font-mono">{id}</span>
+                    </p>
+                  );
+                }
+                return draft.video_embed_url.trim() ? (
+                  <p className="text-xs text-ink-muted">
+                    No Wistia video detected in that text yet.
+                  </p>
+                ) : null;
+              })()}
             </div>
 
             <div className="flex flex-col gap-2">
