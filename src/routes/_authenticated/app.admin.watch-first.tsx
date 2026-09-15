@@ -353,51 +353,32 @@ function WatchFirstAdmin() {
           ) : lessons.length === 0 ? (
             <div className="p-4 text-sm text-ink-muted">No lessons yet.</div>
           ) : (
-            <ul className="divide-y divide-border">
-              {lessons.map((lesson) => {
-                const active = !isNew && lesson.id === selectedId;
-                return (
-                  <li key={lesson.id}>
-                    <button
-                      type="button"
-                      onClick={() => {
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={lessons.map((l) => l.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <ul className="divide-y divide-border">
+                  {lessons.map((lesson, index) => (
+                    <SortableLessonRow
+                      key={lesson.id}
+                      lesson={lesson}
+                      index={index}
+                      active={!isNew && lesson.id === selectedId}
+                      onSelect={() => {
                         setIsNew(false);
                         setSelectedId(lesson.id);
                         setUploadedUrl(null);
                       }}
-                      className={cn(
-                        "w-full text-left px-4 py-3 transition-colors hover:bg-background",
-                        active && "bg-background",
-                      )}
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span
-                          className={cn(
-                            "text-sm text-ink truncate",
-                            !lesson.is_published && "italic text-ink-muted",
-                          )}
-                        >
-                          {lesson.title || "Untitled"}
-                        </span>
-                        <span className="text-xs text-ink-muted shrink-0">
-                          #{lesson.sort_order}
-                        </span>
-                      </div>
-                      <span
-                        className={cn(
-                          "mt-1 inline-block rounded px-1.5 py-0.5 text-[11px] font-medium",
-                          lesson.is_published
-                            ? "bg-background text-ink-muted"
-                            : "border border-dashed border-border text-ink-muted",
-                        )}
-                      >
-                        {lesson.is_published ? "Published" : "Draft"}
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
+                    />
+                  ))}
+                </ul>
+              </SortableContext>
+            </DndContext>
           )}
         </div>
 
