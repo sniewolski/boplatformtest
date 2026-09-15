@@ -51,6 +51,7 @@ export type ToolManifest = {
 };
 
 export const toolRegistry: ToolManifest[] = [
+  watchFirstManifest,
   dailyLogManifest,
   sellingSystemsAuditManifest,
   salescodeManifest,
