@@ -107,6 +107,14 @@ Deno.serve(async (req) => {
       }
       console.log("[views] resolved", videoId, parsed);
 
+      // snippet.publishedAt is best-effort: absent/invalid -> leave null.
+      const rawPublished = items[0]?.snippet?.publishedAt;
+      const publishedAt =
+        typeof rawPublished === "string" &&
+        !Number.isNaN(Date.parse(rawPublished))
+          ? new Date(rawPublished).toISOString()
+          : null;
+
       const patchRes = await fetch(
         `${restBase}?video_id=eq.${encodeURIComponent(videoId)}`,
         {
@@ -119,6 +127,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             view_count: parsed,
             views_updated_at: new Date().toISOString(),
+            ...(publishedAt ? { published_at: publishedAt } : {}),
           }),
         },
       );
