@@ -137,7 +137,12 @@ Deno.serve(async (req) => {
       }
       const patched = (await patchRes.json()) as any[];
       if (Array.isArray(patched) && patched.length > 0) return patched[0];
-      return { ...row, view_count: parsed, views_updated_at: new Date().toISOString() };
+      return {
+        ...row,
+        view_count: parsed,
+        views_updated_at: new Date().toISOString(),
+        ...(publishedAt ? { published_at: publishedAt } : {}),
+      };
     } catch (err) {
       console.error("[views] threw", String(err));
       return row;
