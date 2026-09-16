@@ -71,15 +71,18 @@ Deno.serve(async (req) => {
     const lastUpdated = row?.views_updated_at
       ? Date.parse(row.views_updated_at)
       : null;
+    // Also refetch when published_at is missing (lazy backfill), even if the
+    // view_count is still fresh. Failure-safe: any problem leaves the row as-is.
     const isFresh =
       row?.view_count != null &&
       lastUpdated != null &&
-      Date.now() - lastUpdated < VIEWS_TTL_MS;
+      Date.now() - lastUpdated < VIEWS_TTL_MS &&
+      row?.published_at != null;
     if (isFresh) return row;
 
     try {
       const apiUrl =
-        `https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${encodeURIComponent(videoId)}&key=${encodeURIComponent(YOUTUBE_DATA_API_KEY)}`;
+        `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${encodeURIComponent(videoId)}&key=${encodeURIComponent(YOUTUBE_DATA_API_KEY)}`;
       const apiRes = await fetch(apiUrl);
       console.log("[views] youtube api status", apiRes.status);
       if (!apiRes.ok) {
