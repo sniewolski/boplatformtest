@@ -159,7 +159,7 @@ function TrackerAdmin() {
     queryFn: async (): Promise<TrackedVideoRow[]> => {
       const { data, error } = await supabase
         .from("tracked_videos")
-        .select("video_id, title, thumbnail_url, resolved_at");
+        .select("video_id, title, thumbnail_url, resolved_at, published_at");
       if (error) throw error;
       return (data ?? []) as TrackedVideoRow[];
     },
@@ -180,7 +180,8 @@ function TrackerAdmin() {
       if (seen.has(ev.source_value)) continue;
       seen.add(ev.source_value);
       const row = known.get(ev.source_value);
-      if (!row || !row.resolved_at) missing.push(ev.source_value);
+      if (!row || !row.resolved_at || row.published_at == null)
+        missing.push(ev.source_value);
     }
     if (missing.length === 0) return;
 
