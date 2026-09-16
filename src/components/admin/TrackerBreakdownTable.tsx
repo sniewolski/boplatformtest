@@ -418,6 +418,7 @@ export function TrackerBreakdownTable({
             <thead className="bg-[var(--surface-raised)] text-ink-muted">
               <tr className="text-left">
                 <SortHeader label="Category" sortKey="category" sort={sort} onSort={onSort} className="w-[110px]" />
+                <SortHeader label="Published" sortKey="published" sort={sort} onSort={onSort} className="w-[130px] whitespace-nowrap" />
                 <th className="px-4 py-3 font-medium w-[120px]">Thumbnail</th>
                 <SortHeader label="Title" sortKey="title" sort={sort} onSort={onSort} />
                 <SortHeader label="Views" sortKey="ytViews" sort={sort} onSort={onSort} align="right" className="w-[110px]" />
@@ -447,6 +448,7 @@ export function TrackerBreakdownTable({
                 return (
                   <tr className="border-t border-border bg-[var(--surface-raised)] font-medium">
                     <td className="px-4 py-2">TOTAL</td>
+                    <td className="px-4 py-2">—</td>
                     <td className="px-4 py-2" />
                     <td className="px-4 py-2" />
                     <td className="px-4 py-2 text-right tabular-nums">
@@ -488,6 +490,9 @@ export function TrackerBreakdownTable({
                 return (
                   <tr key={row.videoId} className="border-t border-border">
                     <td className="px-4 py-3 text-ink-muted">video</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-ink-muted">
+                      {formatPublished(meta?.published_at ?? null)}
+                    </td>
                     <td className="px-4 py-3 align-middle">
                       {meta?.thumbnail_url ? (
                         <img
@@ -542,6 +547,7 @@ export function TrackerBreakdownTable({
               {sortedOtherAggregates.map((row) => (
                 <tr key={`src-${row.sourceType}`} className="border-t border-border">
                   <td className="px-4 py-3 text-ink-muted">{row.sourceType}</td>
+                  <td className="px-4 py-3">—</td>
                   <td className="px-4 py-3" />
                   <td className="px-4 py-3 align-middle text-ink">
                     {row.sourceType.charAt(0).toUpperCase() + row.sourceType.slice(1)}
@@ -567,6 +573,7 @@ export function TrackerBreakdownTable({
                       aria-label="Include direct and unattributed traffic in totals"
                     />
                   </td>
+                  <td className="px-4 py-3">—</td>
                   <td className="px-4 py-3" />
                   <td className="px-4 py-3 italic">
                     Direct / unattributed
