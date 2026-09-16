@@ -45,6 +45,18 @@ function formatInt(n: number): string {
   return n.toLocaleString("en-US");
 }
 
+/** "14 Mar 2026" (en-GB), em dash when null/unparseable. */
+function formatPublished(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
 function formatRatio(num: number, den: number | null | undefined): string {
   if (!den || den <= 0 || !Number.isFinite(den)) return "—";
   const pct = (num / den) * 100;
@@ -57,6 +69,7 @@ function formatRatio(num: number, den: number | null | undefined): string {
 type SortKey =
   | "title"
   | "category"
+  | "published"
   | "ytViews"
   | "visits"
   | "clicks"
@@ -114,10 +127,18 @@ function SortHeader({
   className?: string;
 }) {
   const active = sort?.key === sortKey;
+  const shownDir: SortDir = active
+    ? sort!.dir
+    : TEXT_SORT_KEYS.has(sortKey)
+      ? "asc"
+      : "desc";
+  const Chevron = shownDir === "asc" ? ChevronUp : ChevronDown;
   return (
     <th
       className={cn(
-        "px-4 py-3 font-medium",
+        "group cursor-pointer px-4 py-3 font-medium transition-colors duration-150 ease-out motion-safe",
+        "[@media(hover:hover)_and_(pointer:fine)]:hover:bg-muted",
+        "[@media(hover:hover)_and_(pointer:fine)]:hover:text-ink",
         align === "right" && "text-right",
         className,
       )}
@@ -133,13 +154,14 @@ function SortHeader({
       >
         <span>{label}</span>
         <span className="inline-flex w-4 shrink-0 justify-center">
-          {active ? (
-            sort!.dir === "asc" ? (
-              <ChevronUp className="size-3.5 text-[var(--ink-muted)]" />
-            ) : (
-              <ChevronDown className="size-3.5 text-[var(--ink-muted)]" />
-            )
-          ) : null}
+          <Chevron
+            className={cn(
+              "size-3.5 text-[var(--ink-muted)] transition-opacity duration-150 ease-out motion-safe",
+              active
+                ? "opacity-100"
+                : "opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-35",
+            )}
+          />
         </span>
       </button>
     </th>
@@ -297,12 +319,18 @@ export function TrackerBreakdownTable({
     const yt = (id: string): number | null =>
       viewsError || !viewsMap ? null : viewsMap[id] ?? 0;
 
+    const published = new Map(
+      (videos ?? []).map((v) => [v.video_id, v.published_at ?? null]),
+    );
+
     const videoKey = (r: VideoAggregate): string | number | null => {
       switch (sort.key) {
         case "title":
           return titles.get(r.videoId) ?? "";
         case "category":
           return "video";
+        case "published":
+          return published.get(r.videoId) ?? null;
         case "ytViews":
           return yt(r.videoId);
         case "visits":
@@ -326,6 +354,8 @@ export function TrackerBreakdownTable({
           return r.sourceType.charAt(0).toUpperCase() + r.sourceType.slice(1);
         case "category":
           return r.sourceType;
+        case "published":
+          return null;
         case "visits":
           return r.views;
         case "clicks":
