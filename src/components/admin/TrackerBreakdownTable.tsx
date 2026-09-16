@@ -22,6 +22,7 @@ export type TrackedVideoRow = {
   title: string | null;
   thumbnail_url: string | null;
   resolved_at: string | null;
+  published_at: string | null;
 };
 
 type VideoAggregate = {

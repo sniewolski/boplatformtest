@@ -71,15 +71,18 @@ Deno.serve(async (req) => {
     const lastUpdated = row?.views_updated_at
       ? Date.parse(row.views_updated_at)
       : null;
+    // Also refetch when published_at is missing (lazy backfill), even if the
+    // view_count is still fresh. Failure-safe: any problem leaves the row as-is.
     const isFresh =
       row?.view_count != null &&
       lastUpdated != null &&
-      Date.now() - lastUpdated < VIEWS_TTL_MS;
+      Date.now() - lastUpdated < VIEWS_TTL_MS &&
+      row?.published_at != null;
     if (isFresh) return row;
 
     try {
       const apiUrl =
-        `https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${encodeURIComponent(videoId)}&key=${encodeURIComponent(YOUTUBE_DATA_API_KEY)}`;
+        `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${encodeURIComponent(videoId)}&key=${encodeURIComponent(YOUTUBE_DATA_API_KEY)}`;
       const apiRes = await fetch(apiUrl);
       console.log("[views] youtube api status", apiRes.status);
       if (!apiRes.ok) {
@@ -104,6 +107,14 @@ Deno.serve(async (req) => {
       }
       console.log("[views] resolved", videoId, parsed);
 
+      // snippet.publishedAt is best-effort: absent/invalid -> leave null.
+      const rawPublished = items[0]?.snippet?.publishedAt;
+      const publishedAt =
+        typeof rawPublished === "string" &&
+        !Number.isNaN(Date.parse(rawPublished))
+          ? new Date(rawPublished).toISOString()
+          : null;
+
       const patchRes = await fetch(
         `${restBase}?video_id=eq.${encodeURIComponent(videoId)}`,
         {
@@ -116,6 +127,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             view_count: parsed,
             views_updated_at: new Date().toISOString(),
+            ...(publishedAt ? { published_at: publishedAt } : {}),
           }),
         },
       );
@@ -125,7 +137,12 @@ Deno.serve(async (req) => {
       }
       const patched = (await patchRes.json()) as any[];
       if (Array.isArray(patched) && patched.length > 0) return patched[0];
-      return { ...row, view_count: parsed, views_updated_at: new Date().toISOString() };
+      return {
+        ...row,
+        view_count: parsed,
+        views_updated_at: new Date().toISOString(),
+        ...(publishedAt ? { published_at: publishedAt } : {}),
+      };
     } catch (err) {
       console.error("[views] threw", String(err));
       return row;

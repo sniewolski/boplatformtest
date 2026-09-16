@@ -15,6 +15,13 @@
       "when": 1789473189329,
       "tag": "0001_watch_first_images_storage_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789554399252,
+      "tag": "0002_add_published_at_to_tracked_videos",
+      "breakpoints": true
     }
   ]
 }
