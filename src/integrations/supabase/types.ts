@@ -867,6 +867,7 @@ export type Database = {
       tracked_videos: {
         Row: {
           first_seen_at: string
+          published_at: string | null
           resolved_at: string | null
           thumbnail_url: string | null
           title: string | null
@@ -876,6 +877,7 @@ export type Database = {
         }
         Insert: {
           first_seen_at?: string
+          published_at?: string | null
           resolved_at?: string | null
           thumbnail_url?: string | null
           title?: string | null
@@ -885,6 +887,7 @@ export type Database = {
         }
         Update: {
           first_seen_at?: string
+          published_at?: string | null
           resolved_at?: string | null
           thumbnail_url?: string | null
           title?: string | null

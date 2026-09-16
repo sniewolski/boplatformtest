@@ -1,0 +1,1 @@
+ALTER TABLE public.tracked_videos ADD COLUMN published_at timestamptz;
