@@ -286,6 +286,12 @@ export function AppShell({
   async function handleSignOut() {
     await queryClient.cancelQueries();
     queryClient.clear();
+    // Drop the activity session id so the next login mints a fresh one.
+    try {
+      sessionStorage.removeItem("activity_session_id");
+    } catch {
+      // storage failures must not block sign-out
+    }
     await supabase.auth.signOut();
     router.navigate({ to: "/login", replace: true });
   }
