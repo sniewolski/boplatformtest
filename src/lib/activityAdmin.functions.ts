@@ -10,6 +10,13 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 /**
+ * A session_id lives in sessionStorage and can persist across days, so rows
+ * sharing one id may cover unrelated visits. On read we split each id's rows
+ * into sub-sessions whenever they go quiet for longer than this.
+ */
+const SESSION_GAP_SECONDS = 30 * 60;
+
+/**
  * Strict admin gate. Uses the caller's own RLS-bound client and the
  * `has_role(_user_id, _role)` security-definer function against
  * `user_roles` — the same source of truth behind `useIsAdmin()`.
@@ -32,6 +39,8 @@ export type ActivityTimelineEvent = {
 };
 
 export type ActivitySession = {
+  /** Stable unique key: `${session_id}#${n}` — session_id alone is not unique. */
+  key: string;
   session_id: string;
   startedAt: string;
   lastActiveAt: string;
@@ -92,58 +101,78 @@ export const getActivityForOwner = createServerFn({ method: "GET" })
     }
 
     const bySession = new Map<string, Row[]>();
-    const distinctIps = new Set<string>();
     for (const row of all) {
-      if (row.ip) distinctIps.add(row.ip);
       const arr = bySession.get(row.session_id) ?? [];
       arr.push(row);
       bySession.set(row.session_id, arr);
     }
 
     const sessions: ActivitySession[] = [];
-    for (const [sessionId, events] of bySession) {
-      // rows arrive ascending from the query, so first/last are earliest/latest
-      const first = events[0]!;
-      const last = events[events.length - 1]!;
-      const login = events.find((e) => e.event_type === "login");
-
-      const startedAt = login?.created_at ?? first.created_at;
-      const lastActiveAt = last.created_at;
-      const durationSeconds = Math.max(
-        0,
-        Math.round(
-          (new Date(lastActiveAt).getTime() - new Date(startedAt).getTime()) /
-            1000,
-        ),
-      );
-
-      const sessionIps: string[] = [];
-      for (const e of events) {
-        if (e.ip && !sessionIps.includes(e.ip)) sessionIps.push(e.ip);
+    for (const [sessionId, rows] of bySession) {
+      // rows arrive ascending from the query; split on inactivity gaps so that
+      // unrelated visits sharing one session_id don't weld into one row.
+      const chunks: Row[][] = [];
+      let current: Row[] = [];
+      for (const row of rows) {
+        const previous = current[current.length - 1];
+        if (
+          previous &&
+          (new Date(row.created_at).getTime() -
+            new Date(previous.created_at).getTime()) /
+            1000 >
+            SESSION_GAP_SECONDS
+        ) {
+          chunks.push(current);
+          current = [];
+        }
+        current.push(row);
       }
-      const primaryIp = login?.ip ?? sessionIps[0] ?? null;
+      if (current.length > 0) chunks.push(current);
 
-      const timeline: ActivityTimelineEvent[] = events
-        .filter((e) => e.event_type !== "heartbeat")
-        .map((e) => ({
-          type: e.event_type as ActivityEventType,
-          at: e.created_at,
-          meta: e.metadata ?? null,
-        }));
+      chunks.forEach((events, index) => {
+        const first = events[0]!;
+        const last = events[events.length - 1]!;
+        const login = events.find((e) => e.event_type === "login");
 
-      sessions.push({
-        session_id: sessionId,
-        startedAt,
-        lastActiveAt,
-        durationSeconds,
-        ip: primaryIp,
-        ...(sessionIps.length > 1 ? { ipList: sessionIps } : {}),
-        events: timeline,
-        resourceOpenCount: events.filter(
-          (e) => e.event_type === "resource_open",
-        ).length,
-        toolViewCount: events.filter((e) => e.event_type === "tool_view")
-          .length,
+        const startedAt = login?.created_at ?? first.created_at;
+        const lastActiveAt = last.created_at;
+        const durationSeconds = Math.max(
+          0,
+          Math.round(
+            (new Date(lastActiveAt).getTime() - new Date(startedAt).getTime()) /
+              1000,
+          ),
+        );
+
+        const sessionIps: string[] = [];
+        for (const e of events) {
+          if (e.ip && !sessionIps.includes(e.ip)) sessionIps.push(e.ip);
+        }
+        const primaryIp = login?.ip ?? sessionIps[0] ?? null;
+
+        const timeline: ActivityTimelineEvent[] = events
+          .filter((e) => e.event_type !== "heartbeat")
+          .map((e) => ({
+            type: e.event_type as ActivityEventType,
+            at: e.created_at,
+            meta: e.metadata ?? null,
+          }));
+
+        sessions.push({
+          key: `${sessionId}#${index}`,
+          session_id: sessionId,
+          startedAt,
+          lastActiveAt,
+          durationSeconds,
+          ip: primaryIp,
+          ...(sessionIps.length > 1 ? { ipList: sessionIps } : {}),
+          events: timeline,
+          resourceOpenCount: events.filter(
+            (e) => e.event_type === "resource_open",
+          ).length,
+          toolViewCount: events.filter((e) => e.event_type === "tool_view")
+            .length,
+        });
       });
     }
 
@@ -155,6 +184,12 @@ export const getActivityForOwner = createServerFn({ method: "GET" })
       if (!acc) return s.lastActiveAt;
       return new Date(s.lastActiveAt) > new Date(acc) ? s.lastActiveAt : acc;
     }, null);
+
+    // Summary is derived from the split sub-sessions, not the raw grouping.
+    const distinctIps = new Set<string>();
+    for (const s of sessions) {
+      for (const ip of s.ipList ?? (s.ip ? [s.ip] : [])) distinctIps.add(ip);
+    }
 
     return {
       summary: {

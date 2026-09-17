@@ -59,14 +59,12 @@ export function OwnerActivityDetail({ ownerId }: { ownerId: string }) {
             </div>
             {data!.sessions.map((session) => (
               <SessionRow
-                key={session.session_id}
+                key={session.key}
                 session={session}
                 longest={longest}
-                open={openId === session.session_id}
+                open={openId === session.key}
                 onToggle={() =>
-                  setOpenId((cur) =>
-                    cur === session.session_id ? null : session.session_id,
-                  )
+                  setOpenId((cur) => (cur === session.key ? null : session.key))
                 }
               />
             ))}
