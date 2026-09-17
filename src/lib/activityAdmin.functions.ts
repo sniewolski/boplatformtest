@@ -17,6 +17,14 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const SESSION_GAP_SECONDS = 30 * 60;
 
 /**
+ * Sub-sessions shorter than this that contain no real events (no logins,
+ * no tool views, no resource opens — heartbeats only) are pure background
+ * noise and are dropped on read. Anything under 3 minutes that DID touch
+ * something is kept; anything over 3 minutes is kept regardless.
+ */
+const MIN_EMPTY_SESSION_SECONDS = 180;
+
+/**
  * Strict admin gate. Uses the caller's own RLS-bound client and the
  * `has_role(_user_id, _role)` security-definer function against
  * `user_roles` — the same source of truth behind `useIsAdmin()`.
