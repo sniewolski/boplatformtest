@@ -120,6 +120,33 @@ export function OwnerAuditDetail({ ownerId }: { ownerId: string }) {
         </div>
       )}
 
+      {audits.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <span className="text-xs text-ink-muted">Audit</span>
+          {audits.length === 1 ? (
+            <span className="text-sm font-medium">
+              {auditLabel(audits[0])}
+            </span>
+          ) : (
+            <Select
+              value={auditId ?? undefined}
+              onValueChange={(v) => setSelectedAuditId(v)}
+            >
+              <SelectTrigger className="w-full sm:max-w-md">
+                <SelectValue placeholder="Select an audit" />
+              </SelectTrigger>
+              <SelectContent>
+                {audits.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {auditLabel(a)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+      )}
+
       <nav
         role="tablist"
         aria-label="Audit sections"
