@@ -460,6 +460,45 @@ export type Database = {
         }
         Relationships: []
       }
+      resources: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          file_name: string
+          file_path: string
+          file_size: number
+          id: string
+          title: string
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number
+          id?: string
+          title: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          id?: string
+          title?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
       respondent_sessions: {
         Row: {
           completed_at: string | null
