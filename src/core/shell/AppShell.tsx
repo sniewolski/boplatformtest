@@ -28,6 +28,13 @@ const NAV_GROUPS: { key: string; label: string }[] = [
   { key: "resources", label: "Workspace" },
 ];
 
+/** How often an active, visible tab records a heartbeat. */
+const HEARTBEAT_INTERVAL_MS = 60_000;
+/** No interaction for this long and heartbeats stop until the user returns. */
+const IDLE_TIMEOUT_MS = 5 * 60_000;
+/** Pointer movement only refreshes the idle clock this often. */
+const MOVE_THROTTLE_MS = 1_000;
+
 
 
 
@@ -52,10 +59,10 @@ export function AppShell({
   const willAiPausedForOwner =
     willAiSettings?.owner_access_enabled === false && !isAdmin;
 
-  // Background activity heartbeat: log every 60s while the shell is mounted.
+  // Background activity heartbeat: beats every 60s while the shell is mounted,
+  // the tab is visible, and the user has interacted within IDLE_TIMEOUT_MS.
   useEffect(() => {
     const SESSION_KEY = "activity_session_id";
-    const HEARTBEAT_INTERVAL = 60000;
 
     let sessionId = sessionStorage.getItem(SESSION_KEY);
     if (!sessionId) {
@@ -67,13 +74,86 @@ export function AppShell({
       }
     }
 
-    const beat = () => {
-      logEvent({ data: { session_id: sessionId, event_type: "heartbeat" } }).catch(() => {});
+    // Refs only — interaction tracking must never trigger a re-render.
+    const lastInteractionRef = { current: Date.now() };
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+
+    const send = () => {
+      logEvent({
+        data: { session_id: sessionId, event_type: "heartbeat" },
+      }).catch(() => {});
     };
 
-    beat();
-    const intervalId = setInterval(beat, HEARTBEAT_INTERVAL);
-    return () => clearInterval(intervalId);
+    const isIdle = () => Date.now() - lastInteractionRef.current > IDLE_TIMEOUT_MS;
+
+    const tick = () => {
+      if (document.visibilityState !== "visible") return;
+      if (isIdle()) return;
+      send();
+    };
+
+    const startBeating = () => {
+      if (intervalId !== null) return;
+      tick();
+      intervalId = setInterval(tick, HEARTBEAT_INTERVAL_MS);
+    };
+
+    const stopBeating = () => {
+      if (intervalId === null) return;
+      clearInterval(intervalId);
+      intervalId = null;
+    };
+
+    // Any interaction refreshes the idle clock and, if we had gone quiet
+    // through idleness, resumes beating immediately.
+    const markInteraction = () => {
+      const wasIdle = isIdle();
+      lastInteractionRef.current = Date.now();
+      if (wasIdle && document.visibilityState === "visible") {
+        stopBeating();
+        startBeating();
+      }
+    };
+
+    // Pointer movement is throttled so we never touch state or the network
+    // on every move — it only refreshes the timestamp at most once a second.
+    let lastMoveAt = 0;
+    const onPointerMove = () => {
+      const now = Date.now();
+      if (now - lastMoveAt < MOVE_THROTTLE_MS) return;
+      lastMoveAt = now;
+      markInteraction();
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        startBeating();
+      } else {
+        stopBeating();
+      }
+    };
+
+    document.addEventListener("pointerdown", markInteraction, { passive: true });
+    document.addEventListener("keydown", markInteraction, { passive: true });
+    document.addEventListener("scroll", markInteraction, {
+      passive: true,
+      capture: true,
+    });
+    document.addEventListener("pointermove", onPointerMove, { passive: true });
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    if (document.visibilityState === "visible") startBeating();
+
+    return () => {
+      stopBeating();
+      document.removeEventListener("pointerdown", markInteraction);
+      document.removeEventListener("keydown", markInteraction);
+      document.removeEventListener("scroll", markInteraction, {
+        capture: true,
+      } as EventListenerOptions);
+      document.removeEventListener("pointermove", onPointerMove);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, [logEvent]);
 
   useEffect(() => {
@@ -206,6 +286,12 @@ export function AppShell({
   async function handleSignOut() {
     await queryClient.cancelQueries();
     queryClient.clear();
+    // Drop the activity session id so the next login mints a fresh one.
+    try {
+      sessionStorage.removeItem("activity_session_id");
+    } catch {
+      // storage failures must not block sign-out
+    }
     await supabase.auth.signOut();
     router.navigate({ to: "/login", replace: true });
   }
