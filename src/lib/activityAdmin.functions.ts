@@ -10,6 +10,13 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 /**
+ * A session_id lives in sessionStorage and can persist across days, so rows
+ * sharing one id may cover unrelated visits. On read we split each id's rows
+ * into sub-sessions whenever they go quiet for longer than this.
+ */
+const SESSION_GAP_SECONDS = 30 * 60;
+
+/**
  * Strict admin gate. Uses the caller's own RLS-bound client and the
  * `has_role(_user_id, _role)` security-definer function against
  * `user_roles` — the same source of truth behind `useIsAdmin()`.
@@ -32,6 +39,8 @@ export type ActivityTimelineEvent = {
 };
 
 export type ActivitySession = {
+  /** Stable unique key: `${session_id}#${n}` — session_id alone is not unique. */
+  key: string;
   session_id: string;
   startedAt: string;
   lastActiveAt: string;
