@@ -36,6 +36,7 @@ import { Route as AuthenticatedAppAdminReviewRouteImport } from './routes/_authe
 import { Route as AuthenticatedAppAdminResourcesRouteImport } from './routes/_authenticated/app.admin.resources'
 import { Route as AuthenticatedAppAdminSopsIndexRouteImport } from './routes/_authenticated/app.admin.sops.index'
 import { Route as AuthenticatedAppAdminReviewIndexRouteImport } from './routes/_authenticated/app.admin.review.index'
+import { Route as AuthenticatedAppAdminResourcesIndexRouteImport } from './routes/_authenticated/app.admin.resources.index'
 import { Route as AuthenticatedAppToolsKeySplatRouteImport } from './routes/_authenticated/app.tools.$key.$'
 import { Route as AuthenticatedAppAdminReviewOwnerIdRouteImport } from './routes/_authenticated/app.admin.review.$ownerId'
 
@@ -185,6 +186,12 @@ const AuthenticatedAppAdminReviewIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedAppAdminReviewRoute,
   } as any)
+const AuthenticatedAppAdminResourcesIndexRoute =
+  AuthenticatedAppAdminResourcesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAppAdminResourcesRoute,
+  } as any)
 const AuthenticatedAppToolsKeySplatRoute =
   AuthenticatedAppToolsKeySplatRouteImport.update({
     id: '/app/tools/$key/$',
@@ -208,7 +215,7 @@ export interface FileRoutesByFullPath {
   '/r/$token/$': typeof RTokenSplatRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/r/$token/': typeof RTokenIndexRoute
-  '/app/admin/resources': typeof AuthenticatedAppAdminResourcesRoute
+  '/app/admin/resources': typeof AuthenticatedAppAdminResourcesRouteWithChildren
   '/app/admin/review': typeof AuthenticatedAppAdminReviewRouteWithChildren
   '/app/admin/sops': typeof AuthenticatedAppAdminSopsRouteWithChildren
   '/app/admin/tracker': typeof AuthenticatedAppAdminTrackerRoute
@@ -225,6 +232,7 @@ export interface FileRoutesByFullPath {
   '/app/admin/': typeof AuthenticatedAppAdminIndexRoute
   '/app/admin/review/$ownerId': typeof AuthenticatedAppAdminReviewOwnerIdRoute
   '/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
+  '/app/admin/resources/': typeof AuthenticatedAppAdminResourcesIndexRoute
   '/app/admin/review/': typeof AuthenticatedAppAdminReviewIndexRoute
   '/app/admin/sops/': typeof AuthenticatedAppAdminSopsIndexRoute
 }
@@ -236,7 +244,6 @@ export interface FileRoutesByTo {
   '/r/$token/$': typeof RTokenSplatRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/r/$token': typeof RTokenIndexRoute
-  '/app/admin/resources': typeof AuthenticatedAppAdminResourcesRoute
   '/app/admin/tracker': typeof AuthenticatedAppAdminTrackerRoute
   '/app/admin/watch-first': typeof AuthenticatedAppAdminWatchFirstRoute
   '/app/admin/will-ai': typeof AuthenticatedAppAdminWillAiRoute
@@ -251,6 +258,7 @@ export interface FileRoutesByTo {
   '/app/admin': typeof AuthenticatedAppAdminIndexRoute
   '/app/admin/review/$ownerId': typeof AuthenticatedAppAdminReviewOwnerIdRoute
   '/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
+  '/app/admin/resources': typeof AuthenticatedAppAdminResourcesIndexRoute
   '/app/admin/review': typeof AuthenticatedAppAdminReviewIndexRoute
   '/app/admin/sops': typeof AuthenticatedAppAdminSopsIndexRoute
 }
@@ -266,7 +274,7 @@ export interface FileRoutesById {
   '/r/$token/$': typeof RTokenSplatRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/r/$token/': typeof RTokenIndexRoute
-  '/_authenticated/app/admin/resources': typeof AuthenticatedAppAdminResourcesRoute
+  '/_authenticated/app/admin/resources': typeof AuthenticatedAppAdminResourcesRouteWithChildren
   '/_authenticated/app/admin/review': typeof AuthenticatedAppAdminReviewRouteWithChildren
   '/_authenticated/app/admin/sops': typeof AuthenticatedAppAdminSopsRouteWithChildren
   '/_authenticated/app/admin/tracker': typeof AuthenticatedAppAdminTrackerRoute
@@ -283,6 +291,7 @@ export interface FileRoutesById {
   '/_authenticated/app/admin/': typeof AuthenticatedAppAdminIndexRoute
   '/_authenticated/app/admin/review/$ownerId': typeof AuthenticatedAppAdminReviewOwnerIdRoute
   '/_authenticated/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
+  '/_authenticated/app/admin/resources/': typeof AuthenticatedAppAdminResourcesIndexRoute
   '/_authenticated/app/admin/review/': typeof AuthenticatedAppAdminReviewIndexRoute
   '/_authenticated/app/admin/sops/': typeof AuthenticatedAppAdminSopsIndexRoute
 }
@@ -315,6 +324,7 @@ export interface FileRouteTypes {
     | '/app/admin/'
     | '/app/admin/review/$ownerId'
     | '/app/tools/$key/$'
+    | '/app/admin/resources/'
     | '/app/admin/review/'
     | '/app/admin/sops/'
   fileRoutesByTo: FileRoutesByTo
@@ -326,7 +336,6 @@ export interface FileRouteTypes {
     | '/r/$token/$'
     | '/app'
     | '/r/$token'
-    | '/app/admin/resources'
     | '/app/admin/tracker'
     | '/app/admin/watch-first'
     | '/app/admin/will-ai'
@@ -341,6 +350,7 @@ export interface FileRouteTypes {
     | '/app/admin'
     | '/app/admin/review/$ownerId'
     | '/app/tools/$key/$'
+    | '/app/admin/resources'
     | '/app/admin/review'
     | '/app/admin/sops'
   id:
@@ -372,6 +382,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/admin/'
     | '/_authenticated/app/admin/review/$ownerId'
     | '/_authenticated/app/tools/$key/$'
+    | '/_authenticated/app/admin/resources/'
     | '/_authenticated/app/admin/review/'
     | '/_authenticated/app/admin/sops/'
   fileRoutesById: FileRoutesById
@@ -582,6 +593,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAdminReviewIndexRouteImport
       parentRoute: typeof AuthenticatedAppAdminReviewRoute
     }
+    '/_authenticated/app/admin/resources/': {
+      id: '/_authenticated/app/admin/resources/'
+      path: '/'
+      fullPath: '/app/admin/resources/'
+      preLoaderRoute: typeof AuthenticatedAppAdminResourcesIndexRouteImport
+      parentRoute: typeof AuthenticatedAppAdminResourcesRoute
+    }
     '/_authenticated/app/tools/$key/$': {
       id: '/_authenticated/app/tools/$key/$'
       path: '/app/tools/$key/$'
@@ -598,6 +616,21 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AuthenticatedAppAdminResourcesRouteChildren {
+  AuthenticatedAppAdminResourcesIndexRoute: typeof AuthenticatedAppAdminResourcesIndexRoute
+}
+
+const AuthenticatedAppAdminResourcesRouteChildren: AuthenticatedAppAdminResourcesRouteChildren =
+  {
+    AuthenticatedAppAdminResourcesIndexRoute:
+      AuthenticatedAppAdminResourcesIndexRoute,
+  }
+
+const AuthenticatedAppAdminResourcesRouteWithChildren =
+  AuthenticatedAppAdminResourcesRoute._addFileChildren(
+    AuthenticatedAppAdminResourcesRouteChildren,
+  )
 
 interface AuthenticatedAppAdminReviewRouteChildren {
   AuthenticatedAppAdminReviewOwnerIdRoute: typeof AuthenticatedAppAdminReviewOwnerIdRoute
@@ -632,7 +665,7 @@ const AuthenticatedAppAdminSopsRouteWithChildren =
   )
 
 interface AuthenticatedAppAdminRouteChildren {
-  AuthenticatedAppAdminResourcesRoute: typeof AuthenticatedAppAdminResourcesRoute
+  AuthenticatedAppAdminResourcesRoute: typeof AuthenticatedAppAdminResourcesRouteWithChildren
   AuthenticatedAppAdminReviewRoute: typeof AuthenticatedAppAdminReviewRouteWithChildren
   AuthenticatedAppAdminSopsRoute: typeof AuthenticatedAppAdminSopsRouteWithChildren
   AuthenticatedAppAdminTrackerRoute: typeof AuthenticatedAppAdminTrackerRoute
@@ -642,7 +675,8 @@ interface AuthenticatedAppAdminRouteChildren {
 }
 
 const AuthenticatedAppAdminRouteChildren: AuthenticatedAppAdminRouteChildren = {
-  AuthenticatedAppAdminResourcesRoute: AuthenticatedAppAdminResourcesRoute,
+  AuthenticatedAppAdminResourcesRoute:
+    AuthenticatedAppAdminResourcesRouteWithChildren,
   AuthenticatedAppAdminReviewRoute:
     AuthenticatedAppAdminReviewRouteWithChildren,
   AuthenticatedAppAdminSopsRoute: AuthenticatedAppAdminSopsRouteWithChildren,
