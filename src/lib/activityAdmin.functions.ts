@@ -184,32 +184,49 @@ export const getActivityForOwner = createServerFn({ method: "GET" })
       });
     }
 
-    sessions.sort(
+    // Drop empty micro-sessions: under MIN_EMPTY_SESSION_SECONDS AND no real
+    // events (heartbeat-only background noise). Filtering only — the raw
+    // activity_events rows are untouched.
+    const beforeFilterCount = sessions.length;
+    const filtered = sessions.filter(
+      (s) =>
+        s.durationSeconds >= MIN_EMPTY_SESSION_SECONDS || s.events.length > 0,
+    );
+    const filteredOut = beforeFilterCount - filtered.length;
+
+    filtered.sort(
       (a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
     );
 
-    const lastSeenAt = sessions.reduce<string | null>((acc, s) => {
+    const lastSeenAt = filtered.reduce<string | null>((acc, s) => {
       if (!acc) return s.lastActiveAt;
       return new Date(s.lastActiveAt) > new Date(acc) ? s.lastActiveAt : acc;
     }, null);
 
-    // Summary is derived from the split sub-sessions, not the raw grouping.
+    // Summary is derived from the filtered sub-sessions, so the header
+    // matches exactly what is rendered.
     const distinctIps = new Set<string>();
-    for (const s of sessions) {
+    for (const s of filtered) {
       for (const ip of s.ipList ?? (s.ip ? [s.ip] : [])) distinctIps.add(ip);
+    }
+
+    if (filteredOut > 0) {
+      console.info(
+        `[activityAdmin] filtered ${filteredOut} empty micro-session(s) (<${MIN_EMPTY_SESSION_SECONDS}s, no real events)`,
+      );
     }
 
     return {
       summary: {
-        totalSessions: sessions.length,
-        totalDurationSeconds: sessions.reduce(
+        totalSessions: filtered.length,
+        totalDurationSeconds: filtered.reduce(
           (sum, s) => sum + s.durationSeconds,
           0,
         ),
         lastSeenAt,
         distinctIpCount: distinctIps.size,
       },
-      sessions,
+      sessions: filtered,
     };
   });
 
