@@ -28,6 +28,13 @@ const NAV_GROUPS: { key: string; label: string }[] = [
   { key: "resources", label: "Workspace" },
 ];
 
+/** How often an active, visible tab records a heartbeat. */
+const HEARTBEAT_INTERVAL_MS = 60_000;
+/** No interaction for this long and heartbeats stop until the user returns. */
+const IDLE_TIMEOUT_MS = 5 * 60_000;
+/** Pointer movement only refreshes the idle clock this often. */
+const MOVE_THROTTLE_MS = 1_000;
+
 
 
 
