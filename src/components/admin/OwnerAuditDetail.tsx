@@ -40,6 +40,18 @@ const SECTION_TABS = [
 
 type TabKey = (typeof SECTION_TABS)[number]["key"];
 
+type AuditRow = { id: string; name: string | null; created_at: string };
+
+function auditLabel(audit: AuditRow): string {
+  const name = audit.name?.trim();
+  const date = new Date(audit.created_at).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  return `${name || "Untitled audit"} · ${date}`;
+}
+
 export function OwnerAuditDetail({ ownerId }: { ownerId: string }) {
   const [tab, setTab] = useState<TabKey>("conversion");
   const isAdmin = useIsAdmin();
