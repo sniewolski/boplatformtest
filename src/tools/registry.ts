@@ -17,6 +17,7 @@ import type { AnyRoute } from "@tanstack/react-router";
 import { sellingSystemsAuditManifest } from "./selling-systems-audit/manifest";
 import { salescodeManifest } from "./salescode/manifest";
 import { sopsManifest } from "./sops/manifest";
+import { resourcesManifest } from "./resources/manifest";
 import { willAiManifest } from "./will-ai/manifest";
 import { dailyLogManifest } from "./daily-log/manifest";
 import { watchFirstManifest } from "./watch-first/manifest";
@@ -56,5 +57,6 @@ export const toolRegistry: ToolManifest[] = [
   sellingSystemsAuditManifest,
   salescodeManifest,
   sopsManifest,
+  resourcesManifest,
   willAiManifest,
 ];

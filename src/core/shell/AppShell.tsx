@@ -25,7 +25,7 @@ type NavItem = {
 
 const NAV_GROUPS: { key: string; label: string }[] = [
   { key: "coaching", label: "Onboarding" },
-  { key: "resources", label: "Resources" },
+  { key: "resources", label: "Workspace" },
 ];
 
 
