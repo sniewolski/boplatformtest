@@ -37,25 +37,32 @@ export function OwnerAuditDetail({ ownerId }: { ownerId: string }) {
   const [tab, setTab] = useState<TabKey>("conversion");
   const isAdmin = useIsAdmin();
 
-  /**
-   * SINGLE RESOLUTION POINT for the selected audit. Exactly one audit per
-   * owner today; Phase 3 replaces this with an audit selector. Every section
-   * tab, the content tab and the export trigger read the auditId from here.
-   */
+  /** SINGLE RESOLUTION POINT for the selected audit. Every section tab, the
+   * content tab and the export trigger read the auditId from here. */
   const auditsQ = useQuery({
     queryKey: ["admin-audit", "audits", ownerId],
     enabled: !!ownerId,
-    queryFn: async (): Promise<{ id: string }[]> => {
+    queryFn: async (): Promise<
+      { id: string; name: string | null; created_at: string }[]
+    > => {
       const { data, error } = await supabase
         .from("audits")
-        .select("id")
+        .select("id, name, created_at")
         .eq("owner_id", ownerId)
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as { id: string }[];
+      return (data ?? []) as { id: string; name: string | null; created_at: string }[];
     },
   });
-  const auditId = auditsQ.data?.[0]?.id ?? null;
+  const audits = auditsQ.data ?? [];
+
+  // Defaults to the newest audit (first row); falls back whenever the
+  // selected id no longer exists (owner switch, refetch).
+  const [selectedAuditId, setSelectedAuditId] = useState<string | null>(null);
+  const auditId =
+    selectedAuditId && audits.some((a) => a.id === selectedAuditId)
+      ? selectedAuditId
+      : audits[0]?.id ?? null;
 
   const fetchExport = useServerFn(getAuditExportData);
   const exportMut = useMutation({
