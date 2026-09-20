@@ -101,11 +101,14 @@ function LeadAuditsList() {
         {filtered.length > 0 && (
           <ul className="flex flex-col divide-y divide-border border border-border rounded-xl">
             {filtered.map((row) => (
-              <li key={row.sessionId}>
+              <li
+                key={row.sessionId}
+                className="flex items-center gap-2 pr-3 hover:bg-[var(--surface-raised)] transition-colors"
+              >
                 <Link
                   to="/app/admin/lead-audits/$sessionId"
                   params={{ sessionId: row.sessionId }}
-                  className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-[var(--surface-raised)] transition-colors"
+                  className="flex flex-1 min-w-0 items-center justify-between gap-4 px-5 py-4"
                 >
                   <div className="flex flex-col min-w-0">
                     <span className="text-ink text-sm truncate">
