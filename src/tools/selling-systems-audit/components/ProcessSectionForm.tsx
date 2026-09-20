@@ -228,7 +228,7 @@ export function SalesProcess({ auditId }: { auditId: string }) {
                 tools={tools}
                 hasSubmitted={hasSubmitted}
                 hasUnsubmittedChanges={hasUnsubmittedChanges}
-                submitting={submit.isPending}
+                submitting={isSubmitting}
                 onSubmit={handleSubmit}
                 error={submitError}
                 submitLabel={submitLabel}
