@@ -153,7 +153,7 @@ function FreeAuditStart() {
             className="h-12 rounded-xl px-4"
           />
           <p id="free-audit-email-note" className="text-sm text-ink-muted">
-            We need your name and email so we can send your 30-day plan if you're chosen.
+             We need your name and email to know where to send your 30-day plan.
           </p>
           <p id="free-audit-email-error" className="min-h-5 text-sm text-ink-muted" aria-live="polite">
             {errors.email ?? ""}
