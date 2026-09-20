@@ -261,8 +261,7 @@ export function ConversionReview({ auditId }: { auditId: string }) {
     };
   }, [flushSave]);
 
-  const isReceived =
-    !!intake?.submitted_at && !intake.has_unsubmitted_changes && !editingAfterSubmit;
+  const isReceived = !!submittedAt && !hasUnsubmittedChanges && !editingAfterSubmit;
   const needsCurrency = !currencyLoading && !currency;
   const validation = useMemo(() => validateInputs(foundation), [foundation]);
 
