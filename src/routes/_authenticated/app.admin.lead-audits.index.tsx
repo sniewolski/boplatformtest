@@ -133,11 +133,34 @@ function LeadAuditsList() {
                     <span className="text-ink-muted text-xs">Open →</span>
                   </div>
                 </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    deleteMut.reset();
+                    setTarget(row);
+                  }}
+                  aria-label={`Delete lead audit for ${row.name?.trim() || row.email || "this person"}`}
+                  className="shrink-0 rounded-lg p-2 text-ink-muted hover:text-[var(--red)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <Trash2 className="size-4" aria-hidden />
+                </button>
               </li>
             ))}
           </ul>
         )}
       </section>
+
+      <DeleteLeadAuditDialog
+        open={!!target}
+        onOpenChange={(open) => {
+          if (!open && !deleteMut.isPending) setTarget(null);
+        }}
+        name={target?.name ?? null}
+        email={target?.email ?? null}
+        isPending={deleteMut.isPending}
+        error={deleteMut.error ? (deleteMut.error as Error).message : null}
+        onConfirm={() => target && deleteMut.mutate(target.sessionId)}
+      />
     </div>
   );
 }
