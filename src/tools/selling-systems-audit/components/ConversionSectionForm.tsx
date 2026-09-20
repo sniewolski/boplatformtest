@@ -287,7 +287,7 @@ export function ConversionReview({ auditId }: { auditId: string }) {
       return;
     }
     try {
-      await submit.mutateAsync({ draft: currentDraft });
+      await submitSection(currentDraft);
       lastSavedRef.current = JSON.stringify(currentDraft);
       setSaveState("saved");
       setEditingAfterSubmit(false);
