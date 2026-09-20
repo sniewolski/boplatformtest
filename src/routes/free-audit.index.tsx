@@ -2,10 +2,12 @@ import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PublicAuditLayout } from "@/components/free-audit/PublicAuditLayout";
 import {
+  LEAD_AUDIT_CONSENT_LABEL,
   readStoredLeadAuditToken,
   storeLeadAuditToken,
 } from "@/lib/auditLeadPublic";
@@ -32,7 +34,12 @@ export const Route = createFileRoute("/free-audit/")({
   component: FreeAuditStart,
 });
 
-type FieldErrors = { name?: string; email?: string; form?: string };
+type FieldErrors = {
+  name?: string;
+  email?: string;
+  consent?: string;
+  form?: string;
+};
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
