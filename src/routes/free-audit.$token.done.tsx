@@ -25,7 +25,7 @@ function FreeAuditDone() {
         <div className="flex flex-col gap-4">
           <h1 className="text-3xl font-semibold sm:text-4xl">Thank you for completing the audit</h1>
           <p className="text-base text-ink-muted sm:text-lg">
-            We'll review every completed audit. One person will be chosen and sent a personalised 30-day plan by email.
+            Your audit is complete. Will reviews every submission personally, and one person will be selected to receive a full 30-day revenue action plan by email. If your audit is the one selected, it will also be used in a public YouTube video.
           </p>
         </div>
         <Button asChild variant="outline" className="w-fit">
