@@ -45,9 +45,6 @@ export type LeadAuditRow = {
 };
 
 export type LeadAuditDetail = LeadAuditRow & {
-  /** Holding-account id; only used to satisfy the owner_id column on the
-   * admin-only summary/note upserts. Resolved server-side. */
-  holdingOwnerId: string;
   currency: string | null;
 };
 
@@ -135,8 +132,6 @@ export const getLeadAudit = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import(
       "@/integrations/supabase/client.server"
     );
-    const { getLeadHoldingUserId } = await import("@/lib/auditLead.server");
-
     const { data: row, error } = await supabaseAdmin
       .from("respondent_sessions")
       .select(
@@ -162,7 +157,50 @@ export const getLeadAudit = createServerFn({ method: "POST" })
       completedAt: ((row as any).completed_at as string | null) ?? null,
       auditId,
       completedSections: auditId ? (counts.get(auditId) ?? 0) : 0,
-      holdingOwnerId: await getLeadHoldingUserId(),
       currency: currencyOf((row as any).payload),
     };
+  });
+
+export const getLeadAuditExportData = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ sessionId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+
+    const { supabaseAdmin } = await import(
+      "@/integrations/supabase/client.server"
+    );
+    const { getLeadHoldingUserId } = await import("@/lib/auditLead.server");
+    const { loadAuditExportData } = await import(
+      "@/tools/selling-systems-audit/admin/auditExport.functions"
+    );
+
+    const { data: row, error } = await supabaseAdmin
+      .from("respondent_sessions")
+      .select("respondent_name, respondent_email, payload")
+      .eq("id", data.sessionId)
+      .eq("tool_key", LEAD_TOOL_KEY)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!row) throw new Error("Lead audit not found");
+
+    const auditId = auditIdOf((row as any).payload);
+    if (!auditId) throw new Error("This lead audit has no audit attached.");
+    const email = ((row as any).respondent_email as string | null)?.trim();
+    if (!email) throw new Error("This lead audit has no email address.");
+
+    return loadAuditExportData({
+      supabaseAdmin,
+      ownerId: await getLeadHoldingUserId(),
+      auditId,
+      identity: {
+        fullName: ((row as any).respondent_name as string | null) ?? null,
+        email,
+        currency: currencyOf((row as any).payload) as import("@/lib/format-currency").CurrencyCode | null,
+      },
+      includeInsights: false,
+      includeContent: false,
+    });
   });

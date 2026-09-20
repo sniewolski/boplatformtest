@@ -24,8 +24,9 @@ export function SectionAdminTab({
   sectionKey,
   sectionLabel,
   renderReadBack,
+  readBackOnly,
 }: {
-  ownerId: string;
+  ownerId?: string;
   auditId: string | null;
   sectionKey: AdminSectionKey;
   sectionLabel: string;
@@ -33,9 +34,10 @@ export function SectionAdminTab({
     answers: Record<string, unknown>,
     currency: CurrencyCode | null,
   ) => ReactNode;
+  readBackOnly?: { currency: CurrencyCode | null };
 }) {
   const submitted = useSubmittedAnswers(auditId, sectionKey);
-  const currencyQ = useOwnerCurrency(ownerId);
+  const currencyQ = useOwnerCurrency(readBackOnly ? undefined : ownerId);
 
   const answers = submitted.data?.submitted_answers ?? null;
   const submittedAt = submitted.data?.submitted_at ?? null;
@@ -44,12 +46,14 @@ export function SectionAdminTab({
 
   return (
     <div className="flex flex-col gap-8 max-w-3xl">
-      <SectionSummaryPanel
-        ownerId={ownerId}
-        auditId={auditId}
-        sectionKey={sectionKey}
-        hasSubmitted={hasSubmitted}
-      />
+      {!readBackOnly && ownerId && (
+        <SectionSummaryPanel
+          ownerId={ownerId}
+          auditId={auditId}
+          sectionKey={sectionKey}
+          hasSubmitted={hasSubmitted}
+        />
+      )}
 
       <section className="flex flex-col gap-4" aria-label="Submitted answers">
         <div className="flex items-baseline justify-between gap-3">
@@ -80,11 +84,13 @@ export function SectionAdminTab({
           answers &&
           renderReadBack(
             answers as Record<string, unknown>,
-            currencyQ.data ?? null,
+             readBackOnly?.currency ?? currencyQ.data ?? null,
           )}
       </section>
 
-      <SectionNotes ownerId={ownerId} auditId={auditId} sectionKey={sectionKey} />
+      {!readBackOnly && ownerId && (
+        <SectionNotes ownerId={ownerId} auditId={auditId} sectionKey={sectionKey} />
+      )}
     </div>
   );
 }
