@@ -1,9 +1,15 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
-import { listLeadAudits } from "@/lib/leadAudits.functions";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Trash2 } from "lucide-react";
+import {
+  deleteLeadAudit,
+  listLeadAudits,
+  type LeadAuditRow,
+} from "@/lib/leadAudits.functions";
 import { Input } from "@/components/ui/input";
+import { DeleteLeadAuditDialog } from "@/components/admin/DeleteLeadAuditDialog";
 
 export const Route = createFileRoute("/_authenticated/app/admin/lead-audits/")({
   component: LeadAuditsList,
