@@ -134,7 +134,7 @@ function FreeAuditHub() {
         <div className="flex flex-col gap-3">
           <p className="text-sm font-medium text-ink-muted">Selling Systems Audit</p>
           <h1 className="text-3xl font-semibold sm:text-4xl">Welcome, {firstName}</h1>
-          <p className="text-ink-muted">Work through each section in order, or return to any section later.</p>
+          <p className="text-ink-muted">Work through each section and submit your answers.</p>
         </div>
         <div className="flex flex-col gap-3" aria-label={`${completed} of 6 sections completed`}>
           <div className="flex items-baseline justify-between gap-4">
@@ -171,7 +171,7 @@ function FreeAuditHub() {
         <div className="flex flex-col gap-1">
           <h2 className="text-lg font-semibold">Your private link</h2>
           <p className="text-sm text-ink-muted">
-            Keep this link to return on another device. Anyone with it can open your audit.
+            Keep this link to return on another device.
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
