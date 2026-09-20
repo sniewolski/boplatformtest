@@ -171,6 +171,77 @@ export const getLeadAudit = createServerFn({ method: "POST" })
     };
   });
 
+/**
+ * Permanently delete one lead audit.
+ *
+ * The client sends only a sessionId. The session row is fetched with a hard
+ * `.eq("tool_key", LEAD_TOOL_KEY)` filter, so a session belonging to any other
+ * tool simply does not resolve and the function aborts before any delete runs.
+ * audit_id is read exclusively from that session's stored payload — no
+ * audit_id, owner_id or table name is ever accepted from the client.
+ */
+export const deleteLeadAudit = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ sessionId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }): Promise<{ ok: true }> => {
+    await assertAdmin(context.supabase, context.userId);
+
+    const { supabaseAdmin } = await import(
+      "@/integrations/supabase/client.server"
+    );
+
+    // Guard: only a session with tool_key = 'audit-lead' can resolve here.
+    const { data: row, error } = await supabaseAdmin
+      .from("respondent_sessions")
+      .select("id, tool_key, payload")
+      .eq("id", data.sessionId)
+      .eq("tool_key", LEAD_TOOL_KEY)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!row) throw new Error("Lead audit not found");
+    // Belt and braces: never proceed on anything but a lead session.
+    if ((row as any).tool_key !== LEAD_TOOL_KEY) {
+      throw new Error("Forbidden");
+    }
+
+    const auditId = auditIdOf((row as any).payload);
+
+    if (auditId) {
+      for (const table of SECTION_TABLES) {
+        const { error: sectionError } = await supabaseAdmin
+          .from(table as any)
+          .delete()
+          .eq("audit_id", auditId);
+        if (sectionError) throw new Error(sectionError.message);
+      }
+
+      for (const table of ["audit_section_summaries", "audit_section_notes"]) {
+        const { error: insightError } = await supabaseAdmin
+          .from(table as any)
+          .delete()
+          .eq("audit_id", auditId);
+        if (insightError) throw new Error(insightError.message);
+      }
+
+      const { error: auditError } = await supabaseAdmin
+        .from("audits")
+        .delete()
+        .eq("id", auditId);
+      if (auditError) throw new Error(auditError.message);
+    }
+
+    const { error: sessionError } = await supabaseAdmin
+      .from("respondent_sessions")
+      .delete()
+      .eq("id", data.sessionId)
+      .eq("tool_key", LEAD_TOOL_KEY);
+    if (sessionError) throw new Error(sessionError.message);
+
+    return { ok: true };
+  });
+
 export const getLeadAuditExportData = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
