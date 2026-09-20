@@ -52,6 +52,7 @@ import { Route as AuthenticatedAppAdminResourcesIndexRouteImport } from './route
 import { Route as AuthenticatedAppAdminLeadAuditsIndexRouteImport } from './routes/_authenticated/app.admin.lead-audits.index'
 import { Route as AuthenticatedAppToolsKeySplatRouteImport } from './routes/_authenticated/app.tools.$key.$'
 import { Route as AuthenticatedAppAdminReviewOwnerIdRouteImport } from './routes/_authenticated/app.admin.review.$ownerId'
+import { Route as AuthenticatedAppAdminLeadAuditsSessionIdRouteImport } from './routes/_authenticated/app.admin.lead-audits.$sessionId'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -288,6 +289,12 @@ const AuthenticatedAppAdminReviewOwnerIdRoute =
     path: '/$ownerId',
     getParentRoute: () => AuthenticatedAppAdminReviewRoute,
   } as any)
+const AuthenticatedAppAdminLeadAuditsSessionIdRoute =
+  AuthenticatedAppAdminLeadAuditsSessionIdRouteImport.update({
+    id: '/$sessionId',
+    path: '/$sessionId',
+    getParentRoute: () => AuthenticatedAppAdminLeadAuditsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -326,6 +333,7 @@ export interface FileRoutesByFullPath {
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/app/admin/': typeof AuthenticatedAppAdminIndexRoute
+  '/app/admin/lead-audits/$sessionId': typeof AuthenticatedAppAdminLeadAuditsSessionIdRoute
   '/app/admin/review/$ownerId': typeof AuthenticatedAppAdminReviewOwnerIdRoute
   '/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
   '/app/admin/lead-audits/': typeof AuthenticatedAppAdminLeadAuditsIndexRoute
@@ -362,6 +370,7 @@ export interface FileRoutesByTo {
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/app/admin': typeof AuthenticatedAppAdminIndexRoute
+  '/app/admin/lead-audits/$sessionId': typeof AuthenticatedAppAdminLeadAuditsSessionIdRoute
   '/app/admin/review/$ownerId': typeof AuthenticatedAppAdminReviewOwnerIdRoute
   '/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
   '/app/admin/lead-audits': typeof AuthenticatedAppAdminLeadAuditsIndexRoute
@@ -408,6 +417,7 @@ export interface FileRoutesById {
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/_authenticated/app/admin/': typeof AuthenticatedAppAdminIndexRoute
+  '/_authenticated/app/admin/lead-audits/$sessionId': typeof AuthenticatedAppAdminLeadAuditsSessionIdRoute
   '/_authenticated/app/admin/review/$ownerId': typeof AuthenticatedAppAdminReviewOwnerIdRoute
   '/_authenticated/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
   '/_authenticated/app/admin/lead-audits/': typeof AuthenticatedAppAdminLeadAuditsIndexRoute
@@ -454,6 +464,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
     | '/app/admin/'
+    | '/app/admin/lead-audits/$sessionId'
     | '/app/admin/review/$ownerId'
     | '/app/tools/$key/$'
     | '/app/admin/lead-audits/'
@@ -490,6 +501,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
     | '/app/admin'
+    | '/app/admin/lead-audits/$sessionId'
     | '/app/admin/review/$ownerId'
     | '/app/tools/$key/$'
     | '/app/admin/lead-audits'
@@ -535,6 +547,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
     | '/_authenticated/app/admin/'
+    | '/_authenticated/app/admin/lead-audits/$sessionId'
     | '/_authenticated/app/admin/review/$ownerId'
     | '/_authenticated/app/tools/$key/$'
     | '/_authenticated/app/admin/lead-audits/'
@@ -867,15 +880,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAdminReviewOwnerIdRouteImport
       parentRoute: typeof AuthenticatedAppAdminReviewRoute
     }
+    '/_authenticated/app/admin/lead-audits/$sessionId': {
+      id: '/_authenticated/app/admin/lead-audits/$sessionId'
+      path: '/$sessionId'
+      fullPath: '/app/admin/lead-audits/$sessionId'
+      preLoaderRoute: typeof AuthenticatedAppAdminLeadAuditsSessionIdRouteImport
+      parentRoute: typeof AuthenticatedAppAdminLeadAuditsRoute
+    }
   }
 }
 
 interface AuthenticatedAppAdminLeadAuditsRouteChildren {
+  AuthenticatedAppAdminLeadAuditsSessionIdRoute: typeof AuthenticatedAppAdminLeadAuditsSessionIdRoute
   AuthenticatedAppAdminLeadAuditsIndexRoute: typeof AuthenticatedAppAdminLeadAuditsIndexRoute
 }
 
 const AuthenticatedAppAdminLeadAuditsRouteChildren: AuthenticatedAppAdminLeadAuditsRouteChildren =
   {
+    AuthenticatedAppAdminLeadAuditsSessionIdRoute:
+      AuthenticatedAppAdminLeadAuditsSessionIdRoute,
     AuthenticatedAppAdminLeadAuditsIndexRoute:
       AuthenticatedAppAdminLeadAuditsIndexRoute,
   }
