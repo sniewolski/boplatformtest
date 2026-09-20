@@ -8,7 +8,7 @@ import { PublicAuditLayout } from "@/components/free-audit/PublicAuditLayout";
 import {
   readStoredLeadAuditToken,
   storeLeadAuditToken,
-} from "@/lib/auditLead.client";
+} from "@/lib/auditLeadPublic";
 
 export const Route = createFileRoute("/free-audit/")({
   ssr: false,
