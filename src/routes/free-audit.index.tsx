@@ -106,8 +106,7 @@ function FreeAuditStart() {
         <header className="flex flex-col gap-4">
           <h1 className="text-3xl font-semibold sm:text-4xl">See where your sales system needs work</h1>
           <p className="text-base text-ink-muted sm:text-lg">
-            This practical audit covers six parts of your sales system and takes
-            around 20 minutes. You can pause and return at any time.
+            This audit takes around 20 minutes. You can pause and return at any time.
           </p>
         </header>
       </div>
