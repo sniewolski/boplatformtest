@@ -49,6 +49,7 @@ function FreeAuditStart() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState("");
+  const [consent, setConsent] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -68,6 +69,9 @@ function FreeAuditStart() {
     else if (!EMAIL_PATTERN.test(cleanEmail)) {
       nextErrors.email = "Please enter a valid email address.";
     }
+    if (!consent) {
+      nextErrors.consent = "Please tick this box to start the audit.";
+    }
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
@@ -80,7 +84,12 @@ function FreeAuditStart() {
       const response = await fetch("/api/public/audit-lead/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: cleanName, email: cleanEmail, company }),
+        body: JSON.stringify({
+          name: cleanName,
+          email: cleanEmail,
+          company,
+          consent: true,
+        }),
       });
       const data = (await response.json()) as { ok?: boolean; token?: string | null };
       if (!response.ok || !data.ok) throw new Error("start_failed");
