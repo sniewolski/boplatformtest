@@ -187,8 +187,47 @@ function FreeAuditStart() {
           />
         </div>
 
+        <div className="flex flex-col gap-2">
+          <div className="flex items-start gap-3">
+            <Checkbox
+              id="free-audit-consent"
+              checked={consent}
+              onCheckedChange={(checked) => {
+                setConsent(checked === true);
+                if (checked === true && errors.consent) {
+                  setErrors((current) => ({ ...current, consent: undefined }));
+                }
+              }}
+              aria-invalid={Boolean(errors.consent)}
+              aria-describedby={
+                errors.consent ? "free-audit-consent-error" : undefined
+              }
+              disabled={submitting}
+              className="mt-0.5"
+            />
+            <Label
+              htmlFor="free-audit-consent"
+              className="text-sm font-normal leading-relaxed text-ink-muted cursor-pointer"
+            >
+              {LEAD_AUDIT_CONSENT_LABEL}
+            </Label>
+          </div>
+          <p
+            id="free-audit-consent-error"
+            className="min-h-5 text-sm text-ink-muted"
+            aria-live="polite"
+          >
+            {errors.consent ?? ""}
+          </p>
+        </div>
+
         <div className="flex flex-col gap-3">
-          <Button type="submit" size="lg" disabled={submitting} className="w-full sm:w-fit">
+          <Button
+            type="submit"
+            size="lg"
+            disabled={submitting || !consent}
+            className="w-full sm:w-fit"
+          >
             {submitting ? "Starting…" : "Start the audit"}
             {!submitting ? <ArrowRight aria-hidden="true" /> : null}
           </Button>
