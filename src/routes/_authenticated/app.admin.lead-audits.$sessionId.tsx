@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Download, Loader2 } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Download, Loader2, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { getLeadAudit, getLeadAuditExportData } from "@/lib/leadAudits.functions";
+import { DeleteLeadAuditDialog } from "@/components/admin/DeleteLeadAuditDialog";
+import { deleteLeadAudit, getLeadAudit, getLeadAuditExportData } from "@/lib/leadAudits.functions";
 import { exportToMarkdown, hasAnySubmission } from "@/tools/selling-systems-audit/admin/exportToMarkdown";
 import { downloadMarkdown } from "@/lib/download-file";
 import { ConversionAdminTab } from "@/tools/selling-systems-audit/admin/ConversionAdminTab";
@@ -76,6 +77,19 @@ function LeadAuditDetail() {
     },
   });
 
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const remove = useServerFn(deleteLeadAudit);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const deleteMut = useMutation({
+    mutationFn: () => remove({ data: { sessionId } }),
+    onSuccess: async () => {
+      setConfirmOpen(false);
+      await qc.invalidateQueries({ queryKey: ["admin", "lead-audits"] });
+      navigate({ to: "/app/admin/lead-audits" });
+    },
+  });
+
   return (
     <div className="app-content py-12 flex flex-col gap-8">
       <div className="flex flex-col gap-3">
@@ -115,10 +129,25 @@ function LeadAuditDetail() {
             )}
           </div>
           <div className="flex flex-col items-start sm:items-end gap-1 shrink-0">
+            <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                deleteMut.reset();
+                setConfirmOpen(true);
+              }}
+              className="text-ink-muted hover:text-[var(--red)]"
+            >
+              <Trash2 className="size-3.5" aria-hidden />
+              Delete
+            </Button>
             <Button type="button" variant="outline" size="sm" onClick={() => exportMut.mutate()} disabled={!auditId || exportMut.isPending}>
               {exportMut.isPending ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : <Download className="size-3.5" aria-hidden />}
               {exportMut.isPending ? "Exporting…" : "Export to MD"}
             </Button>
+            </div>
             {exportMut.error && <span className="text-xs text-[var(--red)]">{(exportMut.error as Error).message}</span>}
           </div>
         </header>
@@ -226,6 +255,18 @@ function LeadAuditDetail() {
           </section>
         </>
       )}
+
+      <DeleteLeadAuditDialog
+        open={confirmOpen}
+        onOpenChange={(open) => {
+          if (!deleteMut.isPending) setConfirmOpen(open);
+        }}
+        name={lead?.name ?? null}
+        email={lead?.email ?? null}
+        isPending={deleteMut.isPending}
+        error={deleteMut.error ? (deleteMut.error as Error).message : null}
+        onConfirm={() => deleteMut.mutate()}
+      />
     </div>
   );
 }

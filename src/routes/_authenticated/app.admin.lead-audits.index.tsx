@@ -1,9 +1,15 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
-import { listLeadAudits } from "@/lib/leadAudits.functions";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Trash2 } from "lucide-react";
+import {
+  deleteLeadAudit,
+  listLeadAudits,
+  type LeadAuditRow,
+} from "@/lib/leadAudits.functions";
 import { Input } from "@/components/ui/input";
+import { DeleteLeadAuditDialog } from "@/components/admin/DeleteLeadAuditDialog";
 
 export const Route = createFileRoute("/_authenticated/app/admin/lead-audits/")({
   component: LeadAuditsList,
@@ -47,6 +53,17 @@ function LeadAuditsList() {
     );
   }, [leads.data, query]);
 
+  const qc = useQueryClient();
+  const remove = useServerFn(deleteLeadAudit);
+  const [target, setTarget] = useState<LeadAuditRow | null>(null);
+  const deleteMut = useMutation({
+    mutationFn: (sessionId: string) => remove({ data: { sessionId } }),
+    onSuccess: async () => {
+      setTarget(null);
+      await qc.invalidateQueries({ queryKey: ["admin", "lead-audits"] });
+    },
+  });
+
   return (
     <div className="app-content py-16 flex flex-col gap-10">
       <header className="flex flex-col gap-2">
@@ -84,11 +101,14 @@ function LeadAuditsList() {
         {filtered.length > 0 && (
           <ul className="flex flex-col divide-y divide-border border border-border rounded-xl">
             {filtered.map((row) => (
-              <li key={row.sessionId}>
+              <li
+                key={row.sessionId}
+                className="flex items-center gap-2 pr-3 hover:bg-[var(--surface-raised)] transition-colors"
+              >
                 <Link
                   to="/app/admin/lead-audits/$sessionId"
                   params={{ sessionId: row.sessionId }}
-                  className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-[var(--surface-raised)] transition-colors"
+                  className="flex flex-1 min-w-0 items-center justify-between gap-4 px-5 py-4"
                 >
                   <div className="flex flex-col min-w-0">
                     <span className="text-ink text-sm truncate">
@@ -113,11 +133,34 @@ function LeadAuditsList() {
                     <span className="text-ink-muted text-xs">Open →</span>
                   </div>
                 </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    deleteMut.reset();
+                    setTarget(row);
+                  }}
+                  aria-label={`Delete lead audit for ${row.name?.trim() || row.email || "this person"}`}
+                  className="shrink-0 rounded-lg p-2 text-ink-muted hover:text-[var(--red)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <Trash2 className="size-4" aria-hidden />
+                </button>
               </li>
             ))}
           </ul>
         )}
       </section>
+
+      <DeleteLeadAuditDialog
+        open={!!target}
+        onOpenChange={(open) => {
+          if (!open && !deleteMut.isPending) setTarget(null);
+        }}
+        name={target?.name ?? null}
+        email={target?.email ?? null}
+        isPending={deleteMut.isPending}
+        error={deleteMut.error ? (deleteMut.error as Error).message : null}
+        onConfirm={() => target && deleteMut.mutate(target.sessionId)}
+      />
     </div>
   );
 }
