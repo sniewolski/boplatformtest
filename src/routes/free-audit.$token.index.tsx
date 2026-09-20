@@ -12,7 +12,7 @@ import {
   fetchLeadAuditState,
   LEAD_AUDIT_SECTIONS,
   type LeadAuditSectionState,
-} from "@/lib/auditLead.client";
+} from "@/lib/auditLeadPublic";
 
 export const Route = createFileRoute("/free-audit/$token/")({
   ssr: false,
