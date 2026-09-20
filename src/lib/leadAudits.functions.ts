@@ -46,7 +46,16 @@ export type LeadAuditRow = {
 
 export type LeadAuditDetail = LeadAuditRow & {
   currency: string | null;
+  consentGivenAt: string | null;
 };
+
+function consentGivenAtOf(consent: unknown): string | null {
+  if (!consent || typeof consent !== "object") return null;
+  const record = consent as Record<string, unknown>;
+  if (record.agreed !== true) return null;
+  const at = record.at;
+  return typeof at === "string" && at ? at : null;
+}
 
 /** Count non-null submitted_at across the six tables for a set of audit ids. */
 async function countSubmittedByAudit(
@@ -135,7 +144,7 @@ export const getLeadAudit = createServerFn({ method: "POST" })
     const { data: row, error } = await supabaseAdmin
       .from("respondent_sessions")
       .select(
-        "id, respondent_name, respondent_email, status, created_at, completed_at, payload",
+        "id, respondent_name, respondent_email, status, created_at, completed_at, payload, consent",
       )
       .eq("id", data.sessionId)
       .eq("tool_key", LEAD_TOOL_KEY)
@@ -158,6 +167,7 @@ export const getLeadAudit = createServerFn({ method: "POST" })
       auditId,
       completedSections: auditId ? (counts.get(auditId) ?? 0) : 0,
       currency: currencyOf((row as any).payload),
+      consentGivenAt: consentGivenAtOf((row as any).consent),
     };
   });
 
