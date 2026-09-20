@@ -1,47 +1,36 @@
-# Messaging & Positioning — Build Plan
+# Public Lead Audit Start and Hub — Implementation Plan
 
-New owner-intake section inside `selling-systems-audit`, mirroring the Sales Activity section's machinery (config-driven steps, two-blob jsonb + RLS, shared IntakeFields/StepShell/ReadBack, no analysis shown to owner).
+## Scope
+Build only the public entry, progress hub, and completion experience for the lead audit. The six audit forms remain out of scope, and all existing backend, owner, admin, export, and SalesCode code stays untouched.
 
-Distinct from prior sections: text-heavy by design — the owner's actual words (value props, differentiation, proof) are the diagnostic payload and stay as open text.
+## Routes and page behavior
+- Add `/free-audit` with route-specific noindex metadata, concise audit context, name/email validation, the accessible honeypot, submit loading/error states, and an optional saved-device continuation link.
+- Add `/free-audit/$token` with route-specific noindex metadata. Fetch the existing public state endpoint, reserve a stable loading layout, greet by first name, show six ordered section rows and their derived status, show completed count, and provide a copyable private return link.
+- Add `/free-audit/$token/done` with route-specific noindex metadata and only the requested thank-you and selection/30-day-plan message.
+- Use small public-only layout helpers where they reduce duplication; no app shell, sidebar, or dashboard elements.
 
-## Phases (one at a time, stop after each)
+## State and edge cases
+- Store the returned token under one namespaced localStorage key after a successful start; all storage access is guarded so privacy mode or blocked storage cannot break the page.
+- Read and validate the stored token on the start screen before showing the continuation link; never auto-redirect.
+- Derive section state from `submitted_at`, draft/submitted answer presence, and `has_unsubmitted_changes`: completed, in progress, or not started.
+- Redirect completed sessions from the hub to the dedicated completion route.
+- Treat failed/non-JSON state responses and invalid tokens as a calm unavailable state linking back to `/free-audit`.
+- Copy the absolute private URL with Clipboard API support and a safe fallback, with an accessible success/failure message.
 
-### Phase 0 — Overview + route stub
-- Add `{ key: "messaging", label: "Messaging & Positioning", description: …, status: "available" }` to `AUDIT_SECTIONS` in `config.ts`, ordered: conversion, pipeline, process, activity, **messaging**, content(locked).
-- Branch in `routes/App.tsx`: `if (segment === "messaging") return <Messaging />;`
-- New `routes/Messaging.tsx` — placeholder (heading + muted line).
-- Verify: overview shows 6 sections in correct order, Messaging clickable to placeholder, "X of 6" math correct.
+## Visual implementation
+- Use the existing Geist font and semantic neutral/red tokens only.
+- Keep a quiet centered composition with varied spacing, 12–16px radii, visible focus states, and red reserved for the primary submit action.
+- Use existing design-system buttons and inputs; interactions remain under 300ms, include `scale(0.97)` press feedback, and inherit reduced-motion handling.
+- Keep the section list visually varied rather than an identical card grid; avoid gradients, warm surfaces, glass effects, badges, oversized headline treatment, and decorative imagery.
+- Verify at 360px and desktop widths for wrapping, stable loading dimensions, focus visibility, and no overflow.
 
-### Phase 1 — Data layer
-- Migration: `selling_systems_audit_messaging` table (mirror activity table): owner_id PK → auth.users CASCADE, draft_answers jsonb, submitted_answers jsonb, has_unsubmitted_changes bool, submitted_at, updated_at. Grants to authenticated + service_role. RLS on. 4 owner policies scoped to `auth.uid() = owner_id` (SELECT/INSERT/UPDATE/DELETE) + 1 admin read-all via `has_role`. BEFORE UPDATE trigger → `touch_updated_at`.
-- `config.ts`: add `MESSAGING_STEPS` (6 steps including review) + all option sets (ICP_WRITTEN, ICP_BASIS, YES_SOMEWHAT_NO, RECOGNITION, MESSAGE_LEVEL, CAN_TELL, COMPETE_BASIS, EVIDENCE_TYPES, PROOF_SPECIFICITY, PROOF_TARGETING, CONSISTENCY_LEVELS, MATCH_LEVELS) + `MessagingAnswers` type nested by step.
-- `data/useMessagingReview.ts`: mirror `useActivityReview.ts` — `useMessagingIntake` / `useSaveDraft` / `useSubmitIntake`, same cache/cast/dirty-flag.
-- Wire `AuditOverview` to subscribe to `useMessagingIntake` and bump `completed` when `submitted_at` set.
+## Technical details
+- All data uses `fetch` against `/api/public/audit-lead/start` and `/api/public/audit-lead/state`.
+- Public screens do not import session state, the browser database client, or owner data hooks.
+- Section destinations will be rendered as ordinary temporary links because their route files intentionally do not exist until the next phase; no section placeholder route or form will be added now.
+- Add unique title, description, Open Graph title/description, `og:type`, `twitter:card`, and `robots: noindex,nofollow` metadata on each content route.
 
-### Phase 2 — Stepped shell
-- Replace placeholder `routes/Messaging.tsx` with full shell mirroring `SalesActivity.tsx`:
-  - Hydration guard, 700ms debounced autosave, refs for last-saved/latest/dirty/hasSubmitted, commit-point flushes (blurCapture, step nav, visibilitychange, unmount).
-  - 6 empty steps using `ProgressBar` / `StepHeader` / `StepNav`.
-  - `ReviewStep` with Submit logic + `ReceivedState` + edit-after-submit.
-- Verify end-to-end persistence with no fields.
-
-### Phase 3 — Question UIs + read-back
-- Add `TextField` to `IntakeFields.tsx` (single-line, matching existing input styling) if no equivalent primitive exists.
-- Add `ReadText({ label, value })` to `ReadBack.tsx` — label on its own line, full-width wrapped prose beneath, "—" if blank.
-- Step 1 (icp): structured group inside one `Question` — Industry/CompanySize/Role as short single-line fields in a tidy row (sized to content), Situation/Mindset as `OptionalText` 2-row full-width beneath. Then Q2 `MaturitySpectrum` (ICP_WRITTEN), Q3 `Segmented` (ICP_BASIS).
-- Step 2 (problem): Q6 `OptionalText`; Q7/Q8/Q9 `Segmented`.
-- Step 3 (value): structured value-prop group (Outcome `OptionalText` full-width + For whom/Timeframe short fields side-by-side); Q12 `OptionalText`; differentiation group (open + "Can prospects tell?" Segmented); Q14 Segmented; Q15 `OptionalText`.
-- Step 4 (proof): Q16 `Chips` with "other" reveal → `evidenceOther` text; Q17/Q18 `Segmented`; Q19 `OptionalText`.
-- Step 5 (consistency): Q21/Q22 `Segmented`.
-- Step 6 (review): `ReadGroup` per step in order — single-selects via `labelOf`, chips via `chipsLabels`, open text via `ReadText`, short structured sub-fields via `ReadRow`, blanks "—". Then Submit block.
-
-## Dependencies (fixed)
-Phase 0 → Phase 1 (migration must exist before any query) → Phase 2 (shell needs hooks) → Phase 3 (fields need shell).
-
-## Reuse — do not rebuild
-`IntakeFields` (Segmented, MaturitySpectrum, Chips, OptionalText, Question), `StepShell` (ProgressBar, StepNav, StepHeader), `ReadBack` (labelOf, chipsLabels, ReadRow, ReadGroup). Only additions: `TextField` (if needed) and `ReadText`.
-
-## Constraints (pinned)
-No analysis/scores shown to owner. Design tokens only — `bg-ink`, `text-ink-muted`, `border-border`. Segmented controls hug content, left-aligned. Text inputs may be full-width within content column. No new colours, no diagnostic colour. Don't convert specified text fields into bands. No cross-tool imports.
-
-Confirm to proceed with **Phase 0**.
+## Verification
+- Run the project typecheck/build harness checks.
+- Exercise start validation, loading/error states, valid hub state, invalid token state, completed-session redirect, clipboard behavior, and guarded device memory.
+- Capture and inspect 360px and desktop screenshots without creating real lead records; use mocked network responses for stateful visual checks.
