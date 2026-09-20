@@ -77,6 +77,19 @@ function LeadAuditDetail() {
     },
   });
 
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const remove = useServerFn(deleteLeadAudit);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const deleteMut = useMutation({
+    mutationFn: () => remove({ data: { sessionId } }),
+    onSuccess: async () => {
+      setConfirmOpen(false);
+      await qc.invalidateQueries({ queryKey: ["admin", "lead-audits"] });
+      navigate({ to: "/app/admin/lead-audits" });
+    },
+  });
+
   return (
     <div className="app-content py-12 flex flex-col gap-8">
       <div className="flex flex-col gap-3">
