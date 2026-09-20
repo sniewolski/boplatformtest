@@ -255,6 +255,18 @@ function LeadAuditDetail() {
           </section>
         </>
       )}
+
+      <DeleteLeadAuditDialog
+        open={confirmOpen}
+        onOpenChange={(open) => {
+          if (!deleteMut.isPending) setConfirmOpen(open);
+        }}
+        name={lead?.name ?? null}
+        email={lead?.email ?? null}
+        isPending={deleteMut.isPending}
+        error={deleteMut.error ? (deleteMut.error as Error).message : null}
+        onConfirm={() => deleteMut.mutate()}
+      />
     </div>
   );
 }
