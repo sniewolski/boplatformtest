@@ -176,30 +176,21 @@ export function SalesProcess({ auditId }: { auditId: string }) {
 
   return (
     <div className="app-content py-12 flex flex-col gap-10">
-      <Link
-        to="/app/tools/$key/$"
-        params={{ key: "selling-systems-audit", _splat: auditId }}
-        className="inline-flex items-center gap-2 text-ink-muted text-sm hover:text-ink transition-colors w-fit"
-      >
-        <ArrowLeft className="size-4" />
-        Back to audit
-      </Link>
+      {backSlot}
 
       <header className="flex flex-col gap-3">
         <h1 className="text-3xl" style={{ letterSpacing: "-0.02em" }}>
-          Sales Process
+          {title}
         </h1>
       </header>
 
       {isReceived ? (
-        <ReceivedState
-          auditId={auditId}
-          sectionKey="process"
-          onEdit={() => {
+        renderReceived({
+          onEdit: () => {
             setEditingAfterSubmit(true);
             setStepIdx(0);
-          }}
-        />
+          },
+        })
       ) : (
         <>
           <ProgressBar steps={PROCESS_STEPS} currentIdx={stepIdx} onJump={setStepIdx} />
