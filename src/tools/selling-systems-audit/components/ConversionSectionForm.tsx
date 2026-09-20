@@ -199,44 +199,41 @@ export function ConversionReview({ auditId }: { auditId: string }) {
   const lastSavedRef = useRef<string | null>(null);
   const latestDraftRef = useRef<IntakeAnswers>(currentDraft);
   const dirtyRef = useRef(false);
-  const hasSubmittedRef = useRef(!!intake?.submitted_at);
-  const saveMutateRef = useRef(save.mutate);
+  const hasSubmittedRef = useRef(!!submittedAt);
+  const saveDraftRef = useRef(saveDraft);
 
   useEffect(() => {
     latestDraftRef.current = currentDraft;
   }, [currentDraft]);
   useEffect(() => {
-    saveMutateRef.current = save.mutate;
-  }, [save.mutate]);
+    saveDraftRef.current = saveDraft;
+  }, [saveDraft]);
   useEffect(() => {
-    hasSubmittedRef.current = !!intake?.submitted_at;
-  }, [intake?.submitted_at]);
+    hasSubmittedRef.current = !!submittedAt;
+  }, [submittedAt]);
 
   // Immediate save from refs. Safe to call from cleanup / event handlers —
   // never closes over stale state. No-op when not dirty.
   const flushSave = useCallback(() => {
-    if (!dirtyRef.current || !userId) return;
+    if (!dirtyRef.current || !canPersist) return;
     const draft = latestDraftRef.current;
     const serialized = JSON.stringify(draft);
     dirtyRef.current = false;
     lastSavedRef.current = serialized;
     setSaveState("saving");
-    saveMutateRef.current(
-      { draft, hasSubmitted: hasSubmittedRef.current },
-      {
-        onSuccess: () => setSaveState("saved"),
-        onError: () => {
-          dirtyRef.current = true;
-          setSaveState("idle");
-        },
+    void saveDraftRef.current(draft, hasSubmittedRef.current).then(
+      () => setSaveState("saved"),
+      () => {
+        dirtyRef.current = true;
+        setSaveState("idle");
       },
     );
-  }, [userId]);
+  }, [canPersist]);
 
   // Debounced autosave — mid-typing backstop. Commit-point + unmount flushes
   // are the primary mechanisms below.
   useEffect(() => {
-    if (!hydrated || !userId) return;
+    if (!hydrated || !canPersist) return;
     const serialized = JSON.stringify(currentDraft);
     if (lastSavedRef.current === null) {
       lastSavedRef.current = serialized;
@@ -247,7 +244,7 @@ export function ConversionReview({ auditId }: { auditId: string }) {
     setSaveState("saving");
     const t = setTimeout(() => flushSave(), AUTOSAVE_MS);
     return () => clearTimeout(t);
-  }, [currentDraft, hydrated, userId, flushSave]);
+  }, [currentDraft, hydrated, canPersist, flushSave]);
 
   // Flush on unmount (e.g. "Back to audit") and on tab hide.
   useEffect(() => {
