@@ -175,7 +175,13 @@ export const getAuditExportData = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
     z
-      .object({ ownerId: z.string().uuid(), auditId: z.string().uuid() })
+      .object({
+        ownerId: z.string().uuid(),
+        auditId: z.string().uuid(),
+        fullName: z.string().nullable().optional(),
+        email: z.string().email().optional(),
+        currency: z.enum(["USD", "EUR", "GBP"]).nullable().optional(),
+      })
       .parse(input),
   )
   .handler(async ({ data, context }): Promise<AuditExportData> => {
@@ -189,5 +195,13 @@ export const getAuditExportData = createServerFn({ method: "POST" })
       supabaseAdmin,
       ownerId: data.ownerId,
       auditId: data.auditId,
+      identity:
+        data.email !== undefined
+          ? {
+              fullName: data.fullName ?? null,
+              email: data.email,
+              currency: data.currency ?? null,
+            }
+          : undefined,
     });
   });
