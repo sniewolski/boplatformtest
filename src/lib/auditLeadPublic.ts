@@ -1,5 +1,9 @@
 export const LEAD_AUDIT_STORAGE_KEY = "sales-lab:free-audit-token";
 
+/** Exact wording shown next to the consent checkbox; stored on the session. */
+export const LEAD_AUDIT_CONSENT_LABEL =
+  "I agree that my answers and business details may be shared publicly, including in a YouTube video.";
+
 export const LEAD_AUDIT_SECTIONS = [
   { key: "conversion", label: "Conversion" },
   { key: "pipeline", label: "Pipeline" },
