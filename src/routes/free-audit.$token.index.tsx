@@ -157,7 +157,7 @@ function FreeAuditHub() {
           <li key={section.key}>
             <a
               href={`/free-audit/${encodeURIComponent(token)}/${section.key}`}
-              className="group flex min-h-[5rem] items-center gap-4 py-4 transition-colors duration-150 ease-out hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="group -mx-4 flex min-h-[5rem] items-center gap-4 rounded-xl px-4 py-4 transition-colors duration-150 ease-out hover:bg-surface-raised focus-visible:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <span className="min-w-0 flex-1 text-base font-medium text-ink">{section.label}</span>
               <span className="shrink-0 text-right text-sm text-ink-muted">{section.status}</span>
