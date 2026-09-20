@@ -298,30 +298,21 @@ export function ConversionReview({ auditId }: { auditId: string }) {
 
   return (
     <div className="app-content py-12 flex flex-col gap-10">
-      <Link
-        to="/app/tools/$key/$"
-        params={{ key: "selling-systems-audit", _splat: auditId }}
-        className="inline-flex items-center gap-2 text-ink-muted text-sm hover:text-ink transition-colors w-fit"
-      >
-        <ArrowLeft className="size-4" />
-        Back to audit
-      </Link>
+      {backSlot}
 
       <header className="flex flex-col gap-3">
         <h1 className="text-3xl" style={{ letterSpacing: "-0.02em" }}>
-          Sales Conversion Rates Review
+          {title}
         </h1>
       </header>
 
       {isReceived ? (
-        <ReceivedState
-          auditId={auditId}
-          sectionKey="conversion"
-          onEdit={() => {
+        renderReceived({
+          onEdit: () => {
             setEditingAfterSubmit(true);
             setStepIdx(0);
-          }}
-        />
+          },
+        })
       ) : (
         <>
           <ProgressBar steps={INTAKE_STEPS} currentIdx={stepIdx} onJump={setStepIdx} />
@@ -332,7 +323,7 @@ export function ConversionReview({ auditId }: { auditId: string }) {
                 inputs={foundation}
                 onChange={setFoundation}
                 currency={currency}
-                onCurrencyChange={(c) => void setCurrency(c)}
+                onCurrencyChange={onCurrencyChange}
                 needsCurrency={needsCurrency}
                 validation={validation}
                 funnelImpossibility={funnelImpossibility}
@@ -366,9 +357,9 @@ export function ConversionReview({ auditId }: { auditId: string }) {
                 closing={closing}
                 summary={summary}
                 currency={currency}
-                hasSubmitted={!!intake?.submitted_at}
-                hasUnsubmittedChanges={!!intake?.has_unsubmitted_changes}
-                submitting={submit.isPending}
+                hasSubmitted={!!submittedAt}
+                hasUnsubmittedChanges={hasUnsubmittedChanges}
+                submitting={isSubmitting}
                 onSubmit={handleSubmit}
                 error={submitError}
                 funnelImpossibility={funnelImpossibility}
