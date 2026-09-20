@@ -1,18 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
-import { ReceivedState } from "./ReceivedState";
-import { useSession } from "@/core/auth/useSession";
 import { Button } from "@/components/ui/button";
-import {
-  useActivityIntake,
-  useSaveDraft,
-  useSubmitIntake,
-  type ActivityAnswers,
-  type ActivityQualityAnswers,
-  type ActivityTrackingAnswers,
-  type ActivityVolumeAnswers,
+import type {
+  ActivityAnswers,
+  ActivityQualityAnswers,
+  ActivityTrackingAnswers,
+  ActivityVolumeAnswers,
 } from "../data/useActivityReview";
+import type { AuditSectionFormProps, SectionSaveState } from "../sectionFormProps";
 import {
   ACTIVITY_STEPS,
   ACTIVITY_METRICS,
@@ -44,20 +38,25 @@ import {
 
 const AUTOSAVE_MS = 700;
 
-/**
- * Sales Activity Metrics intake shell. Mirrors SalesProcess verbatim:
- * hydration guard, per-key debounced autosave (700ms) + commit-point
- * flushes (blur capture, step nav, visibilitychange, unmount), Submit →
- * ReceivedState, "edit after submit" note. Phase 2 leaves the 4 step
- * bodies empty — Phase 3 fills questions + read-back.
- */
-export function SalesActivity({ auditId }: { auditId: string }) {
-  const { session } = useSession();
-  const userId = session?.user.id;
-  const { data: intake, isLoading } = useActivityIntake(auditId);
-  const save = useSaveDraft(userId, auditId);
-  const submit = useSubmitIntake(userId, auditId);
+export type ActivitySectionFormProps = AuditSectionFormProps<ActivityAnswers>;
 
+/**
+ * Presentational Sales Activity Metrics form. No auth, no supabase, no
+ * router — everything comes in through props (see `sectionFormProps.ts`).
+ */
+export function ActivitySectionForm({
+  title,
+  draftAnswers,
+  hasUnsubmittedChanges,
+  submittedAt,
+  isLoading,
+  canPersist,
+  saveDraft,
+  submitSection,
+  isSubmitting,
+  backSlot,
+  renderReceived,
+}: ActivitySectionFormProps) {
   const [stepIdx, setStepIdx] = useState(0);
   const step = ACTIVITY_STEPS[stepIdx];
 
@@ -66,18 +65,18 @@ export function SalesActivity({ auditId }: { auditId: string }) {
   const [quality, setQuality] = useState<ActivityQualityAnswers>({});
 
   const [hydrated, setHydrated] = useState(false);
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
+  const [saveState, setSaveState] = useState<SectionSaveState>("idle");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [editingAfterSubmit, setEditingAfterSubmit] = useState(false);
 
   useEffect(() => {
-    if (hydrated || !userId || isLoading) return;
-    const d = (intake?.draft_answers ?? {}) as ActivityAnswers;
+    if (hydrated || !canPersist || isLoading) return;
+    const d = (draftAnswers ?? {}) as ActivityAnswers;
     if (d.tracking) setTracking(d.tracking);
     if (d.volume) setVolume(d.volume);
     if (d.quality) setQuality(d.quality);
     setHydrated(true);
-  }, [intake, isLoading, hydrated, userId]);
+  }, [draftAnswers, isLoading, hydrated, canPersist]);
 
   const currentDraft = useMemo<ActivityAnswers>(
     () => ({ tracking, volume, quality }),
@@ -87,40 +86,37 @@ export function SalesActivity({ auditId }: { auditId: string }) {
   const lastSavedRef = useRef<string | null>(null);
   const latestDraftRef = useRef<ActivityAnswers>(currentDraft);
   const dirtyRef = useRef(false);
-  const hasSubmittedRef = useRef(!!intake?.submitted_at);
-  const saveMutateRef = useRef(save.mutate);
+  const hasSubmittedRef = useRef(!!submittedAt);
+  const saveDraftRef = useRef(saveDraft);
 
   useEffect(() => {
     latestDraftRef.current = currentDraft;
   }, [currentDraft]);
   useEffect(() => {
-    saveMutateRef.current = save.mutate;
-  }, [save.mutate]);
+    saveDraftRef.current = saveDraft;
+  }, [saveDraft]);
   useEffect(() => {
-    hasSubmittedRef.current = !!intake?.submitted_at;
-  }, [intake?.submitted_at]);
+    hasSubmittedRef.current = !!submittedAt;
+  }, [submittedAt]);
 
   const flushSave = useCallback(() => {
-    if (!dirtyRef.current || !userId) return;
+    if (!dirtyRef.current || !canPersist) return;
     const draft = latestDraftRef.current;
     const serialized = JSON.stringify(draft);
     dirtyRef.current = false;
     lastSavedRef.current = serialized;
     setSaveState("saving");
-    saveMutateRef.current(
-      { draft, hasSubmitted: hasSubmittedRef.current },
-      {
-        onSuccess: () => setSaveState("saved"),
-        onError: () => {
-          dirtyRef.current = true;
-          setSaveState("idle");
-        },
+    void saveDraftRef.current(draft, hasSubmittedRef.current).then(
+      () => setSaveState("saved"),
+      () => {
+        dirtyRef.current = true;
+        setSaveState("idle");
       },
     );
-  }, [userId]);
+  }, [canPersist]);
 
   useEffect(() => {
-    if (!hydrated || !userId) return;
+    if (!hydrated || !canPersist) return;
     const serialized = JSON.stringify(currentDraft);
     if (lastSavedRef.current === null) {
       lastSavedRef.current = serialized;
@@ -131,7 +127,7 @@ export function SalesActivity({ auditId }: { auditId: string }) {
     setSaveState("saving");
     const t = setTimeout(() => flushSave(), AUTOSAVE_MS);
     return () => clearTimeout(t);
-  }, [currentDraft, hydrated, userId, flushSave]);
+  }, [currentDraft, hydrated, canPersist, flushSave]);
 
   useEffect(() => {
     function onVisibility() {
@@ -144,13 +140,12 @@ export function SalesActivity({ auditId }: { auditId: string }) {
     };
   }, [flushSave]);
 
-  const isReceived =
-    !!intake?.submitted_at && !intake.has_unsubmitted_changes && !editingAfterSubmit;
+  const isReceived = !!submittedAt && !hasUnsubmittedChanges && !editingAfterSubmit;
 
   async function handleSubmit() {
     setSubmitError(null);
     try {
-      await submit.mutateAsync({ draft: currentDraft });
+      await submitSection(currentDraft);
       lastSavedRef.current = JSON.stringify(currentDraft);
       setSaveState("saved");
       setEditingAfterSubmit(false);
@@ -159,8 +154,7 @@ export function SalesActivity({ auditId }: { auditId: string }) {
     }
   }
 
-  const hasSubmitted = !!intake?.submitted_at;
-  const hasUnsubmittedChanges = !!intake?.has_unsubmitted_changes;
+  const hasSubmitted = !!submittedAt;
   const submitLabel = !hasSubmitted
     ? "Submit"
     : hasUnsubmittedChanges
@@ -169,30 +163,21 @@ export function SalesActivity({ auditId }: { auditId: string }) {
 
   return (
     <div className="app-content py-12 flex flex-col gap-10">
-      <Link
-        to="/app/tools/$key/$"
-        params={{ key: "selling-systems-audit", _splat: auditId }}
-        className="inline-flex items-center gap-2 text-ink-muted text-sm hover:text-ink transition-colors w-fit"
-      >
-        <ArrowLeft className="size-4" />
-        Back to audit
-      </Link>
+      {backSlot}
 
       <header className="flex flex-col gap-3">
         <h1 className="text-3xl" style={{ letterSpacing: "-0.02em" }}>
-          Sales Activity Metrics
+          {title}
         </h1>
       </header>
 
       {isReceived ? (
-        <ReceivedState
-          auditId={auditId}
-          sectionKey="activity"
-          onEdit={() => {
+        renderReceived({
+          onEdit: () => {
             setEditingAfterSubmit(true);
             setStepIdx(0);
-          }}
-        />
+          },
+        })
       ) : (
         <>
           <ProgressBar steps={ACTIVITY_STEPS} currentIdx={stepIdx} onJump={setStepIdx} />
@@ -214,7 +199,7 @@ export function SalesActivity({ auditId }: { auditId: string }) {
                 quality={quality}
                 hasSubmitted={hasSubmitted}
                 hasUnsubmittedChanges={hasUnsubmittedChanges}
-                submitting={submit.isPending}
+                submitting={isSubmitting}
                 onSubmit={handleSubmit}
                 error={submitError}
                 submitLabel={submitLabel}
