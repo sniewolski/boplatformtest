@@ -153,15 +153,12 @@ function FreeAuditHub() {
       </header>
 
       <ol className="divide-y divide-border border-y border-border">
-        {statuses.map((section, index) => (
+        {statuses.map((section) => (
           <li key={section.key}>
             <a
               href={`/free-audit/${encodeURIComponent(token)}/${section.key}`}
               className="group flex min-h-[5rem] items-center gap-4 py-4 transition-colors duration-150 ease-out hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-              <span className="w-7 shrink-0 text-sm font-medium text-ink-muted" aria-hidden="true">
-                {String(index + 1).padStart(2, "0")}
-              </span>
               <span className="min-w-0 flex-1 text-base font-medium text-ink">{section.label}</span>
               <span className="shrink-0 text-right text-sm text-ink-muted">{section.status}</span>
               <ArrowUpRight className="size-4 shrink-0 text-ink-muted transition-transform duration-150 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
