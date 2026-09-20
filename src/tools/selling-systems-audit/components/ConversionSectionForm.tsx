@@ -126,14 +126,28 @@ type AllAnswers = {
   summary?: SummaryAnswers;
 };
 
-export function ConversionReview({ auditId }: { auditId: string }) {
-  const { session } = useSession();
-  const userId = session?.user.id;
-  const { data: intake, isLoading } = useConversionIntake(auditId);
-  const save = useSaveDraft(userId, auditId);
-  const submit = useSubmitIntake(userId, auditId);
-  const { currency, setCurrency, isLoading: currencyLoading } = useCurrency();
+export type ConversionSectionFormProps = AuditSectionFormProps<IntakeAnswers>;
 
+/**
+ * Presentational Sales Conversion Rates form. No auth, no supabase, no
+ * router — everything comes in through props (see `sectionFormProps.ts`).
+ */
+export function ConversionSectionForm({
+  title,
+  draftAnswers,
+  hasUnsubmittedChanges,
+  submittedAt,
+  isLoading,
+  canPersist,
+  saveDraft,
+  submitSection,
+  isSubmitting,
+  currency,
+  currencyLoading,
+  onCurrencyChange,
+  backSlot,
+  renderReceived,
+}: ConversionSectionFormProps) {
   const [stepIdx, setStepIdx] = useState(0);
   const step = INTAKE_STEPS[stepIdx];
 
@@ -146,17 +160,15 @@ export function ConversionReview({ auditId }: { auditId: string }) {
   const [summary, setSummary] = useState<SummaryAnswers>({});
 
   const [hydrated, setHydrated] = useState(false);
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
+  const [saveState, setSaveState] = useState<SectionSaveState>("idle");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [editingAfterSubmit, setEditingAfterSubmit] = useState(false);
 
-  // Hydrate once from draft. Wait for userId — otherwise the query is
-  // disabled (isLoading=false, intake=undefined) and we'd lock hydration
-  // against an empty payload before the session resolves.
+  // Hydrate once from draft, after the host can persist and the row loaded.
   useEffect(() => {
-    if (hydrated || !userId || isLoading) return;
+    if (hydrated || !canPersist || isLoading) return;
 
-    const d = (intake?.draft_answers ?? {}) as AllAnswers;
+    const d = (draftAnswers ?? {}) as AllAnswers;
     if (d.foundation) {
       setFoundation({
         industry: d.foundation.industry ?? null,
@@ -172,7 +184,7 @@ export function ConversionReview({ auditId }: { auditId: string }) {
     if (d.closing) setClosing(d.closing);
     if (d.summary) setSummary(d.summary);
     setHydrated(true);
-  }, [intake, isLoading, hydrated, userId]);
+  }, [draftAnswers, isLoading, hydrated, canPersist]);
 
 
 
