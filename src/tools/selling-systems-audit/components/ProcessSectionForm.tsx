@@ -1,19 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
-import { ReceivedState } from "./ReceivedState";
-import { useSession } from "@/core/auth/useSession";
 import { Button } from "@/components/ui/button";
-import {
-  useProcessIntake,
-  useSaveDraft,
-  useSubmitIntake,
-  type ProcessAnswers,
-  type ProcessAdherenceAnswers,
-  type ProcessDefinitionAnswers,
-  type ProcessStagesAnswers,
-  type ProcessToolsAnswers,
+import type {
+  ProcessAnswers,
+  ProcessAdherenceAnswers,
+  ProcessDefinitionAnswers,
+  ProcessStagesAnswers,
+  ProcessToolsAnswers,
 } from "../data/useProcessReview";
+import type { AuditSectionFormProps, SectionSaveState } from "../sectionFormProps";
 import type { SalesStage } from "../config";
 import {
   PROCESS_STEPS,
@@ -49,20 +43,26 @@ import {
 
 const AUTOSAVE_MS = 700;
 
-/**
- * Sales Process intake shell. Mirrors PipelineHealth verbatim: hydration
- * guard, per-key debounced autosave (700ms) + commit-point flushes (blur
- * capture, step nav, visibilitychange, unmount), Submit → ReceivedState,
- * "edit after submit" note. Phase 2 leaves the five steps empty — Phase 3
- * fills Stages with the StageBuilder, Phase 4 fills the other UIs + read-back.
- */
-export function SalesProcess({ auditId }: { auditId: string }) {
-  const { session } = useSession();
-  const userId = session?.user.id;
-  const { data: intake, isLoading } = useProcessIntake(auditId);
-  const save = useSaveDraft(userId, auditId);
-  const submit = useSubmitIntake(userId, auditId);
+export type ProcessSectionFormProps = AuditSectionFormProps<ProcessAnswers>;
 
+/**
+ * Presentational Sales Process form. No auth, no supabase, no router —
+ * everything comes in through props (see `sectionFormProps.ts`). Autosave,
+ * flush points and submit behaviour are unchanged from the owner screen.
+ */
+export function ProcessSectionForm({
+  title,
+  draftAnswers,
+  hasUnsubmittedChanges,
+  submittedAt,
+  isLoading,
+  canPersist,
+  saveDraft,
+  submitSection,
+  isSubmitting,
+  backSlot,
+  renderReceived,
+}: ProcessSectionFormProps) {
   const [stepIdx, setStepIdx] = useState(0);
   const step = PROCESS_STEPS[stepIdx];
 
@@ -72,19 +72,19 @@ export function SalesProcess({ auditId }: { auditId: string }) {
   const [tools, setTools] = useState<ProcessToolsAnswers>({});
 
   const [hydrated, setHydrated] = useState(false);
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
+  const [saveState, setSaveState] = useState<SectionSaveState>("idle");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [editingAfterSubmit, setEditingAfterSubmit] = useState(false);
 
   useEffect(() => {
-    if (hydrated || !userId || isLoading) return;
-    const d = (intake?.draft_answers ?? {}) as ProcessAnswers;
+    if (hydrated || !canPersist || isLoading) return;
+    const d = (draftAnswers ?? {}) as ProcessAnswers;
     if (d.definition) setDefinition(d.definition);
     if (d.stages) setStages(d.stages);
     if (d.adherence) setAdherence(d.adherence);
     if (d.tools) setTools(d.tools);
     setHydrated(true);
-  }, [intake, isLoading, hydrated, userId]);
+  }, [draftAnswers, isLoading, hydrated, canPersist]);
 
   const currentDraft = useMemo<ProcessAnswers>(
     () => ({ definition, stages, adherence, tools }),
@@ -94,40 +94,37 @@ export function SalesProcess({ auditId }: { auditId: string }) {
   const lastSavedRef = useRef<string | null>(null);
   const latestDraftRef = useRef<ProcessAnswers>(currentDraft);
   const dirtyRef = useRef(false);
-  const hasSubmittedRef = useRef(!!intake?.submitted_at);
-  const saveMutateRef = useRef(save.mutate);
+  const hasSubmittedRef = useRef(!!submittedAt);
+  const saveDraftRef = useRef(saveDraft);
 
   useEffect(() => {
     latestDraftRef.current = currentDraft;
   }, [currentDraft]);
   useEffect(() => {
-    saveMutateRef.current = save.mutate;
-  }, [save.mutate]);
+    saveDraftRef.current = saveDraft;
+  }, [saveDraft]);
   useEffect(() => {
-    hasSubmittedRef.current = !!intake?.submitted_at;
-  }, [intake?.submitted_at]);
+    hasSubmittedRef.current = !!submittedAt;
+  }, [submittedAt]);
 
   const flushSave = useCallback(() => {
-    if (!dirtyRef.current || !userId) return;
+    if (!dirtyRef.current || !canPersist) return;
     const draft = latestDraftRef.current;
     const serialized = JSON.stringify(draft);
     dirtyRef.current = false;
     lastSavedRef.current = serialized;
     setSaveState("saving");
-    saveMutateRef.current(
-      { draft, hasSubmitted: hasSubmittedRef.current },
-      {
-        onSuccess: () => setSaveState("saved"),
-        onError: () => {
-          dirtyRef.current = true;
-          setSaveState("idle");
-        },
+    void saveDraftRef.current(draft, hasSubmittedRef.current).then(
+      () => setSaveState("saved"),
+      () => {
+        dirtyRef.current = true;
+        setSaveState("idle");
       },
     );
-  }, [userId]);
+  }, [canPersist]);
 
   useEffect(() => {
-    if (!hydrated || !userId) return;
+    if (!hydrated || !canPersist) return;
     const serialized = JSON.stringify(currentDraft);
     if (lastSavedRef.current === null) {
       lastSavedRef.current = serialized;
@@ -138,7 +135,7 @@ export function SalesProcess({ auditId }: { auditId: string }) {
     setSaveState("saving");
     const t = setTimeout(() => flushSave(), AUTOSAVE_MS);
     return () => clearTimeout(t);
-  }, [currentDraft, hydrated, userId, flushSave]);
+  }, [currentDraft, hydrated, canPersist, flushSave]);
 
   useEffect(() => {
     function onVisibility() {
@@ -151,13 +148,12 @@ export function SalesProcess({ auditId }: { auditId: string }) {
     };
   }, [flushSave]);
 
-  const isReceived =
-    !!intake?.submitted_at && !intake.has_unsubmitted_changes && !editingAfterSubmit;
+  const isReceived = !!submittedAt && !hasUnsubmittedChanges && !editingAfterSubmit;
 
   async function handleSubmit() {
     setSubmitError(null);
     try {
-      await submit.mutateAsync({ draft: currentDraft });
+      await submitSection(currentDraft);
       lastSavedRef.current = JSON.stringify(currentDraft);
       setSaveState("saved");
       setEditingAfterSubmit(false);
@@ -166,8 +162,7 @@ export function SalesProcess({ auditId }: { auditId: string }) {
     }
   }
 
-  const hasSubmitted = !!intake?.submitted_at;
-  const hasUnsubmittedChanges = !!intake?.has_unsubmitted_changes;
+  const hasSubmitted = !!submittedAt;
   const submitLabel = !hasSubmitted
     ? "Submit"
     : hasUnsubmittedChanges
