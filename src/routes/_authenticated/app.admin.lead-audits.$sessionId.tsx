@@ -129,6 +129,20 @@ function LeadAuditDetail() {
             )}
           </div>
           <div className="flex flex-col items-start sm:items-end gap-1 shrink-0">
+            <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                deleteMut.reset();
+                setConfirmOpen(true);
+              }}
+              className="text-ink-muted hover:text-[var(--red)]"
+            >
+              <Trash2 className="size-3.5" aria-hidden />
+              Delete
+            </Button>
             <Button type="button" variant="outline" size="sm" onClick={() => exportMut.mutate()} disabled={!auditId || exportMut.isPending}>
               {exportMut.isPending ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : <Download className="size-3.5" aria-hidden />}
               {exportMut.isPending ? "Exporting…" : "Export to MD"}
