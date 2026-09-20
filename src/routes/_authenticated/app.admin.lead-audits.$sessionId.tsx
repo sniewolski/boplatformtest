@@ -147,6 +147,7 @@ function LeadAuditDetail() {
               {exportMut.isPending ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : <Download className="size-3.5" aria-hidden />}
               {exportMut.isPending ? "Exporting…" : "Export to MD"}
             </Button>
+            </div>
             {exportMut.error && <span className="text-xs text-[var(--red)]">{(exportMut.error as Error).message}</span>}
           </div>
         </header>
