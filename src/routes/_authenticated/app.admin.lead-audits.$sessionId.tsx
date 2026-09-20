@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Download, Loader2 } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Download, Loader2, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { getLeadAudit, getLeadAuditExportData } from "@/lib/leadAudits.functions";
+import { DeleteLeadAuditDialog } from "@/components/admin/DeleteLeadAuditDialog";
+import { deleteLeadAudit, getLeadAudit, getLeadAuditExportData } from "@/lib/leadAudits.functions";
 import { exportToMarkdown, hasAnySubmission } from "@/tools/selling-systems-audit/admin/exportToMarkdown";
 import { downloadMarkdown } from "@/lib/download-file";
 import { ConversionAdminTab } from "@/tools/selling-systems-audit/admin/ConversionAdminTab";
