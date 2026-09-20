@@ -106,6 +106,13 @@ function LeadAuditDetail() {
               .filter(Boolean)
               .join(" · ")}
             </p>
+            {lead && (
+              <p className="text-xs text-ink-muted">
+                {lead.consentGivenAt
+                  ? `Consent given ${formatDate(lead.consentGivenAt)}`
+                  : "No consent recorded"}
+              </p>
+            )}
           </div>
           <div className="flex flex-col items-start sm:items-end gap-1 shrink-0">
             <Button type="button" variant="outline" size="sm" onClick={() => exportMut.mutate()} disabled={!auditId || exportMut.isPending}>

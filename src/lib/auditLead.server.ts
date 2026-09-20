@@ -159,9 +159,16 @@ export async function loadWritableLeadSession(token: string) {
   return loaded;
 }
 
+export type LeadConsent = {
+  label: string;
+  agreed: true;
+  at: string;
+};
+
 export async function startLeadAudit(
   name: string,
   email: string,
+  consentLabel: string,
 ): Promise<{ token: string }> {
   const ownerId = await getLeadHoldingUserId();
 
@@ -173,6 +180,11 @@ export async function startLeadAudit(
   if (auditError || !audit) throw auditError ?? new Error("Could not create audit");
 
   const token = generateToken();
+  const consent: LeadConsent = {
+    label: consentLabel,
+    agreed: true,
+    at: new Date().toISOString(),
+  };
   const payload: LeadSessionPayload = { audit_id: audit.id, currency: null };
 
   const { error: sessionError } = await supabaseAdmin
@@ -185,6 +197,7 @@ export async function startLeadAudit(
       respondent_name: name,
       respondent_email: email,
       payload: payload as never,
+      consent: consent as never,
     });
   if (sessionError) throw sessionError;
 

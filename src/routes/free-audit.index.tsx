@@ -2,10 +2,12 @@ import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PublicAuditLayout } from "@/components/free-audit/PublicAuditLayout";
 import {
+  LEAD_AUDIT_CONSENT_LABEL,
   readStoredLeadAuditToken,
   storeLeadAuditToken,
 } from "@/lib/auditLeadPublic";
@@ -32,7 +34,12 @@ export const Route = createFileRoute("/free-audit/")({
   component: FreeAuditStart,
 });
 
-type FieldErrors = { name?: string; email?: string; form?: string };
+type FieldErrors = {
+  name?: string;
+  email?: string;
+  consent?: string;
+  form?: string;
+};
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -42,6 +49,7 @@ function FreeAuditStart() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState("");
+  const [consent, setConsent] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -61,6 +69,9 @@ function FreeAuditStart() {
     else if (!EMAIL_PATTERN.test(cleanEmail)) {
       nextErrors.email = "Please enter a valid email address.";
     }
+    if (!consent) {
+      nextErrors.consent = "Please tick this box to start the audit.";
+    }
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
@@ -73,7 +84,12 @@ function FreeAuditStart() {
       const response = await fetch("/api/public/audit-lead/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: cleanName, email: cleanEmail, company }),
+        body: JSON.stringify({
+          name: cleanName,
+          email: cleanEmail,
+          company,
+          consent: true,
+        }),
       });
       const data = (await response.json()) as { ok?: boolean; token?: string | null };
       if (!response.ok || !data.ok) throw new Error("start_failed");
@@ -171,8 +187,47 @@ function FreeAuditStart() {
           />
         </div>
 
+        <div className="flex flex-col gap-2">
+          <div className="flex items-start gap-3">
+            <Checkbox
+              id="free-audit-consent"
+              checked={consent}
+              onCheckedChange={(checked) => {
+                setConsent(checked === true);
+                if (checked === true && errors.consent) {
+                  setErrors((current) => ({ ...current, consent: undefined }));
+                }
+              }}
+              aria-invalid={Boolean(errors.consent)}
+              aria-describedby={
+                errors.consent ? "free-audit-consent-error" : undefined
+              }
+              disabled={submitting}
+              className="mt-0.5"
+            />
+            <Label
+              htmlFor="free-audit-consent"
+              className="text-sm font-normal leading-relaxed text-ink-muted cursor-pointer"
+            >
+              {LEAD_AUDIT_CONSENT_LABEL}
+            </Label>
+          </div>
+          <p
+            id="free-audit-consent-error"
+            className="min-h-5 text-sm text-ink-muted"
+            aria-live="polite"
+          >
+            {errors.consent ?? ""}
+          </p>
+        </div>
+
         <div className="flex flex-col gap-3">
-          <Button type="submit" size="lg" disabled={submitting} className="w-full sm:w-fit">
+          <Button
+            type="submit"
+            size="lg"
+            disabled={submitting || !consent}
+            className="w-full sm:w-fit"
+          >
             {submitting ? "Starting…" : "Start the audit"}
             {!submitting ? <ArrowRight aria-hidden="true" /> : null}
           </Button>
