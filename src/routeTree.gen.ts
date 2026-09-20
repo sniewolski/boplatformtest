@@ -28,6 +28,11 @@ import { Route as ApiPublicRStateRouteImport } from './routes/api/public/r/state
 import { Route as ApiPublicRSaveRouteImport } from './routes/api/public/r/save'
 import { Route as ApiPublicRCompleteRouteImport } from './routes/api/public/r/complete'
 import { Route as ApiPublicRCaptureRouteImport } from './routes/api/public/r/capture'
+import { Route as ApiPublicAuditLeadSubmitSectionRouteImport } from './routes/api/public/audit-lead/submit-section'
+import { Route as ApiPublicAuditLeadStateRouteImport } from './routes/api/public/audit-lead/state'
+import { Route as ApiPublicAuditLeadStartRouteImport } from './routes/api/public/audit-lead/start'
+import { Route as ApiPublicAuditLeadSetCurrencyRouteImport } from './routes/api/public/audit-lead/set-currency'
+import { Route as ApiPublicAuditLeadSaveDraftRouteImport } from './routes/api/public/audit-lead/save-draft'
 import { Route as AuthenticatedAppAdminWillAiRouteImport } from './routes/_authenticated/app.admin.will-ai'
 import { Route as AuthenticatedAppAdminWatchFirstRouteImport } from './routes/_authenticated/app.admin.watch-first'
 import { Route as AuthenticatedAppAdminTrackerRouteImport } from './routes/_authenticated/app.admin.tracker'
@@ -138,6 +143,34 @@ const ApiPublicRCaptureRoute = ApiPublicRCaptureRouteImport.update({
   path: '/api/public/r/capture',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAuditLeadSubmitSectionRoute =
+  ApiPublicAuditLeadSubmitSectionRouteImport.update({
+    id: '/api/public/audit-lead/submit-section',
+    path: '/api/public/audit-lead/submit-section',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicAuditLeadStateRoute = ApiPublicAuditLeadStateRouteImport.update({
+  id: '/api/public/audit-lead/state',
+  path: '/api/public/audit-lead/state',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAuditLeadStartRoute = ApiPublicAuditLeadStartRouteImport.update({
+  id: '/api/public/audit-lead/start',
+  path: '/api/public/audit-lead/start',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAuditLeadSetCurrencyRoute =
+  ApiPublicAuditLeadSetCurrencyRouteImport.update({
+    id: '/api/public/audit-lead/set-currency',
+    path: '/api/public/audit-lead/set-currency',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicAuditLeadSaveDraftRoute =
+  ApiPublicAuditLeadSaveDraftRouteImport.update({
+    id: '/api/public/audit-lead/save-draft',
+    path: '/api/public/audit-lead/save-draft',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAppAdminWillAiRoute =
   AuthenticatedAppAdminWillAiRouteImport.update({
     id: '/will-ai',
@@ -221,6 +254,11 @@ export interface FileRoutesByFullPath {
   '/app/admin/tracker': typeof AuthenticatedAppAdminTrackerRoute
   '/app/admin/watch-first': typeof AuthenticatedAppAdminWatchFirstRoute
   '/app/admin/will-ai': typeof AuthenticatedAppAdminWillAiRoute
+  '/api/public/audit-lead/save-draft': typeof ApiPublicAuditLeadSaveDraftRoute
+  '/api/public/audit-lead/set-currency': typeof ApiPublicAuditLeadSetCurrencyRoute
+  '/api/public/audit-lead/start': typeof ApiPublicAuditLeadStartRoute
+  '/api/public/audit-lead/state': typeof ApiPublicAuditLeadStateRoute
+  '/api/public/audit-lead/submit-section': typeof ApiPublicAuditLeadSubmitSectionRoute
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
   '/api/public/r/save': typeof ApiPublicRSaveRoute
@@ -247,6 +285,11 @@ export interface FileRoutesByTo {
   '/app/admin/tracker': typeof AuthenticatedAppAdminTrackerRoute
   '/app/admin/watch-first': typeof AuthenticatedAppAdminWatchFirstRoute
   '/app/admin/will-ai': typeof AuthenticatedAppAdminWillAiRoute
+  '/api/public/audit-lead/save-draft': typeof ApiPublicAuditLeadSaveDraftRoute
+  '/api/public/audit-lead/set-currency': typeof ApiPublicAuditLeadSetCurrencyRoute
+  '/api/public/audit-lead/start': typeof ApiPublicAuditLeadStartRoute
+  '/api/public/audit-lead/state': typeof ApiPublicAuditLeadStateRoute
+  '/api/public/audit-lead/submit-section': typeof ApiPublicAuditLeadSubmitSectionRoute
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
   '/api/public/r/save': typeof ApiPublicRSaveRoute
@@ -280,6 +323,11 @@ export interface FileRoutesById {
   '/_authenticated/app/admin/tracker': typeof AuthenticatedAppAdminTrackerRoute
   '/_authenticated/app/admin/watch-first': typeof AuthenticatedAppAdminWatchFirstRoute
   '/_authenticated/app/admin/will-ai': typeof AuthenticatedAppAdminWillAiRoute
+  '/api/public/audit-lead/save-draft': typeof ApiPublicAuditLeadSaveDraftRoute
+  '/api/public/audit-lead/set-currency': typeof ApiPublicAuditLeadSetCurrencyRoute
+  '/api/public/audit-lead/start': typeof ApiPublicAuditLeadStartRoute
+  '/api/public/audit-lead/state': typeof ApiPublicAuditLeadStateRoute
+  '/api/public/audit-lead/submit-section': typeof ApiPublicAuditLeadSubmitSectionRoute
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
   '/api/public/r/save': typeof ApiPublicRSaveRoute
@@ -313,6 +361,11 @@ export interface FileRouteTypes {
     | '/app/admin/tracker'
     | '/app/admin/watch-first'
     | '/app/admin/will-ai'
+    | '/api/public/audit-lead/save-draft'
+    | '/api/public/audit-lead/set-currency'
+    | '/api/public/audit-lead/start'
+    | '/api/public/audit-lead/state'
+    | '/api/public/audit-lead/submit-section'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
     | '/api/public/r/save'
@@ -339,6 +392,11 @@ export interface FileRouteTypes {
     | '/app/admin/tracker'
     | '/app/admin/watch-first'
     | '/app/admin/will-ai'
+    | '/api/public/audit-lead/save-draft'
+    | '/api/public/audit-lead/set-currency'
+    | '/api/public/audit-lead/start'
+    | '/api/public/audit-lead/state'
+    | '/api/public/audit-lead/submit-section'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
     | '/api/public/r/save'
@@ -371,6 +429,11 @@ export interface FileRouteTypes {
     | '/_authenticated/app/admin/tracker'
     | '/_authenticated/app/admin/watch-first'
     | '/_authenticated/app/admin/will-ai'
+    | '/api/public/audit-lead/save-draft'
+    | '/api/public/audit-lead/set-currency'
+    | '/api/public/audit-lead/start'
+    | '/api/public/audit-lead/state'
+    | '/api/public/audit-lead/submit-section'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
     | '/api/public/r/save'
@@ -392,6 +455,11 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   LoginRoute: typeof LoginRoute
   RTokenRoute: typeof RTokenRouteWithChildren
+  ApiPublicAuditLeadSaveDraftRoute: typeof ApiPublicAuditLeadSaveDraftRoute
+  ApiPublicAuditLeadSetCurrencyRoute: typeof ApiPublicAuditLeadSetCurrencyRoute
+  ApiPublicAuditLeadStartRoute: typeof ApiPublicAuditLeadStartRoute
+  ApiPublicAuditLeadStateRoute: typeof ApiPublicAuditLeadStateRoute
+  ApiPublicAuditLeadSubmitSectionRoute: typeof ApiPublicAuditLeadSubmitSectionRoute
   ApiPublicRCaptureRoute: typeof ApiPublicRCaptureRoute
   ApiPublicRCompleteRoute: typeof ApiPublicRCompleteRoute
   ApiPublicRSaveRoute: typeof ApiPublicRSaveRoute
@@ -535,6 +603,41 @@ declare module '@tanstack/react-router' {
       path: '/api/public/r/capture'
       fullPath: '/api/public/r/capture'
       preLoaderRoute: typeof ApiPublicRCaptureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/audit-lead/submit-section': {
+      id: '/api/public/audit-lead/submit-section'
+      path: '/api/public/audit-lead/submit-section'
+      fullPath: '/api/public/audit-lead/submit-section'
+      preLoaderRoute: typeof ApiPublicAuditLeadSubmitSectionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/audit-lead/state': {
+      id: '/api/public/audit-lead/state'
+      path: '/api/public/audit-lead/state'
+      fullPath: '/api/public/audit-lead/state'
+      preLoaderRoute: typeof ApiPublicAuditLeadStateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/audit-lead/start': {
+      id: '/api/public/audit-lead/start'
+      path: '/api/public/audit-lead/start'
+      fullPath: '/api/public/audit-lead/start'
+      preLoaderRoute: typeof ApiPublicAuditLeadStartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/audit-lead/set-currency': {
+      id: '/api/public/audit-lead/set-currency'
+      path: '/api/public/audit-lead/set-currency'
+      fullPath: '/api/public/audit-lead/set-currency'
+      preLoaderRoute: typeof ApiPublicAuditLeadSetCurrencyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/audit-lead/save-draft': {
+      id: '/api/public/audit-lead/save-draft'
+      path: '/api/public/audit-lead/save-draft'
+      fullPath: '/api/public/audit-lead/save-draft'
+      preLoaderRoute: typeof ApiPublicAuditLeadSaveDraftRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app/admin/will-ai': {
@@ -728,6 +831,11 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   LoginRoute: LoginRoute,
   RTokenRoute: RTokenRouteWithChildren,
+  ApiPublicAuditLeadSaveDraftRoute: ApiPublicAuditLeadSaveDraftRoute,
+  ApiPublicAuditLeadSetCurrencyRoute: ApiPublicAuditLeadSetCurrencyRoute,
+  ApiPublicAuditLeadStartRoute: ApiPublicAuditLeadStartRoute,
+  ApiPublicAuditLeadStateRoute: ApiPublicAuditLeadStateRoute,
+  ApiPublicAuditLeadSubmitSectionRoute: ApiPublicAuditLeadSubmitSectionRoute,
   ApiPublicRCaptureRoute: ApiPublicRCaptureRoute,
   ApiPublicRCompleteRoute: ApiPublicRCompleteRoute,
   ApiPublicRSaveRoute: ApiPublicRSaveRoute,
