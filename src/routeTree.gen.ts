@@ -21,6 +21,7 @@ import { Route as FreeAuditTokenIndexRouteImport } from './routes/free-audit.$to
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as RTokenSplatRouteImport } from './routes/r.$token.$'
 import { Route as FreeAuditTokenDoneRouteImport } from './routes/free-audit.$token.done'
+import { Route as FreeAuditTokenSectionKeyRouteImport } from './routes/free-audit.$token.$sectionKey'
 import { Route as AuthenticatedAppBusinessBriefRouteImport } from './routes/_authenticated/app.business-brief'
 import { Route as AuthenticatedAppBookCallRouteImport } from './routes/_authenticated/app.book-call'
 import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
@@ -109,6 +110,12 @@ const FreeAuditTokenDoneRoute = FreeAuditTokenDoneRouteImport.update({
   path: '/done',
   getParentRoute: () => FreeAuditTokenRoute,
 } as any)
+const FreeAuditTokenSectionKeyRoute =
+  FreeAuditTokenSectionKeyRouteImport.update({
+    id: '/$sectionKey',
+    path: '/$sectionKey',
+    getParentRoute: () => FreeAuditTokenRoute,
+  } as any)
 const AuthenticatedAppBusinessBriefRoute =
   AuthenticatedAppBusinessBriefRouteImport.update({
     id: '/app/business-brief',
@@ -278,6 +285,7 @@ export interface FileRoutesByFullPath {
   '/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/app/book-call': typeof AuthenticatedAppBookCallRoute
   '/app/business-brief': typeof AuthenticatedAppBusinessBriefRoute
+  '/free-audit/$token/$sectionKey': typeof FreeAuditTokenSectionKeyRoute
   '/free-audit/$token/done': typeof FreeAuditTokenDoneRoute
   '/r/$token/$': typeof RTokenSplatRoute
   '/app/': typeof AuthenticatedAppIndexRoute
@@ -315,6 +323,7 @@ export interface FileRoutesByTo {
   '/free-audit': typeof FreeAuditIndexRoute
   '/app/book-call': typeof AuthenticatedAppBookCallRoute
   '/app/business-brief': typeof AuthenticatedAppBusinessBriefRoute
+  '/free-audit/$token/$sectionKey': typeof FreeAuditTokenSectionKeyRoute
   '/free-audit/$token/done': typeof FreeAuditTokenDoneRoute
   '/r/$token/$': typeof RTokenSplatRoute
   '/app': typeof AuthenticatedAppIndexRoute
@@ -355,6 +364,7 @@ export interface FileRoutesById {
   '/_authenticated/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/_authenticated/app/book-call': typeof AuthenticatedAppBookCallRoute
   '/_authenticated/app/business-brief': typeof AuthenticatedAppBusinessBriefRoute
+  '/free-audit/$token/$sectionKey': typeof FreeAuditTokenSectionKeyRoute
   '/free-audit/$token/done': typeof FreeAuditTokenDoneRoute
   '/r/$token/$': typeof RTokenSplatRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
@@ -398,6 +408,7 @@ export interface FileRouteTypes {
     | '/app/admin'
     | '/app/book-call'
     | '/app/business-brief'
+    | '/free-audit/$token/$sectionKey'
     | '/free-audit/$token/done'
     | '/r/$token/$'
     | '/app/'
@@ -435,6 +446,7 @@ export interface FileRouteTypes {
     | '/free-audit'
     | '/app/book-call'
     | '/app/business-brief'
+    | '/free-audit/$token/$sectionKey'
     | '/free-audit/$token/done'
     | '/r/$token/$'
     | '/app'
@@ -474,6 +486,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/admin'
     | '/_authenticated/app/book-call'
     | '/_authenticated/app/business-brief'
+    | '/free-audit/$token/$sectionKey'
     | '/free-audit/$token/done'
     | '/r/$token/$'
     | '/_authenticated/app/'
@@ -611,6 +624,13 @@ declare module '@tanstack/react-router' {
       path: '/done'
       fullPath: '/free-audit/$token/done'
       preLoaderRoute: typeof FreeAuditTokenDoneRouteImport
+      parentRoute: typeof FreeAuditTokenRoute
+    }
+    '/free-audit/$token/$sectionKey': {
+      id: '/free-audit/$token/$sectionKey'
+      path: '/$sectionKey'
+      fullPath: '/free-audit/$token/$sectionKey'
+      preLoaderRoute: typeof FreeAuditTokenSectionKeyRouteImport
       parentRoute: typeof FreeAuditTokenRoute
     }
     '/_authenticated/app/business-brief': {
@@ -906,11 +926,13 @@ const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 interface FreeAuditTokenRouteChildren {
+  FreeAuditTokenSectionKeyRoute: typeof FreeAuditTokenSectionKeyRoute
   FreeAuditTokenDoneRoute: typeof FreeAuditTokenDoneRoute
   FreeAuditTokenIndexRoute: typeof FreeAuditTokenIndexRoute
 }
 
 const FreeAuditTokenRouteChildren: FreeAuditTokenRouteChildren = {
+  FreeAuditTokenSectionKeyRoute: FreeAuditTokenSectionKeyRoute,
   FreeAuditTokenDoneRoute: FreeAuditTokenDoneRoute,
   FreeAuditTokenIndexRoute: FreeAuditTokenIndexRoute,
 }
