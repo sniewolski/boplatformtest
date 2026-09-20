@@ -10,7 +10,7 @@ import {
   storeLeadAuditToken,
 } from "@/lib/auditLead.client";
 
-export const Route = createFileRoute("/free-audit")({
+export const Route = createFileRoute("/free-audit/")({
   ssr: false,
   head: () => ({
     meta: [

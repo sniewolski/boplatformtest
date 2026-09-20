@@ -10,9 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as FreeAuditRouteImport } from './routes/free-audit'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as FreeAuditIndexRouteImport } from './routes/free-audit.index'
 import { Route as RTokenRouteImport } from './routes/r.$token'
 import { Route as FreeAuditTokenRouteImport } from './routes/free-audit.$token'
 import { Route as RTokenIndexRouteImport } from './routes/r.$token.index'
@@ -54,11 +54,6 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FreeAuditRoute = FreeAuditRouteImport.update({
-  id: '/free-audit',
-  path: '/free-audit',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
@@ -68,15 +63,20 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FreeAuditIndexRoute = FreeAuditIndexRouteImport.update({
+  id: '/free-audit/',
+  path: '/free-audit/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RTokenRoute = RTokenRouteImport.update({
   id: '/r/$token',
   path: '/r/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FreeAuditTokenRoute = FreeAuditTokenRouteImport.update({
-  id: '/$token',
-  path: '/$token',
-  getParentRoute: () => FreeAuditRoute,
+  id: '/free-audit/$token',
+  path: '/free-audit/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const RTokenIndexRoute = RTokenIndexRouteImport.update({
   id: '/',
@@ -264,10 +264,10 @@ const AuthenticatedAppAdminReviewOwnerIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/free-audit': typeof FreeAuditRouteWithChildren
   '/login': typeof LoginRoute
   '/free-audit/$token': typeof FreeAuditTokenRouteWithChildren
   '/r/$token': typeof RTokenRouteWithChildren
+  '/free-audit/': typeof FreeAuditIndexRoute
   '/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/app/book-call': typeof AuthenticatedAppBookCallRoute
   '/app/business-brief': typeof AuthenticatedAppBusinessBriefRoute
@@ -304,8 +304,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/free-audit': typeof FreeAuditRouteWithChildren
   '/login': typeof LoginRoute
+  '/free-audit': typeof FreeAuditIndexRoute
   '/app/book-call': typeof AuthenticatedAppBookCallRoute
   '/app/business-brief': typeof AuthenticatedAppBusinessBriefRoute
   '/free-audit/$token/done': typeof FreeAuditTokenDoneRoute
@@ -340,10 +340,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/free-audit': typeof FreeAuditRouteWithChildren
   '/login': typeof LoginRoute
   '/free-audit/$token': typeof FreeAuditTokenRouteWithChildren
   '/r/$token': typeof RTokenRouteWithChildren
+  '/free-audit/': typeof FreeAuditIndexRoute
   '/_authenticated/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/_authenticated/app/book-call': typeof AuthenticatedAppBookCallRoute
   '/_authenticated/app/business-brief': typeof AuthenticatedAppBusinessBriefRoute
@@ -382,10 +382,10 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/free-audit'
     | '/login'
     | '/free-audit/$token'
     | '/r/$token'
+    | '/free-audit/'
     | '/app/admin'
     | '/app/book-call'
     | '/app/business-brief'
@@ -422,8 +422,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/free-audit'
     | '/login'
+    | '/free-audit'
     | '/app/book-call'
     | '/app/business-brief'
     | '/free-audit/$token/done'
@@ -457,10 +457,10 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
-    | '/free-audit'
     | '/login'
     | '/free-audit/$token'
     | '/r/$token'
+    | '/free-audit/'
     | '/_authenticated/app/admin'
     | '/_authenticated/app/book-call'
     | '/_authenticated/app/business-brief'
@@ -499,9 +499,10 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  FreeAuditRoute: typeof FreeAuditRouteWithChildren
   LoginRoute: typeof LoginRoute
+  FreeAuditTokenRoute: typeof FreeAuditTokenRouteWithChildren
   RTokenRoute: typeof RTokenRouteWithChildren
+  FreeAuditIndexRoute: typeof FreeAuditIndexRoute
   ApiPublicAuditLeadSaveDraftRoute: typeof ApiPublicAuditLeadSaveDraftRoute
   ApiPublicAuditLeadSetCurrencyRoute: typeof ApiPublicAuditLeadSetCurrencyRoute
   ApiPublicAuditLeadStartRoute: typeof ApiPublicAuditLeadStartRoute
@@ -526,13 +527,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/free-audit': {
-      id: '/free-audit'
-      path: '/free-audit'
-      fullPath: '/free-audit'
-      preLoaderRoute: typeof FreeAuditRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -547,6 +541,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/free-audit/': {
+      id: '/free-audit/'
+      path: '/free-audit'
+      fullPath: '/free-audit/'
+      preLoaderRoute: typeof FreeAuditIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/r/$token': {
       id: '/r/$token'
       path: '/r/$token'
@@ -556,10 +557,10 @@ declare module '@tanstack/react-router' {
     }
     '/free-audit/$token': {
       id: '/free-audit/$token'
-      path: '/$token'
+      path: '/free-audit/$token'
       fullPath: '/free-audit/$token'
       preLoaderRoute: typeof FreeAuditTokenRouteImport
-      parentRoute: typeof FreeAuditRoute
+      parentRoute: typeof rootRouteImport
     }
     '/r/$token/': {
       id: '/r/$token/'
@@ -902,18 +903,6 @@ const FreeAuditTokenRouteWithChildren = FreeAuditTokenRoute._addFileChildren(
   FreeAuditTokenRouteChildren,
 )
 
-interface FreeAuditRouteChildren {
-  FreeAuditTokenRoute: typeof FreeAuditTokenRouteWithChildren
-}
-
-const FreeAuditRouteChildren: FreeAuditRouteChildren = {
-  FreeAuditTokenRoute: FreeAuditTokenRouteWithChildren,
-}
-
-const FreeAuditRouteWithChildren = FreeAuditRoute._addFileChildren(
-  FreeAuditRouteChildren,
-)
-
 interface RTokenRouteChildren {
   RTokenSplatRoute: typeof RTokenSplatRoute
   RTokenIndexRoute: typeof RTokenIndexRoute
@@ -930,9 +919,10 @@ const RTokenRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  FreeAuditRoute: FreeAuditRouteWithChildren,
   LoginRoute: LoginRoute,
+  FreeAuditTokenRoute: FreeAuditTokenRouteWithChildren,
   RTokenRoute: RTokenRouteWithChildren,
+  FreeAuditIndexRoute: FreeAuditIndexRoute,
   ApiPublicAuditLeadSaveDraftRoute: ApiPublicAuditLeadSaveDraftRoute,
   ApiPublicAuditLeadSetCurrencyRoute: ApiPublicAuditLeadSetCurrencyRoute,
   ApiPublicAuditLeadStartRoute: ApiPublicAuditLeadStartRoute,
