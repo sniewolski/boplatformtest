@@ -17,12 +17,14 @@ import { ConversionAdminReadBack } from "./ConversionAdminReadBack";
 export function ConversionAdminTab({
   ownerId,
   auditId,
+  readBackOnly,
 }: {
-  ownerId: string;
+  ownerId?: string;
   auditId: string | null;
+  readBackOnly?: { currency: import("@/lib/format-currency").CurrencyCode | null };
 }) {
   const submitted = useSubmittedAnswers(auditId, "conversion");
-  const currencyQ = useOwnerCurrency(ownerId);
+  const currencyQ = useOwnerCurrency(readBackOnly ? undefined : ownerId);
 
   const answers = submitted.data?.submitted_answers ?? null;
   const submittedAt = submitted.data?.submitted_at ?? null;
@@ -30,12 +32,14 @@ export function ConversionAdminTab({
 
   return (
     <div className="flex flex-col gap-8 max-w-3xl">
-      <SectionSummaryPanel
-        ownerId={ownerId}
-        auditId={auditId}
-        sectionKey="conversion"
-        hasSubmitted={hasSubmitted}
-      />
+      {!readBackOnly && ownerId && (
+        <SectionSummaryPanel
+          ownerId={ownerId}
+          auditId={auditId}
+          sectionKey="conversion"
+          hasSubmitted={hasSubmitted}
+        />
+      )}
 
       <section className="flex flex-col gap-4" aria-label="Submitted answers">
         <div className="flex items-baseline justify-between gap-3">
@@ -65,12 +69,14 @@ export function ConversionAdminTab({
         {hasSubmitted && answers && (
           <ConversionAdminReadBack
             answers={answers as Record<string, unknown>}
-            currency={currencyQ.data ?? null}
+            currency={readBackOnly?.currency ?? currencyQ.data ?? null}
           />
         )}
       </section>
 
-      <SectionNotes ownerId={ownerId} auditId={auditId} sectionKey="conversion" />
+      {!readBackOnly && ownerId && (
+        <SectionNotes ownerId={ownerId} auditId={auditId} sectionKey="conversion" />
+      )}
     </div>
   );
 }

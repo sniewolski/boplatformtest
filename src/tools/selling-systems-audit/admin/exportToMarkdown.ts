@@ -136,6 +136,7 @@ function renderAnswers(
 function renderSection(
   section: AuditExportSection,
   currency: CurrencyCode | null,
+  includeInsights = true,
 ): string {
   const label = SECTION_LABEL[section.key];
   const parts: string[] = [`## ${label}`, ""];
@@ -149,14 +150,16 @@ function renderSection(
   parts.push("");
   parts.push(renderAnswers(section.submittedAnswers, currency));
   parts.push("");
-  parts.push("### Section Summary");
-  parts.push("");
-  parts.push(section.summaryText ? section.summaryText : "*No summary generated*");
-  parts.push("");
-  parts.push("### Coach Notes");
-  parts.push("");
-  parts.push(section.noteBody ? section.noteBody : "*No notes*");
-  parts.push("");
+  if (includeInsights) {
+    parts.push("### Section Summary");
+    parts.push("");
+    parts.push(section.summaryText ? section.summaryText : "*No summary generated*");
+    parts.push("");
+    parts.push("### Coach Notes");
+    parts.push("");
+    parts.push(section.noteBody ? section.noteBody : "*No notes*");
+    parts.push("");
+  }
   return parts.join("\n");
 }
 
@@ -220,9 +223,9 @@ export function exportToMarkdown(data: AuditExportData): string {
     (k) => data.sections.find((s) => s.key === k),
   ).filter((s): s is AuditExportSection => !!s);
   for (const s of orderedSections) {
-    parts.push(renderSection(s, data.currency));
+    parts.push(renderSection(s, data.currency, data.includeInsights !== false));
   }
-  parts.push(renderContent(data.contentAssets));
+  if (data.includeContent !== false) parts.push(renderContent(data.contentAssets));
   return parts.join("\n").replace(/\n{3,}/g, "\n\n").trimEnd() + "\n";
 }
 

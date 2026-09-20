@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { ArrowLeft, Download, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getLeadAudit } from "@/lib/leadAudits.functions";
+import { Button } from "@/components/ui/button";
+import { getLeadAudit, getLeadAuditExportData } from "@/lib/leadAudits.functions";
+import { exportToMarkdown, hasAnySubmission } from "@/tools/selling-systems-audit/admin/exportToMarkdown";
+import { downloadMarkdown } from "@/lib/download-file";
 import { ConversionAdminTab } from "@/tools/selling-systems-audit/admin/ConversionAdminTab";
 import { SectionAdminTab } from "@/tools/selling-systems-audit/admin/SectionAdminTab";
 import { PipelineAdminReadBack } from "@/tools/selling-systems-audit/admin/PipelineAdminReadBack";
@@ -52,8 +55,6 @@ function formatDate(iso: string): string {
 function LeadAuditDetail() {
   const { sessionId } = Route.useParams();
   const [tab, setTab] = useState<TabKey>("conversion");
-  const qc = useQueryClient();
-
   const load = useServerFn(getLeadAudit);
   const leadQ = useQuery({
     queryKey: ["admin", "lead-audit", sessionId],
@@ -62,28 +63,18 @@ function LeadAuditDetail() {
 
   const lead = leadQ.data ?? null;
   const auditId = lead?.auditId ?? null;
-  const ownerId = lead?.holdingOwnerId ?? null;
-
-  /**
-   * The shared section tabs read the currency through
-   * useOwnerCurrency(ownerId) — `owner_settings`, which the holding account
-   * has no row in. Rather than editing the shared components, we prime that
-   * exact query with the currency stored on the lead's session payload and
-   * pin it so it is never refetched away.
-   */
-  if (ownerId) {
-    const key = ["admin-audit", "currency", ownerId];
-    if (qc.getQueryData(key) === undefined) {
-      qc.setQueryDefaults(key, {
-        staleTime: Infinity,
-        gcTime: Infinity,
-        refetchOnMount: false,
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-      });
-      qc.setQueryData(key, lead?.currency ?? null);
-    }
-  }
+  const fetchExport = useServerFn(getLeadAuditExportData);
+  const exportMut = useMutation({
+    mutationFn: async () => {
+      const data = await fetchExport({ data: { sessionId } });
+      if (!hasAnySubmission(data)) throw new Error("Nothing to export yet.");
+      const markdown = exportToMarkdown(data);
+      const nameSource = data.owner.fullName?.trim() || data.owner.email.split("@")[0];
+      const slug = nameSource.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "lead";
+      const today = new Date().toISOString().slice(0, 10);
+      downloadMarkdown(`audit-${slug}-${today}.md`, markdown);
+    },
+  });
 
   return (
     <div className="app-content py-12 flex flex-col gap-8">
@@ -95,13 +86,14 @@ function LeadAuditDetail() {
           <ArrowLeft className="size-3.5" />
           All lead audits
         </Link>
-        <header className="flex flex-col gap-1">
-          <h1 className="text-2xl">
+        <header className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-2xl">
             {lead?.name?.trim() ||
               lead?.email ||
               (leadQ.isLoading ? "…" : "Unknown")}
-          </h1>
-          <p className="text-ink-muted text-sm">
+            </h1>
+            <p className="text-ink-muted text-sm">
             {[
               lead?.name?.trim() ? lead.email : null,
               lead ? `Started ${formatDate(lead.createdAt)}` : null,
@@ -113,7 +105,15 @@ function LeadAuditDetail() {
             ]
               .filter(Boolean)
               .join(" · ")}
-          </p>
+            </p>
+          </div>
+          <div className="flex flex-col items-start sm:items-end gap-1 shrink-0">
+            <Button type="button" variant="outline" size="sm" onClick={() => exportMut.mutate()} disabled={!auditId || exportMut.isPending}>
+              {exportMut.isPending ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : <Download className="size-3.5" aria-hidden />}
+              {exportMut.isPending ? "Exporting…" : "Export to MD"}
+            </Button>
+            {exportMut.error && <span className="text-xs text-[var(--red)]">{(exportMut.error as Error).message}</span>}
+          </div>
         </header>
       </div>
 
@@ -129,7 +129,7 @@ function LeadAuditDetail() {
         </div>
       )}
 
-      {auditId && ownerId && (
+      {auditId && lead && (
         <>
           <nav
             role="tablist"
@@ -159,12 +159,12 @@ function LeadAuditDetail() {
 
           <section className="min-h-[40vh]">
             {tab === "conversion" && (
-              <ConversionAdminTab ownerId={ownerId} auditId={auditId} />
+              <ConversionAdminTab auditId={auditId} readBackOnly={{ currency: lead.currency as import("@/lib/format-currency").CurrencyCode | null }} />
             )}
             {tab === "pipeline" && (
               <SectionAdminTab
-                ownerId={ownerId}
                 auditId={auditId}
+                readBackOnly={{ currency: lead.currency as import("@/lib/format-currency").CurrencyCode | null }}
                 sectionKey="pipeline"
                 sectionLabel="Pipeline"
                 renderReadBack={(answers, currency) => (
@@ -174,8 +174,8 @@ function LeadAuditDetail() {
             )}
             {tab === "process" && (
               <SectionAdminTab
-                ownerId={ownerId}
                 auditId={auditId}
+                readBackOnly={{ currency: null }}
                 sectionKey="process"
                 sectionLabel="Process"
                 renderReadBack={(answers) => (
@@ -185,8 +185,8 @@ function LeadAuditDetail() {
             )}
             {tab === "activity" && (
               <SectionAdminTab
-                ownerId={ownerId}
                 auditId={auditId}
+                readBackOnly={{ currency: null }}
                 sectionKey="activity"
                 sectionLabel="Activity"
                 renderReadBack={(answers) => (
@@ -196,8 +196,8 @@ function LeadAuditDetail() {
             )}
             {tab === "messaging" && (
               <SectionAdminTab
-                ownerId={ownerId}
                 auditId={auditId}
+                readBackOnly={{ currency: null }}
                 sectionKey="messaging"
                 sectionLabel="Messaging"
                 renderReadBack={(answers) => (
@@ -207,8 +207,8 @@ function LeadAuditDetail() {
             )}
             {tab === "alignment" && (
               <SectionAdminTab
-                ownerId={ownerId}
                 auditId={auditId}
+                readBackOnly={{ currency: null }}
                 sectionKey="alignment"
                 sectionLabel="Alignment"
                 renderReadBack={(answers) => (

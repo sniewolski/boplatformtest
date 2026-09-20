@@ -55,7 +55,112 @@ export type AuditExportData = {
   currency: CurrencyCode | null;
   sections: AuditExportSection[];
   contentAssets: AuditExportContentAsset[];
+  includeInsights?: boolean;
+  includeContent?: boolean;
 };
+
+type ExportIdentity = {
+  fullName: string | null;
+  email: string;
+  currency: CurrencyCode | null;
+};
+
+export async function loadAuditExportData({
+  supabaseAdmin,
+  ownerId,
+  auditId,
+  identity,
+  includeInsights = true,
+  includeContent = true,
+}: {
+  supabaseAdmin: any;
+  ownerId: string;
+  auditId: string;
+  identity?: ExportIdentity;
+  includeInsights?: boolean;
+  includeContent?: boolean;
+}): Promise<AuditExportData> {
+  let resolvedIdentity = identity;
+  if (!resolvedIdentity) {
+    const { data: profile, error: profileErr } = await supabaseAdmin
+      .from("profiles")
+      .select("id, email, full_name")
+      .eq("id", ownerId)
+      .maybeSingle();
+    if (profileErr) throw new Error(profileErr.message);
+    if (!profile) throw new Error("Owner not found");
+
+    const { data: settings } = await supabaseAdmin
+      .from("owner_settings")
+      .select("currency")
+      .eq("owner_id", ownerId)
+      .maybeSingle();
+    resolvedIdentity = {
+      fullName: (profile.full_name as string | null) ?? null,
+      email: profile.email as string,
+      currency: ((settings as any)?.currency as CurrencyCode | null) ?? null,
+    };
+  }
+
+  const summaryBy = new Map<string, string>();
+  const noteBy = new Map<string, string>();
+  if (includeInsights) {
+    const { data: summaries, error: sumErr } = await supabaseAdmin
+      .from("audit_section_summaries")
+      .select("section_key, summary_text")
+      .eq("audit_id", auditId);
+    if (sumErr) throw new Error(sumErr.message);
+    for (const r of summaries ?? []) {
+      summaryBy.set((r as any).section_key, (r as any).summary_text ?? "");
+    }
+
+    const { data: notes, error: notesErr } = await supabaseAdmin
+      .from("audit_section_notes")
+      .select("section_key, body")
+      .eq("audit_id", auditId);
+    if (notesErr) throw new Error(notesErr.message);
+    for (const r of notes ?? []) {
+      noteBy.set((r as any).section_key, (r as any).body ?? "");
+    }
+  }
+
+  const sections: AuditExportSection[] = [];
+  for (const key of SECTION_KEYS) {
+    const { data: row, error } = await supabaseAdmin
+      .from(SECTION_TABLE[key] as any)
+      .select("submitted_answers, submitted_at")
+      .eq("audit_id", auditId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    sections.push({
+      key,
+      submittedAnswers: ((row as any)?.submitted_answers as any) ?? null,
+      submittedAt: ((row as any)?.submitted_at as string | null) ?? null,
+      summaryText: summaryBy.get(key) || null,
+      noteBody: noteBy.get(key) || null,
+    });
+  }
+
+  let contentAssets: AuditExportContentAsset[] = [];
+  if (includeContent) {
+    const { data: assets, error: assetsErr } = await supabaseAdmin
+      .from("content_review_assets")
+      .select("id, category, title, input_type, body_text, storage_path, created_at")
+      .eq("owner_id", ownerId)
+      .order("created_at", { ascending: true });
+    if (assetsErr) throw new Error(assetsErr.message);
+    contentAssets = (assets ?? []) as AuditExportContentAsset[];
+  }
+
+  return {
+    owner: { id: ownerId, email: resolvedIdentity.email, fullName: resolvedIdentity.fullName },
+    currency: resolvedIdentity.currency,
+    sections,
+    contentAssets,
+    includeInsights,
+    includeContent,
+  };
+}
 
 async function assertAdmin(supabase: any, userId: string) {
   const { data, error } = await supabase.rpc("has_role", {
@@ -80,75 +185,9 @@ export const getAuditExportData = createServerFn({ method: "POST" })
       "@/integrations/supabase/client.server"
     );
 
-    const { data: profile, error: profileErr } = await supabaseAdmin
-      .from("profiles")
-      .select("id, email, full_name")
-      .eq("id", data.ownerId)
-      .maybeSingle();
-    if (profileErr) throw new Error(profileErr.message);
-    if (!profile) throw new Error("Owner not found");
-
-    const { data: settings } = await supabaseAdmin
-      .from("owner_settings")
-      .select("currency")
-      .eq("owner_id", data.ownerId)
-      .maybeSingle();
-
-    const { data: summaries, error: sumErr } = await supabaseAdmin
-      .from("audit_section_summaries")
-      .select("section_key, summary_text")
-      .eq("audit_id", data.auditId);
-    if (sumErr) throw new Error(sumErr.message);
-
-    const { data: notes, error: notesErr } = await supabaseAdmin
-      .from("audit_section_notes")
-      .select("section_key, body")
-      .eq("audit_id", data.auditId);
-    if (notesErr) throw new Error(notesErr.message);
-
-    const summaryBy = new Map<string, string>();
-    for (const r of summaries ?? []) {
-      summaryBy.set((r as any).section_key, (r as any).summary_text ?? "");
-    }
-    const noteBy = new Map<string, string>();
-    for (const r of notes ?? []) {
-      noteBy.set((r as any).section_key, (r as any).body ?? "");
-    }
-
-    const sections: AuditExportSection[] = [];
-    for (const key of SECTION_KEYS) {
-      const { data: row, error } = await supabaseAdmin
-        .from(SECTION_TABLE[key] as any)
-        .select("submitted_answers, submitted_at")
-        .eq("audit_id", data.auditId)
-        .maybeSingle();
-      if (error) throw new Error(error.message);
-      sections.push({
-        key,
-        submittedAnswers: ((row as any)?.submitted_answers as any) ?? null,
-        submittedAt: ((row as any)?.submitted_at as string | null) ?? null,
-        summaryText: summaryBy.get(key) || null,
-        noteBody: noteBy.get(key) || null,
-      });
-    }
-
-    const { data: assets, error: assetsErr } = await supabaseAdmin
-      .from("content_review_assets")
-      .select(
-        "id, category, title, input_type, body_text, storage_path, created_at",
-      )
-      .eq("owner_id", data.ownerId)
-      .order("created_at", { ascending: true });
-    if (assetsErr) throw new Error(assetsErr.message);
-
-    return {
-      owner: {
-        id: profile.id as string,
-        email: profile.email as string,
-        fullName: (profile.full_name as string | null) ?? null,
-      },
-      currency: ((settings as any)?.currency as CurrencyCode | null) ?? null,
-      sections,
-      contentAssets: (assets ?? []) as AuditExportContentAsset[],
-    };
+    return loadAuditExportData({
+      supabaseAdmin,
+      ownerId: data.ownerId,
+      auditId: data.auditId,
+    });
   });
