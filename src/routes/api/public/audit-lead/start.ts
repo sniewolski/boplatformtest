@@ -4,7 +4,13 @@ export const Route = createFileRoute("/api/public/audit-lead/start")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        let body: { name?: string; email?: string; company?: string };
+        let body: {
+          name?: string;
+          email?: string;
+          company?: string;
+          consent?: boolean;
+          consentLabel?: string;
+        };
         try {
           body = (await request.json()) as typeof body;
         } catch {

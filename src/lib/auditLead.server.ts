@@ -197,6 +197,7 @@ export async function startLeadAudit(
       respondent_name: name,
       respondent_email: email,
       payload: payload as never,
+      consent: consent as never,
     });
   if (sessionError) throw sessionError;
 
