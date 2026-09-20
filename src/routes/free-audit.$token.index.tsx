@@ -97,11 +97,12 @@ function FreeAuditHub() {
 
   if (query.data.status === "completed") return <PublicAuditLoading />;
 
-  const firstName = query.data.name?.trim().split(/\s+/)[0] || "there";
+  const state = query.data;
+  const firstName = state.name?.trim().split(/\s+/)[0] || "there";
   const statuses = LEAD_AUDIT_SECTIONS.map(({ key, label }) => ({
     key,
     label,
-    status: sectionStatus(query.data.sections[key]),
+    status: sectionStatus(state.sections[key]),
   }));
   const completed = statuses.filter((section) => section.status === "Completed").length;
 
