@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -43,12 +43,36 @@ type FieldErrors = {
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+function validateName(value: string): string | undefined {
+  return value.trim() ? undefined : "Please enter your name.";
+}
+
+function validateEmail(value: string): string | undefined {
+  const clean = value.trim().toLowerCase();
+  if (!clean) return "Please enter your email address.";
+  if (!EMAIL_PATTERN.test(clean)) return "Please enter a valid email address.";
+  return undefined;
+}
+
+/** Faint red panel so errors read as errors, not helper text. */
+function ErrorSlot({ id, message }: { id: string; message?: string }) {
+  return (
+    <div id={id} aria-live="polite" className="min-h-5">
+      {message ? (
+        <p className="rounded-xl bg-red-tint px-3 py-2 text-sm text-red-pressed">
+          {message}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function FreeAuditStart() {
   const navigate = useNavigate();
+  const consentRef = useRef<HTMLButtonElement>(null);
   const [storedToken, setStoredToken] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [company, setCompany] = useState("");
   const [consent, setConsent] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
@@ -58,23 +82,36 @@ function FreeAuditStart() {
     if (token?.trim()) setStoredToken(token.trim());
   }, []);
 
+  const showConsentError = () => {
+    setErrors((current) => ({
+      ...current,
+      consent: "Please tick this box to start the audit.",
+    }));
+    consentRef.current?.focus();
+  };
+
+  // Mouse/touch only: the shadcn button sets pointer-events:none while
+  // disabled, so the click lands on this wrapper instead of vanishing.
+  const handleWrapperClick = () => {
+    if (submitting) return;
+    if (!consent) showConsentError();
+  };
+
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const nextErrors: FieldErrors = {};
     const cleanName = name.trim();
     const cleanEmail = email.trim().toLowerCase();
 
-    if (!cleanName) nextErrors.name = "Please enter your name.";
-    if (!cleanEmail) nextErrors.email = "Please enter your email address.";
-    else if (!EMAIL_PATTERN.test(cleanEmail)) {
-      nextErrors.email = "Please enter a valid email address.";
-    }
-    if (!consent) {
-      nextErrors.consent = "Please tick this box to start the audit.";
-    }
+    const nextErrors: FieldErrors = {};
+    const nameError = validateName(name);
+    const emailError = validateEmail(email);
+    if (nameError) nextErrors.name = nameError;
+    if (emailError) nextErrors.email = emailError;
+    if (!consent) nextErrors.consent = "Please tick this box to start the audit.";
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
+      if (!consent) consentRef.current?.focus();
       return;
     }
 
@@ -87,13 +124,11 @@ function FreeAuditStart() {
         body: JSON.stringify({
           name: cleanName,
           email: cleanEmail,
-          company,
           consent: true,
         }),
       });
       const data = (await response.json()) as { ok?: boolean; token?: string | null };
-      if (!response.ok || !data.ok) throw new Error("start_failed");
-      if (!data.token) return;
+      if (!response.ok || !data.ok || !data.token) throw new Error("start_failed");
 
       storeLeadAuditToken(data.token);
       await navigate({ to: "/free-audit/$token", params: { token: data.token } });
@@ -136,17 +171,18 @@ function FreeAuditStart() {
             autoComplete="name"
             value={name}
             onChange={(event) => {
-              setName(event.target.value);
-              if (errors.name) setErrors((current) => ({ ...current, name: undefined }));
+              const value = event.target.value;
+              setName(value);
+              if (errors.name) {
+                setErrors((current) => ({ ...current, name: validateName(value) }));
+              }
             }}
             aria-invalid={Boolean(errors.name)}
             aria-describedby={errors.name ? "free-audit-name-error" : undefined}
             disabled={submitting}
             className="h-12 rounded-xl px-4"
           />
-          <p id="free-audit-name-error" className="min-h-5 text-sm text-ink-muted" aria-live="polite">
-            {errors.name ?? ""}
-          </p>
+          <ErrorSlot id="free-audit-name-error" message={errors.name} />
         </div>
 
         <div className="flex flex-col gap-2">
@@ -159,8 +195,11 @@ function FreeAuditStart() {
             autoComplete="email"
             value={email}
             onChange={(event) => {
-              setEmail(event.target.value);
-              if (errors.email) setErrors((current) => ({ ...current, email: undefined }));
+              const value = event.target.value;
+              setEmail(value);
+              if (errors.email) {
+                setErrors((current) => ({ ...current, email: validateEmail(value) }));
+              }
             }}
             aria-invalid={Boolean(errors.email)}
             aria-describedby="free-audit-email-note free-audit-email-error"
@@ -170,26 +209,13 @@ function FreeAuditStart() {
           <p id="free-audit-email-note" className="text-sm text-ink-muted">
              We need your name and email to know where to send your 30-day plan.
           </p>
-          <p id="free-audit-email-error" className="min-h-5 text-sm text-ink-muted" aria-live="polite">
-            {errors.email ?? ""}
-          </p>
-        </div>
-
-        <div className="sr-only" aria-hidden="true">
-          <Label htmlFor="free-audit-company">Company</Label>
-          <Input
-            id="free-audit-company"
-            name="company"
-            value={company}
-            onChange={(event) => setCompany(event.target.value)}
-            autoComplete="off"
-            tabIndex={-1}
-          />
+          <ErrorSlot id="free-audit-email-error" message={errors.email} />
         </div>
 
         <div className="flex flex-col gap-2">
           <div className="flex items-start gap-3">
             <Checkbox
+              ref={consentRef}
               id="free-audit-consent"
               checked={consent}
               onCheckedChange={(checked) => {
@@ -212,28 +238,22 @@ function FreeAuditStart() {
               {LEAD_AUDIT_CONSENT_LABEL}
             </Label>
           </div>
-          <p
-            id="free-audit-consent-error"
-            className="min-h-5 text-sm text-ink-muted"
-            aria-live="polite"
-          >
-            {errors.consent ?? ""}
-          </p>
+          <ErrorSlot id="free-audit-consent-error" message={errors.consent} />
         </div>
 
         <div className="flex flex-col gap-3">
-          <Button
-            type="submit"
-            size="lg"
-            disabled={submitting || !consent}
-            className="w-full sm:w-fit"
-          >
-            {submitting ? "Starting…" : "Start the audit"}
-            {!submitting ? <ArrowRight aria-hidden="true" /> : null}
-          </Button>
-          <p className="min-h-5 text-sm text-ink-muted" aria-live="polite">
-            {errors.form ?? ""}
-          </p>
+          <div className="w-full sm:w-fit" onClick={handleWrapperClick}>
+            <Button
+              type="submit"
+              size="lg"
+              disabled={submitting || !consent}
+              className="w-full sm:w-fit"
+            >
+              {submitting ? "Starting…" : "Start the audit"}
+              {!submitting ? <ArrowRight aria-hidden="true" /> : null}
+            </Button>
+          </div>
+          <ErrorSlot id="free-audit-form-error" message={errors.form} />
         </div>
       </form>
     </PublicAuditLayout>
