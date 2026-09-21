@@ -8,7 +8,6 @@ export const Route = createFileRoute("/api/public/audit-lead/start")({
         let body: {
           name?: string;
           email?: string;
-          company?: string;
           consent?: boolean;
           consentLabel?: string;
         };
@@ -16,11 +15,6 @@ export const Route = createFileRoute("/api/public/audit-lead/start")({
           body = (await request.json()) as typeof body;
         } catch {
           return new Response("Invalid JSON", { status: 400 });
-        }
-
-        // Honeypot: real visitors never fill `company`. Silently accept.
-        if (body.company && body.company.trim().length > 0) {
-          return Response.json({ ok: true, token: null });
         }
 
         const name = body.name?.trim();
