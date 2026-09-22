@@ -4,6 +4,14 @@ export const LEAD_AUDIT_STORAGE_KEY = "sales-lab:free-audit-token";
 export const LEAD_AUDIT_CONSENT_LABEL =
   "I agree that my answers and business details may be shared publicly, including in a YouTube video.";
 
+/**
+ * Set to false to reopen new submissions on the /free-audit start screen.
+ * This one flag controls both the UI (greyed-out form on the start screen)
+ * and the server check in src/routes/api/public/audit-lead/start.ts.
+ * Closing only blocks NEW audits — in-progress audits keep working.
+ */
+export const LEAD_AUDIT_SUBMISSIONS_CLOSED = true;
+
 export const LEAD_AUDIT_SECTIONS = [
   { key: "conversion", label: "Conversion" },
   { key: "pipeline", label: "Pipeline" },
