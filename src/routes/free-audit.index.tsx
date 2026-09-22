@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { PublicAuditLayout } from "@/components/free-audit/PublicAuditLayout";
 import {
   LEAD_AUDIT_CONSENT_LABEL,
+  LEAD_AUDIT_SUBMISSIONS_CLOSED,
   readStoredLeadAuditToken,
   storeLeadAuditToken,
 } from "@/lib/auditLeadPublic";
@@ -76,6 +77,7 @@ function FreeAuditStart() {
   const [consent, setConsent] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
+  const submissionsClosed = LEAD_AUDIT_SUBMISSIONS_CLOSED;
 
   useEffect(() => {
     const token = readStoredLeadAuditToken();
@@ -93,12 +95,13 @@ function FreeAuditStart() {
   // Mouse/touch only: the shadcn button sets pointer-events:none while
   // disabled, so the click lands on this wrapper instead of vanishing.
   const handleWrapperClick = () => {
-    if (submitting) return;
+    if (submitting || submissionsClosed) return;
     if (!consent) showConsentError();
   };
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (submissionsClosed) return;
     const cleanName = name.trim();
     const cleanEmail = email.trim().toLowerCase();
 
