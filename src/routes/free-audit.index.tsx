@@ -182,7 +182,7 @@ function FreeAuditStart() {
             }}
             aria-invalid={Boolean(errors.name)}
             aria-describedby={errors.name ? "free-audit-name-error" : undefined}
-            disabled={submitting}
+            disabled={submitting || submissionsClosed}
             className="h-12 rounded-xl px-4"
           />
           <ErrorSlot id="free-audit-name-error" message={errors.name} />
@@ -206,7 +206,7 @@ function FreeAuditStart() {
             }}
             aria-invalid={Boolean(errors.email)}
             aria-describedby="free-audit-email-note free-audit-email-error"
-            disabled={submitting}
+            disabled={submitting || submissionsClosed}
             className="h-12 rounded-xl px-4"
           />
           <p id="free-audit-email-note" className="text-sm text-ink-muted">
@@ -231,7 +231,7 @@ function FreeAuditStart() {
               aria-describedby={
                 errors.consent ? "free-audit-consent-error" : undefined
               }
-              disabled={submitting}
+              disabled={submitting || submissionsClosed}
               className="mt-0.5"
             />
             <Label
@@ -249,13 +249,18 @@ function FreeAuditStart() {
             <Button
               type="submit"
               size="lg"
-              disabled={submitting || !consent}
+              disabled={submitting || !consent || submissionsClosed}
               className="w-full sm:w-fit"
             >
               {submitting ? "Starting…" : "Start the audit"}
               {!submitting ? <ArrowRight aria-hidden="true" /> : null}
             </Button>
           </div>
+          {submissionsClosed ? (
+            <p className="rounded-xl bg-surface-raised px-3 py-2 text-sm text-ink-muted">
+              Submissions are now closed. We'll let you know when they open again.
+            </p>
+          ) : null}
           <ErrorSlot id="free-audit-form-error" message={errors.form} />
         </div>
       </form>
