@@ -1,10 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { LEAD_AUDIT_CONSENT_LABEL } from "@/lib/auditLeadPublic";
+import {
+  LEAD_AUDIT_CONSENT_LABEL,
+  LEAD_AUDIT_SUBMISSIONS_CLOSED,
+} from "@/lib/auditLeadPublic";
 
 export const Route = createFileRoute("/api/public/audit-lead/start")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        if (LEAD_AUDIT_SUBMISSIONS_CLOSED) {
+          return new Response("Submissions are closed", { status: 403 });
+        }
         let body: {
           name?: string;
           email?: string;
