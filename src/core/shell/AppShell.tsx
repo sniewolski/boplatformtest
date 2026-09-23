@@ -417,14 +417,24 @@ export function AppShell({
           {showAdminSection && (
             <>
               <div className="h-px bg-border mx-6" />
-              <div className="px-6 py-6">
-                <span
-                  className="text-ink-muted font-semibold text-base"
-                  style={{ letterSpacing: "-0.02em" }}
-                >
-                  Admin
-                </span>
-              </div>
+              <button
+                type="button"
+                onClick={toggleAdminOpen}
+                aria-expanded={adminOpen}
+                aria-controls="admin-nav-items"
+                className="w-full px-6 py-6 flex items-center justify-between text-left text-ink-muted font-semibold text-base cursor-pointer"
+                style={{ letterSpacing: "-0.02em" }}
+              >
+                Admin
+                <ChevronRight
+                  className={`size-4 shrink-0 text-ink-muted transition-transform duration-150 motion-reduce:transition-none${
+                    adminOpen ? " rotate-90" : ""
+                  }`}
+                  aria-hidden
+                />
+              </button>
+              {adminOpen && (
+                <>
               {isAdmin && (
                 <Link
                   to="/app/admin"
