@@ -1,7 +1,7 @@
-import { useEffect, useRef, type ReactNode, type ComponentType } from "react";
+import { useEffect, useRef, useState, type ReactNode, type ComponentType } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, LayoutDashboard, Lock, Shield, ClipboardList, FileText, FolderDown, LogOut, CalendarDays, MessagesSquare, Briefcase, Radio, PlayCircle, Inbox } from "lucide-react";
+import { Check, ChevronRight, LayoutDashboard, Lock, Shield, ClipboardList, FileText, FolderDown, LogOut, CalendarDays, MessagesSquare, Briefcase, Radio, PlayCircle, Inbox } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toolRegistry } from "@/tools/registry";
@@ -220,6 +220,30 @@ export function AppShell({
   const salescodeComplete = !readinessLoading && !incompleteKeys.has("salescode");
 
   const briefNeedsAttention = useBusinessBriefNeedsAttention();
+
+  // Admin sidebar section collapse: starts collapsed, restored from
+  // localStorage when available. Storage failures fall back to collapsed.
+  const [adminOpen, setAdminOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      setAdminOpen(localStorage.getItem("sidebar_admin_open") === "true");
+    } catch {
+      // fall back to collapsed
+    }
+  }, []);
+
+  function toggleAdminOpen() {
+    setAdminOpen((open) => {
+      const next = !open;
+      try {
+        localStorage.setItem("sidebar_admin_open", String(next));
+      } catch {
+        // storage failures must not break the toggle
+      }
+      return next;
+    });
+  }
 
   // Build items from the registry; grouping is driven by navEntry.navGroup.
   // Business Brief and Book a 1:1 call are not registry tools — they are
