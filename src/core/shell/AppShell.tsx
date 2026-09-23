@@ -512,6 +512,8 @@ export function AppShell({
                   Tracker
                 </Link>
               )}
+                </>
+              )}
             </>
           )}
         </nav>
