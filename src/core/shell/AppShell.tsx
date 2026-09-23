@@ -1,7 +1,7 @@
-import { useEffect, useRef, type ReactNode, type ComponentType } from "react";
+import { useEffect, useRef, useState, type ReactNode, type ComponentType } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, LayoutDashboard, Lock, Shield, ClipboardList, FileText, FolderDown, LogOut, CalendarDays, MessagesSquare, Briefcase, Radio, PlayCircle, Inbox } from "lucide-react";
+import { Check, ChevronRight, LayoutDashboard, Lock, Shield, ClipboardList, FileText, FolderDown, LogOut, CalendarDays, MessagesSquare, Briefcase, Radio, PlayCircle, Inbox } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toolRegistry } from "@/tools/registry";
@@ -221,6 +221,30 @@ export function AppShell({
 
   const briefNeedsAttention = useBusinessBriefNeedsAttention();
 
+  // Admin sidebar section collapse: starts collapsed, restored from
+  // localStorage when available. Storage failures fall back to collapsed.
+  const [adminOpen, setAdminOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      setAdminOpen(localStorage.getItem("sidebar_admin_open") === "true");
+    } catch {
+      // fall back to collapsed
+    }
+  }, []);
+
+  function toggleAdminOpen() {
+    setAdminOpen((open) => {
+      const next = !open;
+      try {
+        localStorage.setItem("sidebar_admin_open", String(next));
+      } catch {
+        // storage failures must not break the toggle
+      }
+      return next;
+    });
+  }
+
   // Build items from the registry; grouping is driven by navEntry.navGroup.
   // Business Brief and Book a 1:1 call are not registry tools — they are
   // assigned to groups explicitly below. Dashboard is always first, ungrouped.
@@ -393,14 +417,24 @@ export function AppShell({
           {showAdminSection && (
             <>
               <div className="h-px bg-border mx-6" />
-              <div className="px-6 py-6">
-                <span
-                  className="text-ink-muted font-semibold text-base"
-                  style={{ letterSpacing: "-0.02em" }}
-                >
-                  Admin
-                </span>
-              </div>
+              <button
+                type="button"
+                onClick={toggleAdminOpen}
+                aria-expanded={adminOpen}
+                aria-controls="admin-nav-items"
+                className="w-full px-6 py-6 flex items-center justify-between text-left text-ink-muted font-semibold text-base cursor-pointer"
+                style={{ letterSpacing: "-0.02em" }}
+              >
+                Admin
+                <ChevronRight
+                  className={`size-4 shrink-0 text-ink-muted transition-transform duration-150 motion-reduce:transition-none${
+                    adminOpen ? " rotate-90" : ""
+                  }`}
+                  aria-hidden
+                />
+              </button>
+              {adminOpen && (
+                <>
               {isAdmin && (
                 <Link
                   to="/app/admin"
@@ -477,6 +511,8 @@ export function AppShell({
                   <Radio className="size-4" />
                   Tracker
                 </Link>
+              )}
+                </>
               )}
             </>
           )}
