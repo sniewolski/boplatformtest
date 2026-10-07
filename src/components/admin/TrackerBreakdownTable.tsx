@@ -30,6 +30,8 @@ type VideoAggregate = {
   views: number;
   clicks: number;
   bookings: number;
+  optinViews: number;
+  optins: number;
   lastActivity: string;
 };
 
@@ -38,6 +40,8 @@ type OtherAggregate = {
   views: number;
   clicks: number;
   bookings: number;
+  optinViews: number;
+  optins: number;
   lastActivity: string;
 };
 
@@ -74,6 +78,9 @@ type SortKey =
   | "visits"
   | "clicks"
   | "bookings"
+  | "optinViews"
+  | "optins"
+  | "optinRate"
   | "viewsToVisits"
   | "visitsToBookings"
   | "viewsToBookings";
@@ -197,6 +204,8 @@ export function TrackerBreakdownTable({
     let directViews = 0;
     let directClicks = 0;
     let directBookings = 0;
+    let directOptinViews = 0;
+    let directOptins = 0;
 
     for (const ev of events ?? []) {
       const isVideo = ev.source_type === "video" && ev.source_value;
@@ -209,11 +218,15 @@ export function TrackerBreakdownTable({
             views: 0,
             clicks: 0,
             bookings: 0,
+            optinViews: 0,
+            optins: 0,
             lastActivity: ev.created_at,
           } as VideoAggregate);
         if (ev.event_type === "click") agg.views += 1;
         else if (ev.event_type === "book_button") agg.clicks += 1;
         else if (ev.event_type === "booking") agg.bookings += 1;
+        else if (ev.event_type === "optin_view") agg.optinViews += 1;
+        else if (ev.event_type === "optin") agg.optins += 1;
         if (ev.created_at > agg.lastActivity) agg.lastActivity = ev.created_at;
         map.set(key, agg);
       } else if (ev.source_type) {
@@ -225,17 +238,23 @@ export function TrackerBreakdownTable({
             views: 0,
             clicks: 0,
             bookings: 0,
+            optinViews: 0,
+            optins: 0,
             lastActivity: ev.created_at,
           } as OtherAggregate);
         if (ev.event_type === "click") agg.views += 1;
         else if (ev.event_type === "book_button") agg.clicks += 1;
         else if (ev.event_type === "booking") agg.bookings += 1;
+        else if (ev.event_type === "optin_view") agg.optinViews += 1;
+        else if (ev.event_type === "optin") agg.optins += 1;
         if (ev.created_at > agg.lastActivity) agg.lastActivity = ev.created_at;
         others.set(key, agg);
       } else {
         if (ev.event_type === "click") directViews += 1;
         else if (ev.event_type === "book_button") directClicks += 1;
         else if (ev.event_type === "booking") directBookings += 1;
+        else if (ev.event_type === "optin_view") directOptinViews += 1;
+        else if (ev.event_type === "optin") directOptins += 1;
       }
     }
 
@@ -245,19 +264,39 @@ export function TrackerBreakdownTable({
     const otherList = Array.from(others.values()).sort((a, b) =>
       a.lastActivity < b.lastActivity ? 1 : -1,
     );
-    const hasDirect = directViews + directClicks + directBookings > 0;
-    const sum = (k: "views" | "clicks" | "bookings") =>
+    const hasDirect =
+      directViews +
+        directClicks +
+        directBookings +
+        directOptinViews +
+        directOptins >
+      0;
+    const sum = (k: "views" | "clicks" | "bookings" | "optinViews" | "optins") =>
       list.reduce((s, r) => s + r[k], 0) + otherList.reduce((s, r) => s + r[k], 0);
     const totalViews = sum("views") + directViews;
     const totalClicks = sum("clicks") + directClicks;
     const totalBookings = sum("bookings") + directBookings;
+    const totalOptinViews = sum("optinViews") + directOptinViews;
+    const totalOptins = sum("optins") + directOptins;
     return {
       videoAggregates: list,
       otherAggregates: otherList,
       directRow: hasDirect
-        ? { views: directViews, clicks: directClicks, bookings: directBookings }
+        ? {
+            views: directViews,
+            clicks: directClicks,
+            bookings: directBookings,
+            optinViews: directOptinViews,
+            optins: directOptins,
+          }
         : null,
-      totals: { views: totalViews, clicks: totalClicks, bookings: totalBookings },
+      totals: {
+        views: totalViews,
+        clicks: totalClicks,
+        bookings: totalBookings,
+        optinViews: totalOptinViews,
+        optins: totalOptins,
+      },
     };
   }, [events]);
 
@@ -345,6 +384,12 @@ export function TrackerBreakdownTable({
           return ratioValue(r.bookings, r.views);
         case "viewsToBookings":
           return ratioValue(r.bookings, yt(r.videoId));
+        case "optinViews":
+          return r.optinViews;
+        case "optins":
+          return r.optins;
+        case "optinRate":
+          return ratioValue(r.optins, r.optinViews);
       }
     };
 
@@ -364,6 +409,12 @@ export function TrackerBreakdownTable({
           return r.bookings;
         case "visitsToBookings":
           return ratioValue(r.bookings, r.views);
+        case "optinViews":
+          return r.optinViews;
+        case "optins":
+          return r.optins;
+        case "optinRate":
+          return ratioValue(r.optins, r.optinViews);
         default:
           return null;
       }
@@ -428,6 +479,9 @@ export function TrackerBreakdownTable({
                 <SortHeader label="Views→Visits" sortKey="viewsToVisits" sort={sort} onSort={onSort} align="right" className="w-[120px]" />
                 <SortHeader label="Visits→Bookings" sortKey="visitsToBookings" sort={sort} onSort={onSort} align="right" className="w-[140px]" />
                 <SortHeader label="Views→Bookings" sortKey="viewsToBookings" sort={sort} onSort={onSort} align="right" className="w-[130px]" />
+                <SortHeader label="Opt-in Visits" sortKey="optinViews" sort={sort} onSort={onSort} align="right" className="w-[110px]" />
+                <SortHeader label="Opt-ins" sortKey="optins" sort={sort} onSort={onSort} align="right" className="w-[100px]" />
+                <SortHeader label="Opt-in Rate" sortKey="optinRate" sort={sort} onSort={onSort} align="right" className="w-[110px]" />
               </tr>
             </thead>
             <tbody>
@@ -444,6 +498,8 @@ export function TrackerBreakdownTable({
                   views: totals.views - (includeDirect ? 0 : directRow?.views ?? 0),
                   clicks: totals.clicks - (includeDirect ? 0 : directRow?.clicks ?? 0),
                   bookings: totals.bookings - (includeDirect ? 0 : directRow?.bookings ?? 0),
+                  optinViews: totals.optinViews - (includeDirect ? 0 : directRow?.optinViews ?? 0),
+                  optins: totals.optins - (includeDirect ? 0 : directRow?.optins ?? 0),
                 };
                 return (
                   <tr className="border-t border-border bg-[var(--surface-raised)] font-medium">
@@ -473,6 +529,11 @@ export function TrackerBreakdownTable({
                     </td>
                     <td className="px-4 py-2 text-right tabular-nums">
                       {formatRatio(effectiveTotals.bookings, denom)}
+                    </td>
+                    <td className="px-4 py-2 text-right tabular-nums">{effectiveTotals.optinViews}</td>
+                    <td className="px-4 py-2 text-right tabular-nums">{effectiveTotals.optins}</td>
+                    <td className="px-4 py-2 text-right tabular-nums">
+                      {formatRatio(effectiveTotals.optins, effectiveTotals.optinViews)}
                     </td>
                   </tr>
                 );
@@ -541,6 +602,11 @@ export function TrackerBreakdownTable({
                     <td className="px-4 py-3 text-right tabular-nums">
                       {formatRatio(row.bookings, ytViews)}
                     </td>
+                    <td className="px-4 py-3 text-right tabular-nums">{row.optinViews}</td>
+                    <td className="px-4 py-3 text-right tabular-nums">{row.optins}</td>
+                    <td className="px-4 py-3 text-right tabular-nums">
+                      {formatRatio(row.optins, row.optinViews)}
+                    </td>
                   </tr>
                 );
               })}
@@ -561,6 +627,11 @@ export function TrackerBreakdownTable({
                     {formatRatio(row.bookings, row.views)}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums">—</td>
+                  <td className="px-4 py-3 text-right tabular-nums">{row.optinViews}</td>
+                  <td className="px-4 py-3 text-right tabular-nums">{row.optins}</td>
+                  <td className="px-4 py-3 text-right tabular-nums">
+                    {formatRatio(row.optins, row.optinViews)}
+                  </td>
                 </tr>
               ))}
 
@@ -587,6 +658,11 @@ export function TrackerBreakdownTable({
                     {formatRatio(directRow.bookings, directRow.views)}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums">—</td>
+                  <td className="px-4 py-3 text-right tabular-nums">{directRow.optinViews}</td>
+                  <td className="px-4 py-3 text-right tabular-nums">{directRow.optins}</td>
+                  <td className="px-4 py-3 text-right tabular-nums">
+                    {formatRatio(directRow.optins, directRow.optinViews)}
+                  </td>
                 </tr>
               )}
 
