@@ -1,6 +1,22 @@
 (function () {
   "use strict";
 
+  // ---- Page mode (read synchronously; currentScript is only set now) -----
+  //   data-page="optin"           -> opt-in landing page
+  //   data-page="optin-confirmed" -> post-signup thank-you page
+  //   anything else / missing     -> default mode
+  var PAGE_MODE = null;
+  try {
+    var _cs = document.currentScript;
+    PAGE_MODE = _cs ? _cs.getAttribute("data-page") : null;
+    if (!_cs){
+      var _el = document.querySelector('script[src*="tracker.js"][data-page]');
+      PAGE_MODE = _el ? _el.getAttribute("data-page") : null;
+    }
+  } catch(e){ PAGE_MODE = null; }
+  if (PAGE_MODE !== "optin" && PAGE_MODE !== "optin-confirmed") PAGE_MODE = null;
+
+
   // ---- Config (safe to edit) ---------------------------------------------
   var SUPABASE_URL = "https://ezmtptfptyzoxqmcgebi.supabase.co";
   var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6bXRwdGZwdHl6b3hxbWNnZWJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMTgyMjIsImV4cCI6MjA5NzY5NDIyMn0.sdrVKgzHjL9N_BA8j3NIdSZWNONsMahfdK5vrPEIiFw"; // public anon JWT — safe in a public file
@@ -25,6 +41,7 @@
   var K_SOURCE = "slt_source";      // {type, value, ts}
   var K_BOOK_SENT = "slt_book_sent";
   var K_BOOKED = "slt_booked";      // per-visitor booking dedup flag
+  var K_OPTIN_SENT = "slt_optin_sent"; // per-visitor opt-in dedup flag
 
   // ---- Helpers -----------------------------------------------------------
   function getItem(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
@@ -119,10 +136,25 @@
     setItem(K_BOOKED, "1");
     logEvent("booking");
   }
+  function onOptinPage(){
+    var urlSrc = readSourceFromUrl();
+    if (urlSrc) storeSource(urlSrc);   // last-touch overwrite, fresh window
+    visitorId();
+    logEvent("optin_view", { referrer: document.referrer || null });
+    wireBookCta();
+  }
+  function onOptinConfirmedPage(){
+    if (!getItem(K_VISITOR)) return;       // never passed through a tracked page
+    if (getItem(K_OPTIN_SENT) === "1") return; // already logged for this visitor
+    setItem(K_OPTIN_SENT, "1");
+    logEvent("optin");
+  }
 
   // ---- Route -------------------------------------------------------------
   try {
-    if (location.pathname.indexOf(CONFIRMED_PATH) !== -1) onConfirmedPage();
+    if (PAGE_MODE === "optin-confirmed") onOptinConfirmedPage();
+    else if (PAGE_MODE === "optin") onOptinPage();
+    else if (location.pathname.indexOf(CONFIRMED_PATH) !== -1) onConfirmedPage();
     else onLandingPage();
   } catch(e){}
 })();
