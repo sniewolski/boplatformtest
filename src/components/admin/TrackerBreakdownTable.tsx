@@ -165,8 +165,8 @@ function GroupHeader({
       colSpan={collapsed ? 1 : span}
       rowSpan={collapsed ? 2 : 1}
       className={cn(
-        "px-4 py-2 font-medium text-left align-top border-l border-border",
-        collapsed && "w-[56px]",
+        "px-4 py-2 font-medium text-left align-middle border-l border-border",
+        collapsed ? "w-auto whitespace-nowrap" : "border-b",
       )}
     >
       <button
@@ -175,8 +175,7 @@ function GroupHeader({
         aria-expanded={!collapsed}
         aria-label={`${collapsed ? "Expand" : "Collapse"} ${name} columns`}
         className={cn(
-          "inline-flex items-center gap-1 rounded-sm hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-          collapsed && "flex-col items-start",
+          "inline-flex items-center gap-2 whitespace-nowrap rounded-sm hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         )}
       >
         <ChevronRight
@@ -198,6 +197,7 @@ function SortHeader({
   onSort,
   align = "left",
   className,
+  rowSpan,
 }: {
   label: ReactNode;
   sortKey: SortKey;
@@ -205,6 +205,7 @@ function SortHeader({
   onSort: (key: SortKey) => void;
   align?: "left" | "right";
   className?: string;
+  rowSpan?: number;
 }) {
   const active = sort?.key === sortKey;
   const shownDir: SortDir = active
@@ -215,8 +216,9 @@ function SortHeader({
   const Chevron = shownDir === "asc" ? ChevronUp : ChevronDown;
   return (
     <th
+      rowSpan={rowSpan}
       className={cn(
-        "group cursor-pointer px-4 py-3 font-medium transition-colors duration-150 ease-out motion-safe",
+        "align-middle group cursor-pointer px-4 py-3 font-medium transition-colors duration-150 ease-out motion-safe",
         "[@media(hover:hover)_and_(pointer:fine)]:hover:bg-muted",
         "[@media(hover:hover)_and_(pointer:fine)]:hover:text-ink",
         align === "right" && "text-right",
@@ -597,11 +599,12 @@ export function TrackerBreakdownTable({
           >
             <thead className="bg-[var(--surface-raised)] text-ink-muted">
               <tr ref={groupRowRef} className={cn("text-left", TOP_ROW, "[&>*]:top-0")}>
-                {PINNED.map((c, i) => (
-                  <th key={i} className={cn(pin(i, "head"), "px-4 py-2")} aria-hidden="true" />
-                ))}
-                <th className="px-4 py-2" aria-hidden="true" />
-                <th className="px-4 py-2" aria-hidden="true" />
+                <SortHeader rowSpan={2} label="Category" sortKey="category" sort={sort} onSort={onSort} className={pin(0, "head")} />
+                <SortHeader rowSpan={2} label="Published" sortKey="published" sort={sort} onSort={onSort} className={cn(pin(1, "head"), "whitespace-nowrap")} />
+                <th rowSpan={2} className={cn(pin(2, "head"), "px-4 py-3 font-medium align-middle")}>Thumbnail</th>
+                <SortHeader rowSpan={2} label="Title" sortKey="title" sort={sort} onSort={onSort} className={pin(3, "head")} />
+                <SortHeader rowSpan={2} label="Views" sortKey="ytViews" sort={sort} onSort={onSort} align="right" className="w-[110px]" />
+                <SortHeader rowSpan={2} label="Views→Visits" sortKey="viewsToVisits" sort={sort} onSort={onSort} align="right" className="w-[120px]" />
                 <GroupHeader
                   name="Sales"
                   span={5}
@@ -616,26 +619,20 @@ export function TrackerBreakdownTable({
                 />
               </tr>
               <tr ref={headRowRef} className={cn("text-left", TOP_ROW, "[&>*]:top-[var(--t1)]")}>
-                <SortHeader label="Category" sortKey="category" sort={sort} onSort={onSort} className={cn(pin(0, "head"), "border-t border-border")} />
-                <SortHeader label="Published" sortKey="published" sort={sort} onSort={onSort} className={cn(pin(1, "head"), "whitespace-nowrap border-t border-border")} />
-                <th className={cn(pin(2, "head"), "px-4 py-3 font-medium border-t border-border")}>Thumbnail</th>
-                <SortHeader label="Title" sortKey="title" sort={sort} onSort={onSort} className={cn(pin(3, "head"), "border-t border-border")} />
-                <SortHeader label="Views" sortKey="ytViews" sort={sort} onSort={onSort} align="right" className="w-[110px] border-t border-border" />
-                <SortHeader label="Views→Visits" sortKey="viewsToVisits" sort={sort} onSort={onSort} align="right" className="w-[120px] border-t border-border" />
                 {!collapsed.sales && (
                   <>
-                    <SortHeader label="Visits" sortKey="visits" sort={sort} onSort={onSort} align="right" className="w-[90px] border-t border-border" />
-                    <SortHeader label="Button Clicks" sortKey="clicks" sort={sort} onSort={onSort} align="right" className="w-[110px] border-t border-border" />
-                    <SortHeader label="Bookings" sortKey="bookings" sort={sort} onSort={onSort} align="right" className="w-[100px] border-t border-border" />
-                    <SortHeader label="Visits→Bookings" sortKey="visitsToBookings" sort={sort} onSort={onSort} align="right" className="w-[140px] border-t border-border" />
-                    <SortHeader label="Views→Bookings" sortKey="viewsToBookings" sort={sort} onSort={onSort} align="right" className="w-[130px] border-t border-border" />
+                    <SortHeader label="Visits" sortKey="visits" sort={sort} onSort={onSort} align="right" className="w-[90px] border-l border-border" />
+                    <SortHeader label="Button Clicks" sortKey="clicks" sort={sort} onSort={onSort} align="right" className="w-[110px]" />
+                    <SortHeader label="Bookings" sortKey="bookings" sort={sort} onSort={onSort} align="right" className="w-[100px]" />
+                    <SortHeader label="Visits→Bookings" sortKey="visitsToBookings" sort={sort} onSort={onSort} align="right" className="w-[140px]" />
+                    <SortHeader label="Views→Bookings" sortKey="viewsToBookings" sort={sort} onSort={onSort} align="right" className="w-[130px]" />
                   </>
                 )}
                 {!collapsed.optin && (
                   <>
-                    <SortHeader label={<>Optin<br />Visits</>} sortKey="optinViews" sort={sort} onSort={onSort} align="right" className="w-[100px] border-t border-border" />
-                    <SortHeader label="Opt-ins" sortKey="optins" sort={sort} onSort={onSort} align="right" className="w-[100px] border-t border-border" />
-                    <SortHeader label="Opt-in Rate" sortKey="optinRate" sort={sort} onSort={onSort} align="right" className="w-[110px] border-t border-border" />
+                    <SortHeader label={<>Optin<br />Visits</>} sortKey="optinViews" sort={sort} onSort={onSort} align="right" className="w-[100px] border-l border-border" />
+                    <SortHeader label="Opt-ins" sortKey="optins" sort={sort} onSort={onSort} align="right" className="w-[100px]" />
+                    <SortHeader label="Opt-in Rate" sortKey="optinRate" sort={sort} onSort={onSort} align="right" className="w-[110px]" />
                   </>
                 )}
               </tr>
@@ -678,10 +675,10 @@ export function TrackerBreakdownTable({
                     </td>
                     <td className={td}>{formatRatio(effectiveTotals.views, denom)}</td>
                     {collapsed.sales ? (
-                      <td className={td} />
+                      <td className={cn(td, "border-l border-border")} />
                     ) : (
                       <>
-                        <td className={td}>{effectiveTotals.views}</td>
+                        <td className={cn(td, "border-l border-border")}>{effectiveTotals.views}</td>
                         <td className={td}>{effectiveTotals.clicks}</td>
                         <td className={td}>{effectiveTotals.bookings}</td>
                         <td className={td}>
@@ -691,10 +688,10 @@ export function TrackerBreakdownTable({
                       </>
                     )}
                     {collapsed.optin ? (
-                      <td className={td} />
+                      <td className={cn(td, "border-l border-border")} />
                     ) : (
                       <>
-                        <td className={td}>{effectiveTotals.optinViews}</td>
+                        <td className={cn(td, "border-l border-border")}>{effectiveTotals.optinViews}</td>
                         <td className={td}>{effectiveTotals.optins}</td>
                         <td className={td}>
                           {formatRatio(effectiveTotals.optins, effectiveTotals.optinViews)}
@@ -759,10 +756,10 @@ export function TrackerBreakdownTable({
                     </td>
                     <td className={td}>{formatRatio(row.views, ytViews)}</td>
                     {collapsed.sales ? (
-                      <td className={td} />
+                      <td className={cn(td, "border-l border-border")} />
                     ) : (
                       <>
-                        <td className={td}>{row.views}</td>
+                        <td className={cn(td, "border-l border-border")}>{row.views}</td>
                         <td className={td}>{row.clicks}</td>
                         <td className={td}>{row.bookings}</td>
                         <td className={td}>{formatRatio(row.bookings, row.views)}</td>
@@ -770,10 +767,10 @@ export function TrackerBreakdownTable({
                       </>
                     )}
                     {collapsed.optin ? (
-                      <td className={td} />
+                      <td className={cn(td, "border-l border-border")} />
                     ) : (
                       <>
-                        <td className={td}>{row.optinViews}</td>
+                        <td className={cn(td, "border-l border-border")}>{row.optinViews}</td>
                         <td className={td}>{row.optins}</td>
                         <td className={td}>{formatRatio(row.optins, row.optinViews)}</td>
                       </>
@@ -794,10 +791,10 @@ export function TrackerBreakdownTable({
                     <td className={td}>—</td>
                     <td className={td}>—</td>
                     {collapsed.sales ? (
-                      <td className={td} />
+                      <td className={cn(td, "border-l border-border")} />
                     ) : (
                       <>
-                        <td className={td}>{row.views}</td>
+                        <td className={cn(td, "border-l border-border")}>{row.views}</td>
                         <td className={td}>{row.clicks}</td>
                         <td className={td}>{row.bookings}</td>
                         <td className={td}>{formatRatio(row.bookings, row.views)}</td>
@@ -805,10 +802,10 @@ export function TrackerBreakdownTable({
                       </>
                     )}
                     {collapsed.optin ? (
-                      <td className={td} />
+                      <td className={cn(td, "border-l border-border")} />
                     ) : (
                       <>
-                        <td className={td}>{row.optinViews}</td>
+                        <td className={cn(td, "border-l border-border")}>{row.optinViews}</td>
                         <td className={td}>{row.optins}</td>
                         <td className={td}>{formatRatio(row.optins, row.optinViews)}</td>
                       </>
@@ -836,10 +833,10 @@ export function TrackerBreakdownTable({
                     <td className={td}>—</td>
                     <td className={td}>—</td>
                     {collapsed.sales ? (
-                      <td className={td} />
+                      <td className={cn(td, "border-l border-border")} />
                     ) : (
                       <>
-                        <td className={td}>{directRow.views}</td>
+                        <td className={cn(td, "border-l border-border")}>{directRow.views}</td>
                         <td className={td}>{directRow.clicks}</td>
                         <td className={td}>{directRow.bookings}</td>
                         <td className={td}>{formatRatio(directRow.bookings, directRow.views)}</td>
@@ -847,10 +844,10 @@ export function TrackerBreakdownTable({
                       </>
                     )}
                     {collapsed.optin ? (
-                      <td className={td} />
+                      <td className={cn(td, "border-l border-border")} />
                     ) : (
                       <>
-                        <td className={td}>{directRow.optinViews}</td>
+                        <td className={cn(td, "border-l border-border")}>{directRow.optinViews}</td>
                         <td className={td}>{directRow.optins}</td>
                         <td className={td}>{formatRatio(directRow.optins, directRow.optinViews)}</td>
                       </>
