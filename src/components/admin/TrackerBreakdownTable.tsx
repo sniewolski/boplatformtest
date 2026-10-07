@@ -419,10 +419,9 @@ export function TrackerBreakdownTable({
     const measure = () => {
       const top = el.getBoundingClientRect().top + window.scrollY;
       setFitHeight(Math.max(320, window.innerHeight - top - BOTTOM_GAP));
-      setRowH({
-        g: groupRowRef.current?.getBoundingClientRect().height ?? 0,
-        h: headRowRef.current?.getBoundingClientRect().height ?? 0,
-      });
+      const g = groupRowRef.current?.getBoundingClientRect().height ?? 0;
+      const h = headRowRef.current?.getBoundingClientRect().height ?? 0;
+      setRowH((prev) => (prev.g === g && prev.h === h ? prev : { g, h }));
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -434,7 +433,7 @@ export function TrackerBreakdownTable({
       ro.disconnect();
       window.removeEventListener("resize", measure);
     };
-  });
+  }, [eventsLoading, videosLoading, collapsed]);
   const [collapsed, setCollapsed] = useState<CollapsedGroups>(DEFAULT_COLLAPSED);
   useEffect(() => {
     try {
