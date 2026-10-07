@@ -9,54 +9,58 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as FreeAuditRouteImport } from './routes/free-audit'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as FreeAuditRouteImport } from './routes/free-audit'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as FreeAuditIndexRouteImport } from './routes/free-audit.index'
-import { Route as RTokenRouteImport } from './routes/r.$token'
 import { Route as FreeAuditTokenRouteImport } from './routes/free-audit.$token'
-import { Route as RTokenIndexRouteImport } from './routes/r.$token.index'
-import { Route as FreeAuditTokenIndexRouteImport } from './routes/free-audit.$token.index'
+import { Route as RTokenRouteImport } from './routes/r.$token'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
-import { Route as RTokenSplatRouteImport } from './routes/r.$token.$'
-import { Route as FreeAuditTokenDoneRouteImport } from './routes/free-audit.$token.done'
-import { Route as FreeAuditTokenSectionKeyRouteImport } from './routes/free-audit.$token.$sectionKey'
-import { Route as AuthenticatedAppBusinessBriefRouteImport } from './routes/_authenticated/app.business-brief'
-import { Route as AuthenticatedAppBookCallRouteImport } from './routes/_authenticated/app.book-call'
 import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
+import { Route as AuthenticatedAppBookCallRouteImport } from './routes/_authenticated/app.book-call'
+import { Route as AuthenticatedAppBusinessBriefRouteImport } from './routes/_authenticated/app.business-brief'
+import { Route as FreeAuditTokenIndexRouteImport } from './routes/free-audit.$token.index'
+import { Route as FreeAuditTokenSectionKeyRouteImport } from './routes/free-audit.$token.$sectionKey'
+import { Route as FreeAuditTokenDoneRouteImport } from './routes/free-audit.$token.done'
+import { Route as RTokenIndexRouteImport } from './routes/r.$token.index'
+import { Route as RTokenSplatRouteImport } from './routes/r.$token.$'
 import { Route as AuthenticatedAppAdminIndexRouteImport } from './routes/_authenticated/app.admin.index'
-import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
-import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
-import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
-import { Route as ApiPublicRValidateRouteImport } from './routes/api/public/r/validate'
-import { Route as ApiPublicRStateRouteImport } from './routes/api/public/r/state'
-import { Route as ApiPublicRSaveRouteImport } from './routes/api/public/r/save'
-import { Route as ApiPublicRCompleteRouteImport } from './routes/api/public/r/complete'
-import { Route as ApiPublicRCaptureRouteImport } from './routes/api/public/r/capture'
-import { Route as ApiPublicAuditLeadSubmitSectionRouteImport } from './routes/api/public/audit-lead/submit-section'
-import { Route as ApiPublicAuditLeadStateRouteImport } from './routes/api/public/audit-lead/state'
-import { Route as ApiPublicAuditLeadStartRouteImport } from './routes/api/public/audit-lead/start'
-import { Route as ApiPublicAuditLeadSetCurrencyRouteImport } from './routes/api/public/audit-lead/set-currency'
-import { Route as ApiPublicAuditLeadSaveDraftRouteImport } from './routes/api/public/audit-lead/save-draft'
-import { Route as AuthenticatedAppAdminWillAiRouteImport } from './routes/_authenticated/app.admin.will-ai'
-import { Route as AuthenticatedAppAdminWatchFirstRouteImport } from './routes/_authenticated/app.admin.watch-first'
-import { Route as AuthenticatedAppAdminTrackerRouteImport } from './routes/_authenticated/app.admin.tracker'
-import { Route as AuthenticatedAppAdminSopsRouteImport } from './routes/_authenticated/app.admin.sops'
-import { Route as AuthenticatedAppAdminReviewRouteImport } from './routes/_authenticated/app.admin.review'
-import { Route as AuthenticatedAppAdminResourcesRouteImport } from './routes/_authenticated/app.admin.resources'
 import { Route as AuthenticatedAppAdminLeadAuditsRouteImport } from './routes/_authenticated/app.admin.lead-audits'
-import { Route as AuthenticatedAppAdminSopsIndexRouteImport } from './routes/_authenticated/app.admin.sops.index'
-import { Route as AuthenticatedAppAdminReviewIndexRouteImport } from './routes/_authenticated/app.admin.review.index'
-import { Route as AuthenticatedAppAdminResourcesIndexRouteImport } from './routes/_authenticated/app.admin.resources.index'
+import { Route as AuthenticatedAppAdminResourcesRouteImport } from './routes/_authenticated/app.admin.resources'
+import { Route as AuthenticatedAppAdminReviewRouteImport } from './routes/_authenticated/app.admin.review'
+import { Route as AuthenticatedAppAdminSopsRouteImport } from './routes/_authenticated/app.admin.sops'
+import { Route as AuthenticatedAppAdminTrackerRouteImport } from './routes/_authenticated/app.admin.tracker'
+import { Route as AuthenticatedAppAdminWatchFirstRouteImport } from './routes/_authenticated/app.admin.watch-first'
+import { Route as AuthenticatedAppAdminWillAiRouteImport } from './routes/_authenticated/app.admin.will-ai'
+import { Route as ApiPublicAuditLeadSaveDraftRouteImport } from './routes/api/public/audit-lead/save-draft'
+import { Route as ApiPublicAuditLeadSetCurrencyRouteImport } from './routes/api/public/audit-lead/set-currency'
+import { Route as ApiPublicAuditLeadStartRouteImport } from './routes/api/public/audit-lead/start'
+import { Route as ApiPublicAuditLeadStateRouteImport } from './routes/api/public/audit-lead/state'
+import { Route as ApiPublicAuditLeadSubmitSectionRouteImport } from './routes/api/public/audit-lead/submit-section'
+import { Route as ApiPublicRCaptureRouteImport } from './routes/api/public/r/capture'
+import { Route as ApiPublicRCompleteRouteImport } from './routes/api/public/r/complete'
+import { Route as ApiPublicRSaveRouteImport } from './routes/api/public/r/save'
+import { Route as ApiPublicRStateRouteImport } from './routes/api/public/r/state'
+import { Route as ApiPublicRValidateRouteImport } from './routes/api/public/r/validate'
+import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as AuthenticatedAppAdminLeadAuditsIndexRouteImport } from './routes/_authenticated/app.admin.lead-audits.index'
-import { Route as AuthenticatedAppToolsKeySplatRouteImport } from './routes/_authenticated/app.tools.$key.$'
-import { Route as AuthenticatedAppAdminReviewOwnerIdRouteImport } from './routes/_authenticated/app.admin.review.$ownerId'
 import { Route as AuthenticatedAppAdminLeadAuditsSessionIdRouteImport } from './routes/_authenticated/app.admin.lead-audits.$sessionId'
+import { Route as AuthenticatedAppAdminResourcesIndexRouteImport } from './routes/_authenticated/app.admin.resources.index'
+import { Route as AuthenticatedAppAdminReviewIndexRouteImport } from './routes/_authenticated/app.admin.review.index'
+import { Route as AuthenticatedAppAdminReviewOwnerIdRouteImport } from './routes/_authenticated/app.admin.review.$ownerId'
+import { Route as AuthenticatedAppAdminSopsIndexRouteImport } from './routes/_authenticated/app.admin.sops.index'
+import { Route as AuthenticatedAppToolsKeySplatRouteImport } from './routes/_authenticated/app.tools.$key.$'
 
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FreeAuditRoute = FreeAuditRouteImport.update({
@@ -64,13 +68,9 @@ const FreeAuditRoute = FreeAuditRouteImport.update({
   path: '/free-audit',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FreeAuditIndexRoute = FreeAuditIndexRouteImport.update({
@@ -78,39 +78,41 @@ const FreeAuditIndexRoute = FreeAuditIndexRouteImport.update({
   path: '/',
   getParentRoute: () => FreeAuditRoute,
 } as any)
-const RTokenRoute = RTokenRouteImport.update({
-  id: '/r/$token',
-  path: '/r/$token',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const FreeAuditTokenRoute = FreeAuditTokenRouteImport.update({
   id: '/$token',
   path: '/$token',
   getParentRoute: () => FreeAuditRoute,
 } as any)
-const RTokenIndexRoute = RTokenIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => RTokenRoute,
-} as any)
-const FreeAuditTokenIndexRoute = FreeAuditTokenIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => FreeAuditTokenRoute,
+const RTokenRoute = RTokenRouteImport.update({
+  id: '/r/$token',
+  path: '/r/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
   id: '/app/',
   path: '/app/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const RTokenSplatRoute = RTokenSplatRouteImport.update({
-  id: '/$',
-  path: '/$',
-  getParentRoute: () => RTokenRoute,
+const AuthenticatedAppAdminRoute = AuthenticatedAppAdminRouteImport.update({
+  id: '/app/admin',
+  path: '/app/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const FreeAuditTokenDoneRoute = FreeAuditTokenDoneRouteImport.update({
-  id: '/done',
-  path: '/done',
+const AuthenticatedAppBookCallRoute =
+  AuthenticatedAppBookCallRouteImport.update({
+    id: '/app/book-call',
+    path: '/app/book-call',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAppBusinessBriefRoute =
+  AuthenticatedAppBusinessBriefRouteImport.update({
+    id: '/app/business-brief',
+    path: '/app/business-brief',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const FreeAuditTokenIndexRoute = FreeAuditTokenIndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => FreeAuditTokenRoute,
 } as any)
 const FreeAuditTokenSectionKeyRoute =
@@ -119,132 +121,25 @@ const FreeAuditTokenSectionKeyRoute =
     path: '/$sectionKey',
     getParentRoute: () => FreeAuditTokenRoute,
   } as any)
-const AuthenticatedAppBusinessBriefRoute =
-  AuthenticatedAppBusinessBriefRouteImport.update({
-    id: '/app/business-brief',
-    path: '/app/business-brief',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAppBookCallRoute =
-  AuthenticatedAppBookCallRouteImport.update({
-    id: '/app/book-call',
-    path: '/app/book-call',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAppAdminRoute = AuthenticatedAppAdminRouteImport.update({
-  id: '/app/admin',
-  path: '/app/admin',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const FreeAuditTokenDoneRoute = FreeAuditTokenDoneRouteImport.update({
+  id: '/done',
+  path: '/done',
+  getParentRoute: () => FreeAuditTokenRoute,
+} as any)
+const RTokenIndexRoute = RTokenIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => RTokenRoute,
+} as any)
+const RTokenSplatRoute = RTokenSplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => RTokenRoute,
 } as any)
 const AuthenticatedAppAdminIndexRoute =
   AuthenticatedAppAdminIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => AuthenticatedAppAdminRoute,
-  } as any)
-const LovableEmailQueueProcessRoute =
-  LovableEmailQueueProcessRouteImport.update({
-    id: '/lovable/email/queue/process',
-    path: '/lovable/email/queue/process',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
-  id: '/lovable/email/auth/webhook',
-  path: '/lovable/email/auth/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
-  id: '/lovable/email/auth/preview',
-  path: '/lovable/email/auth/preview',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicRValidateRoute = ApiPublicRValidateRouteImport.update({
-  id: '/api/public/r/validate',
-  path: '/api/public/r/validate',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicRStateRoute = ApiPublicRStateRouteImport.update({
-  id: '/api/public/r/state',
-  path: '/api/public/r/state',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicRSaveRoute = ApiPublicRSaveRouteImport.update({
-  id: '/api/public/r/save',
-  path: '/api/public/r/save',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicRCompleteRoute = ApiPublicRCompleteRouteImport.update({
-  id: '/api/public/r/complete',
-  path: '/api/public/r/complete',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicRCaptureRoute = ApiPublicRCaptureRouteImport.update({
-  id: '/api/public/r/capture',
-  path: '/api/public/r/capture',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicAuditLeadSubmitSectionRoute =
-  ApiPublicAuditLeadSubmitSectionRouteImport.update({
-    id: '/api/public/audit-lead/submit-section',
-    path: '/api/public/audit-lead/submit-section',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicAuditLeadStateRoute = ApiPublicAuditLeadStateRouteImport.update({
-  id: '/api/public/audit-lead/state',
-  path: '/api/public/audit-lead/state',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicAuditLeadStartRoute = ApiPublicAuditLeadStartRouteImport.update({
-  id: '/api/public/audit-lead/start',
-  path: '/api/public/audit-lead/start',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicAuditLeadSetCurrencyRoute =
-  ApiPublicAuditLeadSetCurrencyRouteImport.update({
-    id: '/api/public/audit-lead/set-currency',
-    path: '/api/public/audit-lead/set-currency',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicAuditLeadSaveDraftRoute =
-  ApiPublicAuditLeadSaveDraftRouteImport.update({
-    id: '/api/public/audit-lead/save-draft',
-    path: '/api/public/audit-lead/save-draft',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const AuthenticatedAppAdminWillAiRoute =
-  AuthenticatedAppAdminWillAiRouteImport.update({
-    id: '/will-ai',
-    path: '/will-ai',
-    getParentRoute: () => AuthenticatedAppAdminRoute,
-  } as any)
-const AuthenticatedAppAdminWatchFirstRoute =
-  AuthenticatedAppAdminWatchFirstRouteImport.update({
-    id: '/watch-first',
-    path: '/watch-first',
-    getParentRoute: () => AuthenticatedAppAdminRoute,
-  } as any)
-const AuthenticatedAppAdminTrackerRoute =
-  AuthenticatedAppAdminTrackerRouteImport.update({
-    id: '/tracker',
-    path: '/tracker',
-    getParentRoute: () => AuthenticatedAppAdminRoute,
-  } as any)
-const AuthenticatedAppAdminSopsRoute =
-  AuthenticatedAppAdminSopsRouteImport.update({
-    id: '/sops',
-    path: '/sops',
-    getParentRoute: () => AuthenticatedAppAdminRoute,
-  } as any)
-const AuthenticatedAppAdminReviewRoute =
-  AuthenticatedAppAdminReviewRouteImport.update({
-    id: '/review',
-    path: '/review',
-    getParentRoute: () => AuthenticatedAppAdminRoute,
-  } as any)
-const AuthenticatedAppAdminResourcesRoute =
-  AuthenticatedAppAdminResourcesRouteImport.update({
-    id: '/resources',
-    path: '/resources',
     getParentRoute: () => AuthenticatedAppAdminRoute,
   } as any)
 const AuthenticatedAppAdminLeadAuditsRoute =
@@ -253,23 +148,110 @@ const AuthenticatedAppAdminLeadAuditsRoute =
     path: '/lead-audits',
     getParentRoute: () => AuthenticatedAppAdminRoute,
   } as any)
-const AuthenticatedAppAdminSopsIndexRoute =
-  AuthenticatedAppAdminSopsIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedAppAdminSopsRoute,
+const AuthenticatedAppAdminResourcesRoute =
+  AuthenticatedAppAdminResourcesRouteImport.update({
+    id: '/resources',
+    path: '/resources',
+    getParentRoute: () => AuthenticatedAppAdminRoute,
   } as any)
-const AuthenticatedAppAdminReviewIndexRoute =
-  AuthenticatedAppAdminReviewIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedAppAdminReviewRoute,
+const AuthenticatedAppAdminReviewRoute =
+  AuthenticatedAppAdminReviewRouteImport.update({
+    id: '/review',
+    path: '/review',
+    getParentRoute: () => AuthenticatedAppAdminRoute,
   } as any)
-const AuthenticatedAppAdminResourcesIndexRoute =
-  AuthenticatedAppAdminResourcesIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedAppAdminResourcesRoute,
+const AuthenticatedAppAdminSopsRoute =
+  AuthenticatedAppAdminSopsRouteImport.update({
+    id: '/sops',
+    path: '/sops',
+    getParentRoute: () => AuthenticatedAppAdminRoute,
+  } as any)
+const AuthenticatedAppAdminTrackerRoute =
+  AuthenticatedAppAdminTrackerRouteImport.update({
+    id: '/tracker',
+    path: '/tracker',
+    getParentRoute: () => AuthenticatedAppAdminRoute,
+  } as any)
+const AuthenticatedAppAdminWatchFirstRoute =
+  AuthenticatedAppAdminWatchFirstRouteImport.update({
+    id: '/watch-first',
+    path: '/watch-first',
+    getParentRoute: () => AuthenticatedAppAdminRoute,
+  } as any)
+const AuthenticatedAppAdminWillAiRoute =
+  AuthenticatedAppAdminWillAiRouteImport.update({
+    id: '/will-ai',
+    path: '/will-ai',
+    getParentRoute: () => AuthenticatedAppAdminRoute,
+  } as any)
+const ApiPublicAuditLeadSaveDraftRoute =
+  ApiPublicAuditLeadSaveDraftRouteImport.update({
+    id: '/api/public/audit-lead/save-draft',
+    path: '/api/public/audit-lead/save-draft',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicAuditLeadSetCurrencyRoute =
+  ApiPublicAuditLeadSetCurrencyRouteImport.update({
+    id: '/api/public/audit-lead/set-currency',
+    path: '/api/public/audit-lead/set-currency',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicAuditLeadStartRoute = ApiPublicAuditLeadStartRouteImport.update({
+  id: '/api/public/audit-lead/start',
+  path: '/api/public/audit-lead/start',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAuditLeadStateRoute = ApiPublicAuditLeadStateRouteImport.update({
+  id: '/api/public/audit-lead/state',
+  path: '/api/public/audit-lead/state',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAuditLeadSubmitSectionRoute =
+  ApiPublicAuditLeadSubmitSectionRouteImport.update({
+    id: '/api/public/audit-lead/submit-section',
+    path: '/api/public/audit-lead/submit-section',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicRCaptureRoute = ApiPublicRCaptureRouteImport.update({
+  id: '/api/public/r/capture',
+  path: '/api/public/r/capture',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicRCompleteRoute = ApiPublicRCompleteRouteImport.update({
+  id: '/api/public/r/complete',
+  path: '/api/public/r/complete',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicRSaveRoute = ApiPublicRSaveRouteImport.update({
+  id: '/api/public/r/save',
+  path: '/api/public/r/save',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicRStateRoute = ApiPublicRStateRouteImport.update({
+  id: '/api/public/r/state',
+  path: '/api/public/r/state',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicRValidateRoute = ApiPublicRValidateRouteImport.update({
+  id: '/api/public/r/validate',
+  path: '/api/public/r/validate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
+  id: '/lovable/email/auth/preview',
+  path: '/lovable/email/auth/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
+  id: '/lovable/email/auth/webhook',
+  path: '/lovable/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailQueueProcessRoute =
+  LovableEmailQueueProcessRouteImport.update({
+    id: '/lovable/email/queue/process',
+    path: '/lovable/email/queue/process',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const AuthenticatedAppAdminLeadAuditsIndexRoute =
   AuthenticatedAppAdminLeadAuditsIndexRouteImport.update({
@@ -277,11 +259,23 @@ const AuthenticatedAppAdminLeadAuditsIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedAppAdminLeadAuditsRoute,
   } as any)
-const AuthenticatedAppToolsKeySplatRoute =
-  AuthenticatedAppToolsKeySplatRouteImport.update({
-    id: '/app/tools/$key/$',
-    path: '/app/tools/$key/$',
-    getParentRoute: () => AuthenticatedRouteRoute,
+const AuthenticatedAppAdminLeadAuditsSessionIdRoute =
+  AuthenticatedAppAdminLeadAuditsSessionIdRouteImport.update({
+    id: '/$sessionId',
+    path: '/$sessionId',
+    getParentRoute: () => AuthenticatedAppAdminLeadAuditsRoute,
+  } as any)
+const AuthenticatedAppAdminResourcesIndexRoute =
+  AuthenticatedAppAdminResourcesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAppAdminResourcesRoute,
+  } as any)
+const AuthenticatedAppAdminReviewIndexRoute =
+  AuthenticatedAppAdminReviewIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAppAdminReviewRoute,
   } as any)
 const AuthenticatedAppAdminReviewOwnerIdRoute =
   AuthenticatedAppAdminReviewOwnerIdRouteImport.update({
@@ -289,11 +283,17 @@ const AuthenticatedAppAdminReviewOwnerIdRoute =
     path: '/$ownerId',
     getParentRoute: () => AuthenticatedAppAdminReviewRoute,
   } as any)
-const AuthenticatedAppAdminLeadAuditsSessionIdRoute =
-  AuthenticatedAppAdminLeadAuditsSessionIdRouteImport.update({
-    id: '/$sessionId',
-    path: '/$sessionId',
-    getParentRoute: () => AuthenticatedAppAdminLeadAuditsRoute,
+const AuthenticatedAppAdminSopsIndexRoute =
+  AuthenticatedAppAdminSopsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAppAdminSopsRoute,
+  } as any)
+const AuthenticatedAppToolsKeySplatRoute =
+  AuthenticatedAppToolsKeySplatRouteImport.update({
+    id: '/app/tools/$key/$',
+    path: '/app/tools/$key/$',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -579,18 +579,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/free-audit': {
-      id: '/free-audit'
-      path: '/free-audit'
-      fullPath: '/free-audit'
-      preLoaderRoute: typeof FreeAuditRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -600,11 +593,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/free-audit': {
+      id: '/free-audit'
+      path: '/free-audit'
+      fullPath: '/free-audit'
+      preLoaderRoute: typeof FreeAuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/free-audit/': {
@@ -614,13 +614,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FreeAuditIndexRouteImport
       parentRoute: typeof FreeAuditRoute
     }
-    '/r/$token': {
-      id: '/r/$token'
-      path: '/r/$token'
-      fullPath: '/r/$token'
-      preLoaderRoute: typeof RTokenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/free-audit/$token': {
       id: '/free-audit/$token'
       path: '/$token'
@@ -628,60 +621,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FreeAuditTokenRouteImport
       parentRoute: typeof FreeAuditRoute
     }
-    '/r/$token/': {
-      id: '/r/$token/'
-      path: '/'
-      fullPath: '/r/$token/'
-      preLoaderRoute: typeof RTokenIndexRouteImport
-      parentRoute: typeof RTokenRoute
-    }
-    '/free-audit/$token/': {
-      id: '/free-audit/$token/'
-      path: '/'
-      fullPath: '/free-audit/$token/'
-      preLoaderRoute: typeof FreeAuditTokenIndexRouteImport
-      parentRoute: typeof FreeAuditTokenRoute
+    '/r/$token': {
+      id: '/r/$token'
+      path: '/r/$token'
+      fullPath: '/r/$token'
+      preLoaderRoute: typeof RTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app/': {
       id: '/_authenticated/app/'
       path: '/app'
       fullPath: '/app/'
       preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/r/$token/$': {
-      id: '/r/$token/$'
-      path: '/$'
-      fullPath: '/r/$token/$'
-      preLoaderRoute: typeof RTokenSplatRouteImport
-      parentRoute: typeof RTokenRoute
-    }
-    '/free-audit/$token/done': {
-      id: '/free-audit/$token/done'
-      path: '/done'
-      fullPath: '/free-audit/$token/done'
-      preLoaderRoute: typeof FreeAuditTokenDoneRouteImport
-      parentRoute: typeof FreeAuditTokenRoute
-    }
-    '/free-audit/$token/$sectionKey': {
-      id: '/free-audit/$token/$sectionKey'
-      path: '/$sectionKey'
-      fullPath: '/free-audit/$token/$sectionKey'
-      preLoaderRoute: typeof FreeAuditTokenSectionKeyRouteImport
-      parentRoute: typeof FreeAuditTokenRoute
-    }
-    '/_authenticated/app/business-brief': {
-      id: '/_authenticated/app/business-brief'
-      path: '/app/business-brief'
-      fullPath: '/app/business-brief'
-      preLoaderRoute: typeof AuthenticatedAppBusinessBriefRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/app/book-call': {
-      id: '/_authenticated/app/book-call'
-      path: '/app/book-call'
-      fullPath: '/app/book-call'
-      preLoaderRoute: typeof AuthenticatedAppBookCallRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/app/admin': {
@@ -691,144 +642,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/app/book-call': {
+      id: '/_authenticated/app/book-call'
+      path: '/app/book-call'
+      fullPath: '/app/book-call'
+      preLoaderRoute: typeof AuthenticatedAppBookCallRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/app/business-brief': {
+      id: '/_authenticated/app/business-brief'
+      path: '/app/business-brief'
+      fullPath: '/app/business-brief'
+      preLoaderRoute: typeof AuthenticatedAppBusinessBriefRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/free-audit/$token/': {
+      id: '/free-audit/$token/'
+      path: '/'
+      fullPath: '/free-audit/$token/'
+      preLoaderRoute: typeof FreeAuditTokenIndexRouteImport
+      parentRoute: typeof FreeAuditTokenRoute
+    }
+    '/free-audit/$token/$sectionKey': {
+      id: '/free-audit/$token/$sectionKey'
+      path: '/$sectionKey'
+      fullPath: '/free-audit/$token/$sectionKey'
+      preLoaderRoute: typeof FreeAuditTokenSectionKeyRouteImport
+      parentRoute: typeof FreeAuditTokenRoute
+    }
+    '/free-audit/$token/done': {
+      id: '/free-audit/$token/done'
+      path: '/done'
+      fullPath: '/free-audit/$token/done'
+      preLoaderRoute: typeof FreeAuditTokenDoneRouteImport
+      parentRoute: typeof FreeAuditTokenRoute
+    }
+    '/r/$token/': {
+      id: '/r/$token/'
+      path: '/'
+      fullPath: '/r/$token/'
+      preLoaderRoute: typeof RTokenIndexRouteImport
+      parentRoute: typeof RTokenRoute
+    }
+    '/r/$token/$': {
+      id: '/r/$token/$'
+      path: '/$'
+      fullPath: '/r/$token/$'
+      preLoaderRoute: typeof RTokenSplatRouteImport
+      parentRoute: typeof RTokenRoute
+    }
     '/_authenticated/app/admin/': {
       id: '/_authenticated/app/admin/'
       path: '/'
       fullPath: '/app/admin/'
       preLoaderRoute: typeof AuthenticatedAppAdminIndexRouteImport
-      parentRoute: typeof AuthenticatedAppAdminRoute
-    }
-    '/lovable/email/queue/process': {
-      id: '/lovable/email/queue/process'
-      path: '/lovable/email/queue/process'
-      fullPath: '/lovable/email/queue/process'
-      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/auth/webhook': {
-      id: '/lovable/email/auth/webhook'
-      path: '/lovable/email/auth/webhook'
-      fullPath: '/lovable/email/auth/webhook'
-      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/auth/preview': {
-      id: '/lovable/email/auth/preview'
-      path: '/lovable/email/auth/preview'
-      fullPath: '/lovable/email/auth/preview'
-      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/r/validate': {
-      id: '/api/public/r/validate'
-      path: '/api/public/r/validate'
-      fullPath: '/api/public/r/validate'
-      preLoaderRoute: typeof ApiPublicRValidateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/r/state': {
-      id: '/api/public/r/state'
-      path: '/api/public/r/state'
-      fullPath: '/api/public/r/state'
-      preLoaderRoute: typeof ApiPublicRStateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/r/save': {
-      id: '/api/public/r/save'
-      path: '/api/public/r/save'
-      fullPath: '/api/public/r/save'
-      preLoaderRoute: typeof ApiPublicRSaveRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/r/complete': {
-      id: '/api/public/r/complete'
-      path: '/api/public/r/complete'
-      fullPath: '/api/public/r/complete'
-      preLoaderRoute: typeof ApiPublicRCompleteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/r/capture': {
-      id: '/api/public/r/capture'
-      path: '/api/public/r/capture'
-      fullPath: '/api/public/r/capture'
-      preLoaderRoute: typeof ApiPublicRCaptureRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/audit-lead/submit-section': {
-      id: '/api/public/audit-lead/submit-section'
-      path: '/api/public/audit-lead/submit-section'
-      fullPath: '/api/public/audit-lead/submit-section'
-      preLoaderRoute: typeof ApiPublicAuditLeadSubmitSectionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/audit-lead/state': {
-      id: '/api/public/audit-lead/state'
-      path: '/api/public/audit-lead/state'
-      fullPath: '/api/public/audit-lead/state'
-      preLoaderRoute: typeof ApiPublicAuditLeadStateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/audit-lead/start': {
-      id: '/api/public/audit-lead/start'
-      path: '/api/public/audit-lead/start'
-      fullPath: '/api/public/audit-lead/start'
-      preLoaderRoute: typeof ApiPublicAuditLeadStartRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/audit-lead/set-currency': {
-      id: '/api/public/audit-lead/set-currency'
-      path: '/api/public/audit-lead/set-currency'
-      fullPath: '/api/public/audit-lead/set-currency'
-      preLoaderRoute: typeof ApiPublicAuditLeadSetCurrencyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/audit-lead/save-draft': {
-      id: '/api/public/audit-lead/save-draft'
-      path: '/api/public/audit-lead/save-draft'
-      fullPath: '/api/public/audit-lead/save-draft'
-      preLoaderRoute: typeof ApiPublicAuditLeadSaveDraftRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/app/admin/will-ai': {
-      id: '/_authenticated/app/admin/will-ai'
-      path: '/will-ai'
-      fullPath: '/app/admin/will-ai'
-      preLoaderRoute: typeof AuthenticatedAppAdminWillAiRouteImport
-      parentRoute: typeof AuthenticatedAppAdminRoute
-    }
-    '/_authenticated/app/admin/watch-first': {
-      id: '/_authenticated/app/admin/watch-first'
-      path: '/watch-first'
-      fullPath: '/app/admin/watch-first'
-      preLoaderRoute: typeof AuthenticatedAppAdminWatchFirstRouteImport
-      parentRoute: typeof AuthenticatedAppAdminRoute
-    }
-    '/_authenticated/app/admin/tracker': {
-      id: '/_authenticated/app/admin/tracker'
-      path: '/tracker'
-      fullPath: '/app/admin/tracker'
-      preLoaderRoute: typeof AuthenticatedAppAdminTrackerRouteImport
-      parentRoute: typeof AuthenticatedAppAdminRoute
-    }
-    '/_authenticated/app/admin/sops': {
-      id: '/_authenticated/app/admin/sops'
-      path: '/sops'
-      fullPath: '/app/admin/sops'
-      preLoaderRoute: typeof AuthenticatedAppAdminSopsRouteImport
-      parentRoute: typeof AuthenticatedAppAdminRoute
-    }
-    '/_authenticated/app/admin/review': {
-      id: '/_authenticated/app/admin/review'
-      path: '/review'
-      fullPath: '/app/admin/review'
-      preLoaderRoute: typeof AuthenticatedAppAdminReviewRouteImport
-      parentRoute: typeof AuthenticatedAppAdminRoute
-    }
-    '/_authenticated/app/admin/resources': {
-      id: '/_authenticated/app/admin/resources'
-      path: '/resources'
-      fullPath: '/app/admin/resources'
-      preLoaderRoute: typeof AuthenticatedAppAdminResourcesRouteImport
       parentRoute: typeof AuthenticatedAppAdminRoute
     }
     '/_authenticated/app/admin/lead-audits': {
@@ -838,26 +705,138 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAdminLeadAuditsRouteImport
       parentRoute: typeof AuthenticatedAppAdminRoute
     }
-    '/_authenticated/app/admin/sops/': {
-      id: '/_authenticated/app/admin/sops/'
-      path: '/'
-      fullPath: '/app/admin/sops/'
-      preLoaderRoute: typeof AuthenticatedAppAdminSopsIndexRouteImport
-      parentRoute: typeof AuthenticatedAppAdminSopsRoute
+    '/_authenticated/app/admin/resources': {
+      id: '/_authenticated/app/admin/resources'
+      path: '/resources'
+      fullPath: '/app/admin/resources'
+      preLoaderRoute: typeof AuthenticatedAppAdminResourcesRouteImport
+      parentRoute: typeof AuthenticatedAppAdminRoute
     }
-    '/_authenticated/app/admin/review/': {
-      id: '/_authenticated/app/admin/review/'
-      path: '/'
-      fullPath: '/app/admin/review/'
-      preLoaderRoute: typeof AuthenticatedAppAdminReviewIndexRouteImport
-      parentRoute: typeof AuthenticatedAppAdminReviewRoute
+    '/_authenticated/app/admin/review': {
+      id: '/_authenticated/app/admin/review'
+      path: '/review'
+      fullPath: '/app/admin/review'
+      preLoaderRoute: typeof AuthenticatedAppAdminReviewRouteImport
+      parentRoute: typeof AuthenticatedAppAdminRoute
     }
-    '/_authenticated/app/admin/resources/': {
-      id: '/_authenticated/app/admin/resources/'
-      path: '/'
-      fullPath: '/app/admin/resources/'
-      preLoaderRoute: typeof AuthenticatedAppAdminResourcesIndexRouteImport
-      parentRoute: typeof AuthenticatedAppAdminResourcesRoute
+    '/_authenticated/app/admin/sops': {
+      id: '/_authenticated/app/admin/sops'
+      path: '/sops'
+      fullPath: '/app/admin/sops'
+      preLoaderRoute: typeof AuthenticatedAppAdminSopsRouteImport
+      parentRoute: typeof AuthenticatedAppAdminRoute
+    }
+    '/_authenticated/app/admin/tracker': {
+      id: '/_authenticated/app/admin/tracker'
+      path: '/tracker'
+      fullPath: '/app/admin/tracker'
+      preLoaderRoute: typeof AuthenticatedAppAdminTrackerRouteImport
+      parentRoute: typeof AuthenticatedAppAdminRoute
+    }
+    '/_authenticated/app/admin/watch-first': {
+      id: '/_authenticated/app/admin/watch-first'
+      path: '/watch-first'
+      fullPath: '/app/admin/watch-first'
+      preLoaderRoute: typeof AuthenticatedAppAdminWatchFirstRouteImport
+      parentRoute: typeof AuthenticatedAppAdminRoute
+    }
+    '/_authenticated/app/admin/will-ai': {
+      id: '/_authenticated/app/admin/will-ai'
+      path: '/will-ai'
+      fullPath: '/app/admin/will-ai'
+      preLoaderRoute: typeof AuthenticatedAppAdminWillAiRouteImport
+      parentRoute: typeof AuthenticatedAppAdminRoute
+    }
+    '/api/public/audit-lead/save-draft': {
+      id: '/api/public/audit-lead/save-draft'
+      path: '/api/public/audit-lead/save-draft'
+      fullPath: '/api/public/audit-lead/save-draft'
+      preLoaderRoute: typeof ApiPublicAuditLeadSaveDraftRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/audit-lead/set-currency': {
+      id: '/api/public/audit-lead/set-currency'
+      path: '/api/public/audit-lead/set-currency'
+      fullPath: '/api/public/audit-lead/set-currency'
+      preLoaderRoute: typeof ApiPublicAuditLeadSetCurrencyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/audit-lead/start': {
+      id: '/api/public/audit-lead/start'
+      path: '/api/public/audit-lead/start'
+      fullPath: '/api/public/audit-lead/start'
+      preLoaderRoute: typeof ApiPublicAuditLeadStartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/audit-lead/state': {
+      id: '/api/public/audit-lead/state'
+      path: '/api/public/audit-lead/state'
+      fullPath: '/api/public/audit-lead/state'
+      preLoaderRoute: typeof ApiPublicAuditLeadStateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/audit-lead/submit-section': {
+      id: '/api/public/audit-lead/submit-section'
+      path: '/api/public/audit-lead/submit-section'
+      fullPath: '/api/public/audit-lead/submit-section'
+      preLoaderRoute: typeof ApiPublicAuditLeadSubmitSectionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/r/capture': {
+      id: '/api/public/r/capture'
+      path: '/api/public/r/capture'
+      fullPath: '/api/public/r/capture'
+      preLoaderRoute: typeof ApiPublicRCaptureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/r/complete': {
+      id: '/api/public/r/complete'
+      path: '/api/public/r/complete'
+      fullPath: '/api/public/r/complete'
+      preLoaderRoute: typeof ApiPublicRCompleteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/r/save': {
+      id: '/api/public/r/save'
+      path: '/api/public/r/save'
+      fullPath: '/api/public/r/save'
+      preLoaderRoute: typeof ApiPublicRSaveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/r/state': {
+      id: '/api/public/r/state'
+      path: '/api/public/r/state'
+      fullPath: '/api/public/r/state'
+      preLoaderRoute: typeof ApiPublicRStateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/r/validate': {
+      id: '/api/public/r/validate'
+      path: '/api/public/r/validate'
+      fullPath: '/api/public/r/validate'
+      preLoaderRoute: typeof ApiPublicRValidateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/preview': {
+      id: '/lovable/email/auth/preview'
+      path: '/lovable/email/auth/preview'
+      fullPath: '/lovable/email/auth/preview'
+      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/webhook': {
+      id: '/lovable/email/auth/webhook'
+      path: '/lovable/email/auth/webhook'
+      fullPath: '/lovable/email/auth/webhook'
+      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/queue/process': {
+      id: '/lovable/email/queue/process'
+      path: '/lovable/email/queue/process'
+      fullPath: '/lovable/email/queue/process'
+      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app/admin/lead-audits/': {
       id: '/_authenticated/app/admin/lead-audits/'
@@ -866,12 +845,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAdminLeadAuditsIndexRouteImport
       parentRoute: typeof AuthenticatedAppAdminLeadAuditsRoute
     }
-    '/_authenticated/app/tools/$key/$': {
-      id: '/_authenticated/app/tools/$key/$'
-      path: '/app/tools/$key/$'
-      fullPath: '/app/tools/$key/$'
-      preLoaderRoute: typeof AuthenticatedAppToolsKeySplatRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/_authenticated/app/admin/lead-audits/$sessionId': {
+      id: '/_authenticated/app/admin/lead-audits/$sessionId'
+      path: '/$sessionId'
+      fullPath: '/app/admin/lead-audits/$sessionId'
+      preLoaderRoute: typeof AuthenticatedAppAdminLeadAuditsSessionIdRouteImport
+      parentRoute: typeof AuthenticatedAppAdminLeadAuditsRoute
+    }
+    '/_authenticated/app/admin/resources/': {
+      id: '/_authenticated/app/admin/resources/'
+      path: '/'
+      fullPath: '/app/admin/resources/'
+      preLoaderRoute: typeof AuthenticatedAppAdminResourcesIndexRouteImport
+      parentRoute: typeof AuthenticatedAppAdminResourcesRoute
+    }
+    '/_authenticated/app/admin/review/': {
+      id: '/_authenticated/app/admin/review/'
+      path: '/'
+      fullPath: '/app/admin/review/'
+      preLoaderRoute: typeof AuthenticatedAppAdminReviewIndexRouteImport
+      parentRoute: typeof AuthenticatedAppAdminReviewRoute
     }
     '/_authenticated/app/admin/review/$ownerId': {
       id: '/_authenticated/app/admin/review/$ownerId'
@@ -880,12 +873,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAdminReviewOwnerIdRouteImport
       parentRoute: typeof AuthenticatedAppAdminReviewRoute
     }
-    '/_authenticated/app/admin/lead-audits/$sessionId': {
-      id: '/_authenticated/app/admin/lead-audits/$sessionId'
-      path: '/$sessionId'
-      fullPath: '/app/admin/lead-audits/$sessionId'
-      preLoaderRoute: typeof AuthenticatedAppAdminLeadAuditsSessionIdRouteImport
-      parentRoute: typeof AuthenticatedAppAdminLeadAuditsRoute
+    '/_authenticated/app/admin/sops/': {
+      id: '/_authenticated/app/admin/sops/'
+      path: '/'
+      fullPath: '/app/admin/sops/'
+      preLoaderRoute: typeof AuthenticatedAppAdminSopsIndexRouteImport
+      parentRoute: typeof AuthenticatedAppAdminSopsRoute
+    }
+    '/_authenticated/app/tools/$key/$': {
+      id: '/_authenticated/app/tools/$key/$'
+      path: '/app/tools/$key/$'
+      fullPath: '/app/tools/$key/$'
+      preLoaderRoute: typeof AuthenticatedAppToolsKeySplatRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
