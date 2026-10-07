@@ -36,6 +36,13 @@
       "when": 1789651709426,
       "tag": "0004_resources_storage_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791362455443,
+      "tag": "0005_tracker_optin_event_types",
+      "breakpoints": true
     }
   ]
 }
