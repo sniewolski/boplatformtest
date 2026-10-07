@@ -227,16 +227,47 @@ function TrackerAdmin() {
 
   return (
     <div className="mx-auto w-full max-w-[1600px] px-6 py-16 flex flex-col gap-8">
-      <header className="flex flex-col gap-2">
+      <header>
         <h1 className="text-3xl">Tracker</h1>
-        <p className="text-ink-muted text-sm max-w-prose">
-          Funnel attribution by YouTube video — views, clicks and confirmed
-          bookings for the selected window.
-        </p>
       </header>
 
-      <div className="flex flex-wrap items-end gap-4">
-        <div className="flex flex-col gap-1">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div
+          role="tablist"
+          aria-label="Tracker views"
+          className="inline-flex items-center gap-1 rounded-xl border border-border bg-[var(--surface-raised)] p-1 w-fit"
+        >
+          {TAB_LABELS.map((t) => {
+            const active = activeTab === t.key;
+            return (
+              <button
+                key={t.key}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() =>
+                  navigate({
+                    replace: true,
+                    search: (prev: TrackerSearch) => ({
+                      ...prev,
+                      tab: t.key === "breakdown" ? undefined : t.key,
+                    }),
+                  })
+                }
+                className={cn(
+                  "px-3 py-1.5 text-sm rounded-lg transition-colors",
+                  active
+                    ? "bg-background text-ink font-medium"
+                    : "text-ink-muted hover:text-ink",
+                )}
+              >
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-4">
           <span className="text-xs text-ink-muted">Range</span>
           <Select
             value={preset}
@@ -253,56 +284,21 @@ function TrackerAdmin() {
               <SelectItem value="custom">Custom</SelectItem>
             </SelectContent>
           </Select>
+          {preset === "custom" && (
+            <>
+              <DateField
+                label="From"
+                value={fromDate}
+                onChange={(d) => d && setFromDate(d)}
+              />
+              <DateField
+                label="To"
+                value={toDate}
+                onChange={(d) => d && setToDate(d)}
+              />
+            </>
+          )}
         </div>
-        {preset === "custom" && (
-          <>
-            <DateField
-              label="From"
-              value={fromDate}
-              onChange={(d) => d && setFromDate(d)}
-            />
-            <DateField
-              label="To"
-              value={toDate}
-              onChange={(d) => d && setToDate(d)}
-            />
-          </>
-        )}
-      </div>
-
-      <div
-        role="tablist"
-        aria-label="Tracker views"
-        className="inline-flex items-center gap-1 rounded-xl border border-border bg-[var(--surface-raised)] p-1 w-fit"
-      >
-        {TAB_LABELS.map((t) => {
-          const active = activeTab === t.key;
-          return (
-            <button
-              key={t.key}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() =>
-                navigate({
-                  replace: true,
-                  search: (prev: TrackerSearch) => ({
-                    ...prev,
-                    tab: t.key === "breakdown" ? undefined : t.key,
-                  }),
-                })
-              }
-              className={cn(
-                "px-3 py-1.5 text-sm rounded-lg transition-colors",
-                active
-                  ? "bg-background text-ink font-medium"
-                  : "text-ink-muted hover:text-ink",
-              )}
-            >
-              {t.label}
-            </button>
-          );
-        })}
       </div>
 
       {activeTab === "breakdown" ? (
