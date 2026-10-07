@@ -433,7 +433,7 @@ export function TrackerBreakdownTable({
       ro.disconnect();
       window.removeEventListener("resize", measure);
     };
-  }, [eventsLoading, videosLoading, collapsed]);
+  }, [eventsLoading, videosLoading]);
   const [collapsed, setCollapsed] = useState<CollapsedGroups>(DEFAULT_COLLAPSED);
   useEffect(() => {
     try {
