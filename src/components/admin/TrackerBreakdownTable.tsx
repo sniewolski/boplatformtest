@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronRight, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
@@ -118,6 +118,72 @@ function compareBy(
   return sign * ((a as number) - (b as number));
 }
 
+// ---------- Pinned columns + collapsible groups -------------------------
+
+type CollapsedGroups = { sales: boolean; optin: boolean };
+const DEFAULT_COLLAPSED: CollapsedGroups = { sales: false, optin: false };
+const COLLAPSE_KEY = "tracker_breakdown_collapsed";
+
+// Fixed widths so cumulative sticky offsets are exact.
+const PINNED = [
+  "left-0 w-[110px] min-w-[110px] max-w-[110px]",
+  "left-[110px] w-[130px] min-w-[130px] max-w-[130px]",
+  "left-[240px] w-[120px] min-w-[120px] max-w-[120px]",
+  "left-[360px] w-[280px] min-w-[280px] max-w-[280px] border-r border-border",
+] as const;
+
+function pin(i: number, bg: "head" | "base" | "raised"): string {
+  return cn(
+    "sticky",
+    PINNED[i],
+    bg === "head" ? "z-20 bg-[var(--surface-raised)]" : "z-10",
+    bg === "base" && "bg-background",
+    bg === "raised" && "bg-[var(--surface-raised)]",
+  );
+}
+
+function GroupHeader({
+  name,
+  span,
+  collapsed,
+  onToggle,
+}: {
+  name: string;
+  span: number;
+  collapsed: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <th
+      colSpan={collapsed ? 1 : span}
+      rowSpan={collapsed ? 2 : 1}
+      className={cn(
+        "px-4 py-2 font-medium text-left align-top border-l border-border",
+        collapsed && "w-[56px]",
+      )}
+    >
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={!collapsed}
+        aria-label={`${collapsed ? "Expand" : "Collapse"} ${name} columns`}
+        className={cn(
+          "inline-flex items-center gap-1 rounded-sm hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+          collapsed && "flex-col items-start",
+        )}
+      >
+        <ChevronRight
+          className={cn(
+            "size-3.5 text-[var(--ink-muted)] transition-transform duration-150 ease-out motion-reduce:transition-none",
+            !collapsed && "rotate-90",
+          )}
+        />
+        <span>{name}</span>
+      </button>
+    </th>
+  );
+}
+
 function SortHeader({
   label,
   sortKey,
@@ -126,7 +192,7 @@ function SortHeader({
   align = "left",
   className,
 }: {
-  label: string;
+  label: ReactNode;
   sortKey: SortKey;
   sort: SortState | null;
   onSort: (key: SortKey) => void;
@@ -335,6 +401,29 @@ export function TrackerBreakdownTable({
 
   // ---- Sort state (default: existing lastActivity desc order) ----
   const [sort, setSort] = useState<SortState | null>(null);
+  const [collapsed, setCollapsed] = useState<CollapsedGroups>(DEFAULT_COLLAPSED);
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(COLLAPSE_KEY);
+      if (raw) {
+        const v = JSON.parse(raw) as Partial<CollapsedGroups>;
+        setCollapsed({ sales: v.sales === true, optin: v.optin === true });
+      }
+    } catch {
+      // storage unavailable — keep defaults
+    }
+  }, []);
+  const toggleGroup = (g: keyof CollapsedGroups) => {
+    setCollapsed((prev) => {
+      const next = { ...prev, [g]: !prev[g] };
+      try {
+        window.localStorage.setItem(COLLAPSE_KEY, JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  };
   const onSort = (key: SortKey) =>
     setSort((prev) =>
       prev && prev.key === key
@@ -464,24 +553,51 @@ export function TrackerBreakdownTable({
           </p>
         </div>
       ) : (
-        <div className="rounded-md border border-border overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="rounded-md border border-border overflow-x-auto max-w-full">
+          <table className="min-w-full text-sm border-separate border-spacing-0">
             <thead className="bg-[var(--surface-raised)] text-ink-muted">
               <tr className="text-left">
-                <SortHeader label="Category" sortKey="category" sort={sort} onSort={onSort} className="w-[110px]" />
-                <SortHeader label="Published" sortKey="published" sort={sort} onSort={onSort} className="w-[130px] whitespace-nowrap" />
-                <th className="px-4 py-3 font-medium w-[120px]">Thumbnail</th>
-                <SortHeader label="Title" sortKey="title" sort={sort} onSort={onSort} />
-                <SortHeader label="Views" sortKey="ytViews" sort={sort} onSort={onSort} align="right" className="w-[110px]" />
-                <SortHeader label="Visits" sortKey="visits" sort={sort} onSort={onSort} align="right" className="w-[90px]" />
-                <SortHeader label="Button Clicks" sortKey="clicks" sort={sort} onSort={onSort} align="right" className="w-[110px]" />
-                <SortHeader label="Bookings" sortKey="bookings" sort={sort} onSort={onSort} align="right" className="w-[100px]" />
-                <SortHeader label="Views→Visits" sortKey="viewsToVisits" sort={sort} onSort={onSort} align="right" className="w-[120px]" />
-                <SortHeader label="Visits→Bookings" sortKey="visitsToBookings" sort={sort} onSort={onSort} align="right" className="w-[140px]" />
-                <SortHeader label="Views→Bookings" sortKey="viewsToBookings" sort={sort} onSort={onSort} align="right" className="w-[130px]" />
-                <SortHeader label="Opt-in Visits" sortKey="optinViews" sort={sort} onSort={onSort} align="right" className="w-[110px]" />
-                <SortHeader label="Opt-ins" sortKey="optins" sort={sort} onSort={onSort} align="right" className="w-[100px]" />
-                <SortHeader label="Opt-in Rate" sortKey="optinRate" sort={sort} onSort={onSort} align="right" className="w-[110px]" />
+                {PINNED.map((c, i) => (
+                  <th key={i} className={cn(pin(i, "head"), "px-4 py-2")} aria-hidden="true" />
+                ))}
+                <th className="px-4 py-2" aria-hidden="true" />
+                <th className="px-4 py-2" aria-hidden="true" />
+                <GroupHeader
+                  name="Sales"
+                  span={5}
+                  collapsed={collapsed.sales}
+                  onToggle={() => toggleGroup("sales")}
+                />
+                <GroupHeader
+                  name="Opt-in"
+                  span={3}
+                  collapsed={collapsed.optin}
+                  onToggle={() => toggleGroup("optin")}
+                />
+              </tr>
+              <tr className="text-left">
+                <SortHeader label="Category" sortKey="category" sort={sort} onSort={onSort} className={cn(pin(0, "head"), "border-t border-border")} />
+                <SortHeader label="Published" sortKey="published" sort={sort} onSort={onSort} className={cn(pin(1, "head"), "whitespace-nowrap border-t border-border")} />
+                <th className={cn(pin(2, "head"), "px-4 py-3 font-medium border-t border-border")}>Thumbnail</th>
+                <SortHeader label="Title" sortKey="title" sort={sort} onSort={onSort} className={cn(pin(3, "head"), "border-t border-border")} />
+                <SortHeader label="Views" sortKey="ytViews" sort={sort} onSort={onSort} align="right" className="w-[110px] border-t border-border" />
+                <SortHeader label="Views→Visits" sortKey="viewsToVisits" sort={sort} onSort={onSort} align="right" className="w-[120px] border-t border-border" />
+                {!collapsed.sales && (
+                  <>
+                    <SortHeader label="Visits" sortKey="visits" sort={sort} onSort={onSort} align="right" className="w-[90px] border-t border-border" />
+                    <SortHeader label="Button Clicks" sortKey="clicks" sort={sort} onSort={onSort} align="right" className="w-[110px] border-t border-border" />
+                    <SortHeader label="Bookings" sortKey="bookings" sort={sort} onSort={onSort} align="right" className="w-[100px] border-t border-border" />
+                    <SortHeader label="Visits→Bookings" sortKey="visitsToBookings" sort={sort} onSort={onSort} align="right" className="w-[140px] border-t border-border" />
+                    <SortHeader label="Views→Bookings" sortKey="viewsToBookings" sort={sort} onSort={onSort} align="right" className="w-[130px] border-t border-border" />
+                  </>
+                )}
+                {!collapsed.optin && (
+                  <>
+                    <SortHeader label={<>Optin<br />Visits</>} sortKey="optinViews" sort={sort} onSort={onSort} align="right" className="w-[100px] border-t border-border" />
+                    <SortHeader label="Opt-ins" sortKey="optins" sort={sort} onSort={onSort} align="right" className="w-[100px] border-t border-border" />
+                    <SortHeader label="Opt-in Rate" sortKey="optinRate" sort={sort} onSort={onSort} align="right" className="w-[110px] border-t border-border" />
+                  </>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -501,13 +617,15 @@ export function TrackerBreakdownTable({
                   optinViews: totals.optinViews - (includeDirect ? 0 : directRow?.optinViews ?? 0),
                   optins: totals.optins - (includeDirect ? 0 : directRow?.optins ?? 0),
                 };
+                const bg = "raised" as const;
+                const td = "px-4 py-2 text-right tabular-nums border-t border-border";
                 return (
-                  <tr className="border-t border-border bg-[var(--surface-raised)] font-medium">
-                    <td className="px-4 py-2">TOTAL</td>
-                    <td className="px-4 py-2">—</td>
-                    <td className="px-4 py-2" />
-                    <td className="px-4 py-2" />
-                    <td className="px-4 py-2 text-right tabular-nums">
+                  <tr className="bg-[var(--surface-raised)] font-medium">
+                    <td className={cn(pin(0, bg), "px-4 py-2 border-t border-border")}>TOTAL</td>
+                    <td className={cn(pin(1, bg), "px-4 py-2 border-t border-border")}>—</td>
+                    <td className={cn(pin(2, bg), "px-4 py-2 border-t border-border")} />
+                    <td className={cn(pin(3, bg), "px-4 py-2 border-t border-border")} />
+                    <td className={td}>
                       {viewsError ? (
                         "—"
                       ) : viewsLoading ? (
@@ -518,23 +636,31 @@ export function TrackerBreakdownTable({
                         "—"
                       )}
                     </td>
-                    <td className="px-4 py-2 text-right tabular-nums">{effectiveTotals.views}</td>
-                    <td className="px-4 py-2 text-right tabular-nums">{effectiveTotals.clicks}</td>
-                    <td className="px-4 py-2 text-right tabular-nums">{effectiveTotals.bookings}</td>
-                    <td className="px-4 py-2 text-right tabular-nums">
-                      {formatRatio(effectiveTotals.views, denom)}
-                    </td>
-                    <td className="px-4 py-2 text-right tabular-nums">
-                      {formatRatio(effectiveTotals.bookings, effectiveTotals.views)}
-                    </td>
-                    <td className="px-4 py-2 text-right tabular-nums">
-                      {formatRatio(effectiveTotals.bookings, denom)}
-                    </td>
-                    <td className="px-4 py-2 text-right tabular-nums">{effectiveTotals.optinViews}</td>
-                    <td className="px-4 py-2 text-right tabular-nums">{effectiveTotals.optins}</td>
-                    <td className="px-4 py-2 text-right tabular-nums">
-                      {formatRatio(effectiveTotals.optins, effectiveTotals.optinViews)}
-                    </td>
+                    <td className={td}>{formatRatio(effectiveTotals.views, denom)}</td>
+                    {collapsed.sales ? (
+                      <td className={td} />
+                    ) : (
+                      <>
+                        <td className={td}>{effectiveTotals.views}</td>
+                        <td className={td}>{effectiveTotals.clicks}</td>
+                        <td className={td}>{effectiveTotals.bookings}</td>
+                        <td className={td}>
+                          {formatRatio(effectiveTotals.bookings, effectiveTotals.views)}
+                        </td>
+                        <td className={td}>{formatRatio(effectiveTotals.bookings, denom)}</td>
+                      </>
+                    )}
+                    {collapsed.optin ? (
+                      <td className={td} />
+                    ) : (
+                      <>
+                        <td className={td}>{effectiveTotals.optinViews}</td>
+                        <td className={td}>{effectiveTotals.optins}</td>
+                        <td className={td}>
+                          {formatRatio(effectiveTotals.optins, effectiveTotals.optinViews)}
+                        </td>
+                      </>
+                    )}
                   </tr>
                 );
               })()}
@@ -548,13 +674,14 @@ export function TrackerBreakdownTable({
                 const href = `https://www.youtube.com/watch?v=${row.videoId}`;
                 const ytViews =
                   viewsError || !viewsMap ? null : viewsMap[row.videoId] ?? 0;
+                const td = "px-4 py-3 text-right tabular-nums border-t border-border";
                 return (
-                  <tr key={row.videoId} className="border-t border-border">
-                    <td className="px-4 py-3 text-ink-muted">video</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-ink-muted">
+                  <tr key={row.videoId}>
+                    <td className={cn(pin(0, "base"), "px-4 py-3 text-ink-muted border-t border-border")}>video</td>
+                    <td className={cn(pin(1, "base"), "px-4 py-3 whitespace-nowrap text-ink-muted border-t border-border")}>
                       {formatPublished(meta?.published_at ?? null)}
                     </td>
-                    <td className="px-4 py-3 align-middle">
+                    <td className={cn(pin(2, "base"), "px-4 py-3 align-middle border-t border-border")}>
                       {meta?.thumbnail_url ? (
                         <img
                           src={meta.thumbnail_url}
@@ -566,7 +693,7 @@ export function TrackerBreakdownTable({
                         <div className="w-24 h-[54px] rounded bg-[var(--surface-raised)]" />
                       )}
                     </td>
-                    <td className="px-4 py-3 align-middle">
+                    <td className={cn(pin(3, "base"), "px-4 py-3 align-middle border-t border-border")}>
                       <a
                         href={href}
                         target="_blank"
@@ -579,7 +706,7 @@ export function TrackerBreakdownTable({
                         {title}
                       </a>
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums">
+                    <td className={td}>
                       {viewsError ? (
                         "—"
                       ) : viewsLoading ? (
@@ -590,81 +717,107 @@ export function TrackerBreakdownTable({
                         "—"
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums">{row.views}</td>
-                    <td className="px-4 py-3 text-right tabular-nums">{row.clicks}</td>
-                    <td className="px-4 py-3 text-right tabular-nums">{row.bookings}</td>
-                    <td className="px-4 py-3 text-right tabular-nums">
-                      {formatRatio(row.views, ytViews)}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums">
-                      {formatRatio(row.bookings, row.views)}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums">
-                      {formatRatio(row.bookings, ytViews)}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums">{row.optinViews}</td>
-                    <td className="px-4 py-3 text-right tabular-nums">{row.optins}</td>
-                    <td className="px-4 py-3 text-right tabular-nums">
-                      {formatRatio(row.optins, row.optinViews)}
-                    </td>
+                    <td className={td}>{formatRatio(row.views, ytViews)}</td>
+                    {collapsed.sales ? (
+                      <td className={td} />
+                    ) : (
+                      <>
+                        <td className={td}>{row.views}</td>
+                        <td className={td}>{row.clicks}</td>
+                        <td className={td}>{row.bookings}</td>
+                        <td className={td}>{formatRatio(row.bookings, row.views)}</td>
+                        <td className={td}>{formatRatio(row.bookings, ytViews)}</td>
+                      </>
+                    )}
+                    {collapsed.optin ? (
+                      <td className={td} />
+                    ) : (
+                      <>
+                        <td className={td}>{row.optinViews}</td>
+                        <td className={td}>{row.optins}</td>
+                        <td className={td}>{formatRatio(row.optins, row.optinViews)}</td>
+                      </>
+                    )}
                   </tr>
                 );
               })}
-              {sortedOtherAggregates.map((row) => (
-                <tr key={`src-${row.sourceType}`} className="border-t border-border">
-                  <td className="px-4 py-3 text-ink-muted">{row.sourceType}</td>
-                  <td className="px-4 py-3">—</td>
-                  <td className="px-4 py-3" />
-                  <td className="px-4 py-3 align-middle text-ink">
-                    {row.sourceType.charAt(0).toUpperCase() + row.sourceType.slice(1)}
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums">—</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{row.views}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{row.clicks}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{row.bookings}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">—</td>
-                  <td className="px-4 py-3 text-right tabular-nums">
-                    {formatRatio(row.bookings, row.views)}
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums">—</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{row.optinViews}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{row.optins}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">
-                    {formatRatio(row.optins, row.optinViews)}
-                  </td>
-                </tr>
-              ))}
+              {sortedOtherAggregates.map((row) => {
+                const td = "px-4 py-3 text-right tabular-nums border-t border-border";
+                return (
+                  <tr key={`src-${row.sourceType}`}>
+                    <td className={cn(pin(0, "base"), "px-4 py-3 text-ink-muted border-t border-border")}>{row.sourceType}</td>
+                    <td className={cn(pin(1, "base"), "px-4 py-3 border-t border-border")}>—</td>
+                    <td className={cn(pin(2, "base"), "px-4 py-3 border-t border-border")} />
+                    <td className={cn(pin(3, "base"), "px-4 py-3 align-middle text-ink border-t border-border")}>
+                      {row.sourceType.charAt(0).toUpperCase() + row.sourceType.slice(1)}
+                    </td>
+                    <td className={td}>—</td>
+                    <td className={td}>—</td>
+                    {collapsed.sales ? (
+                      <td className={td} />
+                    ) : (
+                      <>
+                        <td className={td}>{row.views}</td>
+                        <td className={td}>{row.clicks}</td>
+                        <td className={td}>{row.bookings}</td>
+                        <td className={td}>{formatRatio(row.bookings, row.views)}</td>
+                        <td className={td}>—</td>
+                      </>
+                    )}
+                    {collapsed.optin ? (
+                      <td className={td} />
+                    ) : (
+                      <>
+                        <td className={td}>{row.optinViews}</td>
+                        <td className={td}>{row.optins}</td>
+                        <td className={td}>{formatRatio(row.optins, row.optinViews)}</td>
+                      </>
+                    )}
+                  </tr>
+                );
+              })}
 
-              {directRow && (
-                <tr className={cn("border-t border-border bg-[var(--surface-raised)]", !includeDirect && "text-[var(--ink-muted)]")}>
-                  <td className="px-4 py-3">
-                    <Checkbox
-                      checked={includeDirect}
-                      onCheckedChange={(v) => setIncludeDirect(v === true)}
-                      aria-label="Include direct and unattributed traffic in totals"
-                    />
-                  </td>
-                  <td className="px-4 py-3">—</td>
-                  <td className="px-4 py-3" />
-                  <td className="px-4 py-3 italic">
-                    Direct / unattributed
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums">—</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{directRow.views}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{directRow.clicks}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{directRow.bookings}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">—</td>
-                  <td className="px-4 py-3 text-right tabular-nums">
-                    {formatRatio(directRow.bookings, directRow.views)}
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums">—</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{directRow.optinViews}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{directRow.optins}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">
-                    {formatRatio(directRow.optins, directRow.optinViews)}
-                  </td>
-                </tr>
-              )}
+              {directRow && (() => {
+                const td = "px-4 py-3 text-right tabular-nums border-t border-border";
+                return (
+                  <tr className={cn("bg-[var(--surface-raised)]", !includeDirect && "text-[var(--ink-muted)]")}>
+                    <td className={cn(pin(0, "raised"), "px-4 py-3 border-t border-border")}>
+                      <Checkbox
+                        checked={includeDirect}
+                        onCheckedChange={(v) => setIncludeDirect(v === true)}
+                        aria-label="Include direct and unattributed traffic in totals"
+                      />
+                    </td>
+                    <td className={cn(pin(1, "raised"), "px-4 py-3 border-t border-border")}>—</td>
+                    <td className={cn(pin(2, "raised"), "px-4 py-3 border-t border-border")} />
+                    <td className={cn(pin(3, "raised"), "px-4 py-3 italic border-t border-border")}>
+                      Direct / unattributed
+                    </td>
+                    <td className={td}>—</td>
+                    <td className={td}>—</td>
+                    {collapsed.sales ? (
+                      <td className={td} />
+                    ) : (
+                      <>
+                        <td className={td}>{directRow.views}</td>
+                        <td className={td}>{directRow.clicks}</td>
+                        <td className={td}>{directRow.bookings}</td>
+                        <td className={td}>{formatRatio(directRow.bookings, directRow.views)}</td>
+                        <td className={td}>—</td>
+                      </>
+                    )}
+                    {collapsed.optin ? (
+                      <td className={td} />
+                    ) : (
+                      <>
+                        <td className={td}>{directRow.optinViews}</td>
+                        <td className={td}>{directRow.optins}</td>
+                        <td className={td}>{formatRatio(directRow.optins, directRow.optinViews)}</td>
+                      </>
+                    )}
+                  </tr>
+                );
+              })()}
 
             </tbody>
           </table>
