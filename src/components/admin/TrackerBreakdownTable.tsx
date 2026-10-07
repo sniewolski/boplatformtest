@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronRight, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -120,6 +120,13 @@ function compareBy(
 
 // ---------- Pinned columns + collapsible groups -------------------------
 
+// Pinned top rows: non-pinned-left cells become sticky at z-20; corner cells
+// (pin(i, "head")) sit at z-30; pinned-left body cells at z-10.
+const TOP_ROW =
+  "[&>*:not(.sticky)]:sticky [&>*:not(.sticky)]:z-20 [&>*]:bg-[var(--surface-raised)]";
+// Matches the page's bottom padding (py-16).
+const BOTTOM_GAP = 64;
+
 type CollapsedGroups = { sales: boolean; optin: boolean };
 const DEFAULT_COLLAPSED: CollapsedGroups = { sales: false, optin: false };
 const COLLAPSE_KEY = "tracker_breakdown_collapsed";
@@ -136,7 +143,7 @@ function pin(i: number, bg: "head" | "base" | "raised"): string {
   return cn(
     "sticky",
     PINNED[i],
-    bg === "head" ? "z-20 bg-[var(--surface-raised)]" : "z-10",
+    bg === "head" ? "z-30 bg-[var(--surface-raised)]" : "z-10",
     bg === "base" && "bg-background",
     bg === "raised" && "bg-[var(--surface-raised)]",
   );
@@ -401,6 +408,33 @@ export function TrackerBreakdownTable({
 
   // ---- Sort state (default: existing lastActivity desc order) ----
   const [sort, setSort] = useState<SortState | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const groupRowRef = useRef<HTMLTableRowElement>(null);
+  const headRowRef = useRef<HTMLTableRowElement>(null);
+  const [fitHeight, setFitHeight] = useState<number | null>(null);
+  const [rowH, setRowH] = useState({ g: 0, h: 0 });
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const measure = () => {
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      setFitHeight(Math.max(320, window.innerHeight - top - BOTTOM_GAP));
+      setRowH({
+        g: groupRowRef.current?.getBoundingClientRect().height ?? 0,
+        h: headRowRef.current?.getBoundingClientRect().height ?? 0,
+      });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(document.body);
+    if (groupRowRef.current) ro.observe(groupRowRef.current);
+    if (headRowRef.current) ro.observe(headRowRef.current);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  });
   const [collapsed, setCollapsed] = useState<CollapsedGroups>(DEFAULT_COLLAPSED);
   useEffect(() => {
     try {
@@ -553,10 +587,17 @@ export function TrackerBreakdownTable({
           </p>
         </div>
       ) : (
-        <div className="rounded-md border border-border overflow-x-auto max-w-full">
-          <table className="min-w-full text-sm border-separate border-spacing-0">
+        <div
+          ref={scrollRef}
+          className="rounded-md border border-border overflow-auto max-w-full min-h-[320px]"
+          style={{ height: fitHeight ?? undefined }}
+        >
+          <table
+            className="min-w-full text-sm border-separate border-spacing-0"
+            style={{ "--t1": `${rowH.g}px`, "--t2": `${rowH.g + rowH.h}px` } as CSSProperties}
+          >
             <thead className="bg-[var(--surface-raised)] text-ink-muted">
-              <tr className="text-left">
+              <tr ref={groupRowRef} className={cn("text-left", TOP_ROW, "[&>*]:top-0")}>
                 {PINNED.map((c, i) => (
                   <th key={i} className={cn(pin(i, "head"), "px-4 py-2")} aria-hidden="true" />
                 ))}
@@ -575,7 +616,7 @@ export function TrackerBreakdownTable({
                   onToggle={() => toggleGroup("optin")}
                 />
               </tr>
-              <tr className="text-left">
+              <tr ref={headRowRef} className={cn("text-left", TOP_ROW, "[&>*]:top-[var(--t1)]")}>
                 <SortHeader label="Category" sortKey="category" sort={sort} onSort={onSort} className={cn(pin(0, "head"), "border-t border-border")} />
                 <SortHeader label="Published" sortKey="published" sort={sort} onSort={onSort} className={cn(pin(1, "head"), "whitespace-nowrap border-t border-border")} />
                 <th className={cn(pin(2, "head"), "px-4 py-3 font-medium border-t border-border")}>Thumbnail</th>
@@ -617,10 +658,10 @@ export function TrackerBreakdownTable({
                   optinViews: totals.optinViews - (includeDirect ? 0 : directRow?.optinViews ?? 0),
                   optins: totals.optins - (includeDirect ? 0 : directRow?.optins ?? 0),
                 };
-                const bg = "raised" as const;
+                const bg = "head" as const;
                 const td = "px-4 py-2 text-right tabular-nums border-t border-border";
                 return (
-                  <tr className="bg-[var(--surface-raised)] font-medium">
+                  <tr className={cn("bg-[var(--surface-raised)] font-medium", TOP_ROW, "[&>*]:top-[var(--t2)] [&>*]:border-b")}>
                     <td className={cn(pin(0, bg), "px-4 py-2 border-t border-border")}>TOTAL</td>
                     <td className={cn(pin(1, bg), "px-4 py-2 border-t border-border")}>—</td>
                     <td className={cn(pin(2, bg), "px-4 py-2 border-t border-border")} />
