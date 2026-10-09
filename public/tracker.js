@@ -33,7 +33,7 @@
   // Calendly param holding the unique booking id (confirm on first real booking).
   var BOOKING_ID_PARAM = "invitee_uuid";
   var CONFIRMED_PATH = "/confirmed";           // marks the post-booking page
-  var BOOK_CTA_MATCHES = ["form.typeform.com", "#headline-49e7a611"]; // links that count as the book CTA
+  var BOOK_CTA_MATCHES = ["form.typeform.com", "#headline-182f86eb"]; // links that count as the book CTA
   var THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
   // ---- Storage keys ------------------------------------------------------
