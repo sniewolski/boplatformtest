@@ -14,7 +14,7 @@
       PAGE_MODE = _el ? _el.getAttribute("data-page") : null;
     }
   } catch(e){ PAGE_MODE = null; }
-  if (PAGE_MODE !== "optin" && PAGE_MODE !== "optin-confirmed") PAGE_MODE = null;
+  if (PAGE_MODE !== "optin" && PAGE_MODE !== "optin-confirmed" && PAGE_MODE !== "booking-confirmed") PAGE_MODE = null;
 
 
   // ---- Config (safe to edit) ---------------------------------------------
@@ -154,6 +154,7 @@
   try {
     if (PAGE_MODE === "optin-confirmed") onOptinConfirmedPage();
     else if (PAGE_MODE === "optin") onOptinPage();
+    else if (PAGE_MODE === "booking-confirmed") onConfirmedPage();
     else if (location.pathname.indexOf(CONFIRMED_PATH) !== -1) onConfirmedPage();
     else onLandingPage();
   } catch(e){}
