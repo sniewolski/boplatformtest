@@ -43,15 +43,26 @@ Deno.serve(async (req) => {
       return json({ ok: false, error: "Invalid JSON body" }, 400);
     }
 
-    const videoIds: string[] = Array.isArray(body?.video_ids)
+    const rawIds: string[] = Array.isArray(body?.video_ids)
       ? body.video_ids.filter((v: unknown) => typeof v === "string" && v.trim())
       : [];
     const startDate: string | undefined = body?.start_date;
     const endDate: string | undefined = body?.end_date;
     const granularity: string = body?.granularity === "day" ? "day" : "total";
 
-    if (videoIds.length === 0) {
+    // Only valid YouTube IDs (11 chars of A-Za-z0-9_-) may reach Google —
+    // one bad ID makes the Analytics API reject the whole request.
+    const videoIds = rawIds.filter((id) => /^[A-Za-z0-9_-]{11}$/.test(id));
+    const dropped = rawIds.filter((id) => !videoIds.includes(id));
+    if (dropped.length > 0) {
+      console.log("[yt-analytics] dropped invalid ids:", dropped.join(","));
+    }
+
+    if (rawIds.length === 0) {
       return json({ ok: false, error: "video_ids is required" }, 400);
+    }
+    if (videoIds.length === 0) {
+      return json({ ok: true, views: {}, start_date: startDate, end_date: endDate });
     }
     if (!startDate || !endDate) {
       return json(
