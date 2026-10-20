@@ -6,7 +6,7 @@
 import { useState } from "react";
 import { ArrowDown, ArrowUp, Plus, X } from "lucide-react";
 import type { SosaField, SosaQuestion } from "../../config/questionBank";
-import type { SosaAnswer, SosaFieldValue } from "../../types";
+import type { SosaFieldValue } from "../../types";
 import { updateSosaAnswer, useSosaAnswers, type SosaAnswerApi } from "../../data/sosaAnswers";
 import {
   getLinkedFieldsForSource,
@@ -350,4 +350,3 @@ export function LinkedFieldControl({
   );
 }
 
-export type { SosaAnswer };
