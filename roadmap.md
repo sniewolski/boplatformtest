@@ -1,4 +1,4 @@
-- [ ] Add read-only owner data and shared Sales OS Audit status logic.
-- [ ] Add owner-list status and manifest-gated review tab.
-- [ ] Add shared question read-back with section and SOP views.
-- [ ] Run rule tests and verify signed-in review without writing owner data.
+- [x] Add read-only owner data and shared Sales OS Audit status logic.
+- [x] Add owner-list status and manifest-gated review tab.
+- [x] Add shared question read-back with section and SOP views.
+- [x] Run rule tests and verify signed-in review without writing owner data.

@@ -33,7 +33,7 @@ export function useSosaOwnerSubmission(ownerId: string) {
 
 export function useSosaOwnerCurrency(ownerId: string) {
   return useQuery({
-    queryKey: ["owner-settings", ownerId],
+    queryKey: ["admin", "sosa-owner-currency", ownerId],
     enabled: !!ownerId,
     queryFn: async (): Promise<CurrencyCode | null> => {
       const { data, error } = await supabase.from("owner_settings")
