@@ -70,7 +70,9 @@ function FieldReadback({ field, value, path, question, answer, answers, currency
       break;
     }
     case "text": case "script":
-      content = <div className={field.type === "script" ? "whitespace-pre-wrap break-words rounded-lg bg-surface-raised px-4 py-3" : "whitespace-pre-wrap break-words"}>{typeof value === "string" ? value : "No answer"}</div>;
+      content = field.type === "script"
+        ? <blockquote className="whitespace-pre-wrap break-words rounded-lg bg-surface-raised px-4 py-3">{typeof value === "string" ? value : "No answer"}</blockquote>
+        : <div className="whitespace-pre-wrap break-words">{typeof value === "string" ? value : "No answer"}</div>;
       break;
     case "yesno": content = value === "yes" ? "Yes" : value === "no" ? "No" : "No answer"; break;
     case "choice": {
