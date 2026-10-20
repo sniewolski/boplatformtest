@@ -1,5 +1,6 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { toolRegistry } from "@/tools/registry";
+import { useIsAdmin } from "@/core/roles/useMyRoles";
 
 export const Route = createFileRoute("/_authenticated/app/tools/$key/$")({
   loader: ({ params }) => {
@@ -20,6 +21,18 @@ function ToolMountPoint() {
   const { tool } = Route.useLoaderData();
   const params = Route.useParams() as { key: string; _splat?: string };
   const splat = params._splat ?? "";
+  const isAdmin = useIsAdmin();
+
+  // Tools flagged adminOnly render nothing usable for non-admins.
+  if (tool.adminOnly && !isAdmin) {
+    return (
+      <div className="max-w-2xl mx-auto px-8 py-16 flex flex-col gap-3">
+        <h1 className="text-2xl">Tool not found</h1>
+        <p className="text-ink-muted text-sm">No tool is registered for this URL.</p>
+      </div>
+    );
+  }
+
 
   if (!tool.Component) {
     return (
