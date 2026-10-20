@@ -1,23 +1,49 @@
-import { QUESTIONS, SECTIONS, SKIP_RULES } from "../config/questionBank";
+import { useEffect } from "react";
+import { Navigate } from "@tanstack/react-router";
+import type { ToolComponentProps } from "@/tools/registry";
+import { flushAllSosaSaves, useSosaAnswers } from "../data/sosaAnswers";
+import { isScreeningComplete } from "../engine/rules";
+import { Screening } from "./Screening";
+import { Overview } from "./Overview";
 
-export function SalesOperatingSystemAuditApp() {
-  return (
-    <div className="app-content py-16 flex flex-col gap-4">
-      <h1 className="text-2xl">Sales Operating System Audit</h1>
-      <dl className="flex flex-col gap-2 text-sm">
-        <div className="flex gap-2">
-          <dt className="text-ink-muted">Sections</dt>
-          <dd className="text-ink">{SECTIONS.length}</dd>
-        </div>
-        <div className="flex gap-2">
-          <dt className="text-ink-muted">Questions</dt>
-          <dd className="text-ink">{QUESTIONS.length}</dd>
-        </div>
-        <div className="flex gap-2">
-          <dt className="text-ink-muted">Skip rules</dt>
-          <dd className="text-ink">{SKIP_RULES.length}</dd>
-        </div>
-      </dl>
-    </div>
-  );
+/**
+ * In-tool router:
+ *   ""          → overview (redirects to screening until it's complete)
+ *   "screening" → screening page
+ */
+export function SalesOperatingSystemAuditApp({ splat }: ToolComponentProps) {
+  const { answers, isLoading, error } = useSosaAnswers();
+  const segment = (splat || "").split("/").filter(Boolean)[0] ?? "";
+
+  // Flush pending saves when the tab hides and when the tool unmounts.
+  useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState === "hidden") flushAllSosaSaves();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      document.removeEventListener("visibilitychange", onVis);
+      flushAllSosaSaves();
+    };
+  }, []);
+
+  if (error) {
+    return <div className="app-content py-16 text-ink-muted text-sm">Couldn't load your answers. Refresh to try again.</div>;
+  }
+  if (isLoading || !answers) {
+    return <div className="app-content py-16 text-ink-muted text-sm">Loading…</div>;
+  }
+
+  if (segment === "screening") return <Screening />;
+
+  if (!isScreeningComplete(answers)) {
+    return (
+      <Navigate
+        to="/app/tools/$key/$"
+        params={{ key: "sales-operating-system-audit", _splat: "screening" }}
+        replace
+      />
+    );
+  }
+  return <Overview />;
 }
