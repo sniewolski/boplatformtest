@@ -2,20 +2,28 @@ import { useEffect } from "react";
 import { Navigate } from "@tanstack/react-router";
 import type { ToolComponentProps } from "@/tools/registry";
 import { flushAllSosaSaves, useSosaAnswers } from "../data/sosaAnswers";
-import { isScreeningComplete } from "../engine/rules";
+import { getSectionProgress, getVisibleSections, isScreeningComplete } from "../engine/rules";
+import { AuditLayout } from "../components/AuditLayout";
 import { Screening } from "./Screening";
-import { Overview } from "./Overview";
+import { SectionPage } from "./SectionPage";
+
+const KEY = "sales-operating-system-audit";
+
+function Go({ to }: { to: string }) {
+  return <Navigate to="/app/tools/$key/$" params={{ key: KEY, _splat: to }} replace />;
+}
 
 /**
  * In-tool router:
- *   ""          → overview (redirects to screening until it's complete)
- *   "screening" → screening page
+ *   ""           → landing: screening until complete, else first incomplete visible section
+ *   "screening"  → screening page
+ *   "section/:n" → section page (redirects to landing if hidden)
  */
 export function SalesOperatingSystemAuditApp({ splat }: ToolComponentProps) {
   const { answers, isLoading, error } = useSosaAnswers();
-  const segment = (splat || "").split("/").filter(Boolean)[0] ?? "";
+  const parts = (splat || "").split("/").filter(Boolean);
+  const segment = parts[0] ?? "";
 
-  // Flush pending saves when the tab hides and when the tool unmounts.
   useEffect(() => {
     const onVis = () => {
       if (document.visibilityState === "hidden") flushAllSosaSaves();
@@ -27,6 +35,10 @@ export function SalesOperatingSystemAuditApp({ splat }: ToolComponentProps) {
     };
   }, []);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [splat]);
+
   if (error) {
     return <div className="app-content py-16 text-ink-muted text-sm">Couldn't load your answers. Refresh to try again.</div>;
   }
@@ -34,16 +46,30 @@ export function SalesOperatingSystemAuditApp({ splat }: ToolComponentProps) {
     return <div className="app-content py-16 text-ink-muted text-sm">Loading…</div>;
   }
 
-  if (segment === "screening") return <Screening />;
-
-  if (!isScreeningComplete(answers)) {
+  if (segment === "screening") {
     return (
-      <Navigate
-        to="/app/tools/$key/$"
-        params={{ key: "sales-operating-system-audit", _splat: "screening" }}
-        replace
-      />
+      <AuditLayout current="screening">
+        <Screening />
+      </AuditLayout>
     );
   }
-  return <Overview />;
+
+  if (segment === "section") {
+    const n = Number(parts[1]);
+    if (!getVisibleSections(answers).some((s) => s.number === n)) return <Go to="" />;
+    return (
+      <AuditLayout current={n}>
+        <SectionPage key={n} number={n} />
+      </AuditLayout>
+    );
+  }
+
+  if (!isScreeningComplete(answers)) return <Go to="screening" />;
+  const visible = getVisibleSections(answers);
+  const target =
+    visible.find((s) => {
+      const p = getSectionProgress(s.number, answers);
+      return p.answered < p.total;
+    }) ?? visible[0];
+  return <Go to={target ? `section/${target.number}` : "screening"} />;
 }
