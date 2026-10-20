@@ -28,9 +28,17 @@ export function emptySosaAnswer(questionId: string): SosaAnswer {
 
 // ───────── Load ─────────
 
+// The active query client + owner, registered by useSosaAnswers so the non-hook
+// updateSosaAnswer() can reach the same cache and save manager.
+let activeQc: QueryClient | null = null;
+let activeOwnerId: string | null = null;
+
 export function useSosaAnswers() {
   const { session } = useSession();
   const ownerId = session?.user.id;
+  const qc = useQueryClient();
+  activeQc = qc;
+  activeOwnerId = ownerId ?? null;
   const query = useQuery({
     queryKey: sosaAnswersKey(ownerId),
     enabled: !!ownerId,
@@ -203,15 +211,17 @@ export function useSosaSaveStatus() {
 
 // ───────── Per-question hook ─────────
 
-function update(
-  qc: QueryClient,
-  ownerId: string,
-  questionId: string,
-  fn: (prev: SosaAnswer) => SosaAnswer,
-) {
+/**
+ * The single write path: update the cached answer, then schedule its debounced save.
+ * Non-hook so list deletions can cascade into OTHER questions' answers.
+ */
+export function updateSosaAnswer(questionId: string, updater: (prev: SosaAnswer) => SosaAnswer) {
+  const qc = activeQc;
+  const ownerId = activeOwnerId;
+  if (!qc || !ownerId) return;
   const key = sosaAnswersKey(ownerId);
   const map = qc.getQueryData<SosaAnswersMap>(key) ?? {};
-  const next = { ...fn(map[questionId] ?? emptySosaAnswer(questionId)), updatedAt: new Date().toISOString() };
+  const next = { ...updater(map[questionId] ?? emptySosaAnswer(questionId)), updatedAt: new Date().toISOString() };
   qc.setQueryData<SosaAnswersMap>(key, { ...map, [questionId]: next });
   schedule(ownerId, next);
 }
@@ -225,41 +235,40 @@ export type SosaAnswerApi = {
 
 export function useSosaAnswer(questionId: string): SosaAnswerApi {
   const { answers, ownerId } = useSosaAnswers();
-  const qc = useQueryClient();
   const answer = answers?.[questionId] ?? emptySosaAnswer(questionId);
 
   const setFieldValue = useCallback(
     (fieldKey: string, value: SosaFieldValue | undefined) => {
       if (!ownerId) return;
-      update(qc, ownerId, questionId, (prev) => {
+      updateSosaAnswer(questionId, (prev) => {
         const v = { ...prev.value };
         if (value === undefined) delete v[fieldKey];
         else v[fieldKey] = value;
         return { ...prev, value: v };
       });
     },
-    [qc, ownerId, questionId],
+    [ownerId, questionId],
   );
 
   const setEstimate = useCallback(
     (path: string, on: boolean) => {
       if (!ownerId) return;
-      update(qc, ownerId, questionId, (prev) => {
+      updateSosaAnswer(questionId, (prev) => {
         const est = { ...prev.estimates };
         if (on) est[path] = true;
         else delete est[path];
         return { ...prev, estimates: est };
       });
     },
-    [qc, ownerId, questionId],
+    [ownerId, questionId],
   );
 
   const setMarker = useCallback(
     (marker: SosaMarker | null) => {
       if (!ownerId) return;
-      update(qc, ownerId, questionId, (prev) => ({ ...prev, marker }));
+      updateSosaAnswer(questionId, (prev) => ({ ...prev, marker }));
     },
-    [qc, ownerId, questionId],
+    [ownerId, questionId],
   );
 
   return { answer, setFieldValue, setEstimate, setMarker };
