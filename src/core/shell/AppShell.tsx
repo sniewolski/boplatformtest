@@ -7,6 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toolRegistry } from "@/tools/registry";
 import { useMyRoles } from "@/core/roles/useMyRoles";
 import { useBookingReadiness } from "@/lib/useBookingReadiness";
+import { useSosaSubmission } from "@/tools/sales-operating-system-audit/data/sosaSubmission";
 import { useWillAiSettings } from "@/lib/useWillAiSettings";
 import { useBusinessBriefNeedsAttention } from "@/core/business-brief/useBusinessBrief";
 import { logActivityEvent } from "@/lib/activity.functions";
@@ -218,6 +219,7 @@ export function AppShell({
   const auditComplete =
     !readinessLoading && ![...AUDIT_KEYS].some((k) => incompleteKeys.has(k));
   const salescodeComplete = !readinessLoading && !incompleteKeys.has("salescode");
+  const { submittedAt: sosaSubmittedAt } = useSosaSubmission();
 
   const briefNeedsAttention = useBusinessBriefNeedsAttention();
 
@@ -261,7 +263,9 @@ export function AppShell({
           ? auditComplete
           : t.key === "salescode"
             ? salescodeComplete
-            : undefined,
+            : t.key === "sales-operating-system-audit"
+              ? !!sosaSubmittedAt
+              : undefined,
       disabled: t.key === "will-ai" ? willAiPausedForOwner : undefined,
     }));
 

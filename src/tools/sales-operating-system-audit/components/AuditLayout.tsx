@@ -5,6 +5,8 @@ import { useSosaAnswers } from "../data/sosaAnswers";
 import { getOverallProgress, getSectionProgress, getVisibleSections } from "../engine/rules";
 import { PageHeader } from "./PageHeader";
 import { Button } from "@/components/ui/button";
+import { Toaster } from "@/components/ui/sonner";
+import { formatSosaDate, useSosaSubmission } from "../data/sosaSubmission";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 const KEY = "sales-operating-system-audit";
@@ -67,13 +69,18 @@ export function AuditLayout({ current, children }: { current: "screening" | numb
   const overall = getOverallProgress(answers);
   const pct = overall.total ? Math.round((overall.answered / overall.total) * 100) : 0;
   const [open, setOpen] = useState(false);
+  const { submittedAt } = useSosaSubmission();
 
   return (
     <div className="app-content py-12 flex flex-col gap-8">
+      <Toaster />
       <PageHeader title="Sales Operating System Audit">
         <div className="flex flex-col gap-2">
-          <p className="text-sm text-ink-muted tabular-nums">
-            {overall.answered} of {overall.total} answered
+          <p className="text-sm text-ink-muted tabular-nums flex flex-wrap gap-x-3">
+            <span>
+              {overall.answered} of {overall.total} answered
+            </span>
+            {submittedAt && <span>Submitted {formatSosaDate(submittedAt)}</span>}
           </p>
           <div
             className="h-1 w-full rounded-full bg-[var(--surface-raised)] overflow-hidden"
