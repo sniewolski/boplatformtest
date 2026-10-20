@@ -1,0 +1,1 @@
+ALTER TABLE public.sosa_submissions ALTER COLUMN submitted_at SET DEFAULT now();
