@@ -26,7 +26,7 @@ export function SectionPage({ number }: { number: number }) {
   const next = idx >= 0 && idx < visible.length - 1 ? `section/${visible[idx + 1].number}` : null;
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-12">
       <header className="flex flex-col gap-3">
         <h2 className="text-xl text-ink">
           {section.number}. {section.title}
@@ -40,7 +40,7 @@ export function SectionPage({ number }: { number: number }) {
       </header>
 
       {ungrouped.length > 0 && (
-        <div className="flex flex-col gap-10">
+        <div className="flex flex-col gap-12 -mt-2">
           {ungrouped.map((q) => (
             <QuestionBlock key={q.id} question={q} />
           ))}
@@ -48,15 +48,15 @@ export function SectionPage({ number }: { number: number }) {
       )}
 
       {[...groups.entries()].map(([g, qs]) => (
-        <div key={g} className="flex flex-col gap-8">
-          <h3 className="text-base text-ink font-medium border-b border-border pb-2">{g}</h3>
+        <div key={g} className="flex flex-col gap-12 mt-2">
+          <h3 className="text-base text-ink font-medium -mb-6">{g}</h3>
           {qs.map((q) => (
             <QuestionBlock key={q.id} question={q} />
           ))}
         </div>
       ))}
 
-      <div className="flex items-start justify-between gap-4 pt-4">
+      <div className="flex items-start justify-between gap-4">
         <Button asChild variant="outline">
           <Link to="/app/tools/$key/$" params={{ key: KEY, _splat: prev }}>
             Previous

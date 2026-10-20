@@ -13,6 +13,9 @@ const MARKERS: Record<SosaQuestion["markers"], { key: SosaMarker; label: string 
   upload: [{ key: "dont_have", label: "We don't have this" }],
 };
 
+/** Normalize for label-vs-prompt comparison: ignore case, spaces and punctuation. */
+const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+
 /** One question: number, prompt, hint, fields (dimmed/disabled under a marker) and marker toggles. */
 export function QuestionBlock({ question }: { question: SosaQuestion }) {
   const api = useSosaAnswer(question.id);
@@ -39,7 +42,13 @@ export function QuestionBlock({ question }: { question: SosaQuestion }) {
         className={`flex flex-col gap-4 border-0 p-0 m-0 min-w-0 ${marker ? "opacity-50" : ""}`}
       >
         {question.fields.map((f) => (
-          <FieldRenderer key={f.key} question={question} field={f} api={api} />
+          <FieldRenderer
+            key={f.key}
+            question={question}
+            field={f}
+            api={api}
+            hideLabel={!!f.label && normalize(f.label) === normalize(question.prompt)}
+          />
         ))}
       </fieldset>
 
