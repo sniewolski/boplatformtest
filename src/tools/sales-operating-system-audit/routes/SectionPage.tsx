@@ -4,6 +4,7 @@ import { useSosaAnswers } from "../data/sosaAnswers";
 import { getVisibleQuestions, getVisibleSections } from "../engine/rules";
 import { QuestionBlock } from "../components/QuestionBlock";
 import { Button } from "@/components/ui/button";
+import { SubmitArea } from "../components/SubmitArea";
 
 const KEY = "sales-operating-system-audit";
 
@@ -55,18 +56,20 @@ export function SectionPage({ number }: { number: number }) {
         </div>
       ))}
 
-      <div className="flex items-center justify-between gap-4 pt-4">
+      <div className="flex items-start justify-between gap-4 pt-4">
         <Button asChild variant="outline">
           <Link to="/app/tools/$key/$" params={{ key: KEY, _splat: prev }}>
             Previous
           </Link>
         </Button>
-        {next && (
+        {next ? (
           <Button asChild>
             <Link to="/app/tools/$key/$" params={{ key: KEY, _splat: next }}>
               Next
             </Link>
           </Button>
+        ) : (
+          <SubmitArea />
         )}
       </div>
     </div>

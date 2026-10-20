@@ -919,7 +919,7 @@ export type Database = {
         Insert: {
           created_at?: string
           owner_id: string
-          submitted_at: string
+          submitted_at?: string
           updated_at?: string
         }
         Update: {

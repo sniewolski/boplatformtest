@@ -57,6 +57,13 @@
       "when": 1792508511521,
       "tag": "0007_sosa_uploads_storage_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792508671436,
+      "tag": "0008_sosa_submissions_submitted_at_default",
+      "breakpoints": true
     }
   ]
 }

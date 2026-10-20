@@ -37,3 +37,11 @@ test("linked answered rules", () => {
   expect(rows[1].label.endsWith(" 2")).toBe(true);
   expect(isQuestionAnswered(linked.question, two)).toBe(false);
 });
+
+import { isEditedAfterSubmit } from "@/tools/sales-operating-system-audit/engine/rules";
+test("edited after submit", () => {
+  const ans = { questionId: "q", value: {}, estimates: {}, marker: null, updatedAt: "2026-10-20T10:00:01Z" };
+  expect(isEditedAfterSubmit(ans, null)).toBe(false);
+  expect(isEditedAfterSubmit(ans, "2026-10-20T10:00:00Z")).toBe(true);
+  expect(isEditedAfterSubmit(ans, "2026-10-20T10:00:01Z")).toBe(false);
+});

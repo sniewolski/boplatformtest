@@ -86,7 +86,25 @@ let everSaved = false;
 let status: SosaSaveStatus = "idle";
 const listeners = new Set<() => void>();
 
+// Resolvers waiting for the save manager to go idle (awaitable flush).
+let idleWaiters: (() => void)[] = [];
+
+function isBusy() {
+  for (const e of entries.values()) {
+    if (!e.error && (e.inFlight || e.pending || e.timer || e.retryTimer)) return true;
+  }
+  return false;
+}
+
+function notifyIdle() {
+  if (isBusy() || idleWaiters.length === 0) return;
+  const w = idleWaiters;
+  idleWaiters = [];
+  w.forEach((r) => r());
+}
+
 function recomputeStatus() {
+  notifyIdle();
   let next: SosaSaveStatus = everSaved ? "saved" : "idle";
   let saving = false;
   let error = false;
@@ -184,6 +202,23 @@ export function flushAllSosaSaves() {
   for (const [qid, e] of entries) {
     if (e.pending && !e.error) void send(qid);
   }
+}
+
+/**
+ * Send every pending save now and resolve once nothing is pending, in flight
+ * or awaiting retry. Resolves true when every save succeeded, false if any
+ * question is in the error state.
+ */
+export function flushAllSosaSavesAndWait(): Promise<boolean> {
+  for (const [qid, e] of entries) {
+    if (e.error) continue;
+    if (e.retryTimer || e.timer || (e.pending && !e.inFlight)) void send(qid);
+  }
+  const hasError = () => [...entries.values()].some((e) => e.error);
+  if (!isBusy()) return Promise.resolve(!hasError());
+  return new Promise((resolve) => {
+    idleWaiters.push(() => resolve(!hasError()));
+  });
 }
 
 export function retryAllSosaSaves() {
