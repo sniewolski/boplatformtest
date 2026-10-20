@@ -10,15 +10,28 @@ import { OwnerSalesCodeDetail } from "@/components/admin/OwnerSalesCodeDetail";
 import { OwnerBusinessBriefDetail } from "@/components/admin/OwnerBusinessBriefDetail";
 import { OwnerDailyLogDetail } from "@/components/admin/OwnerDailyLogDetail";
 import { OwnerActivityDetail } from "@/components/admin/OwnerActivityDetail";
+import { Button } from "@/components/ui/button";
+import { useMyRoles } from "@/core/roles/useMyRoles";
+import { salesOperatingSystemAuditManifest } from "@/tools/sales-operating-system-audit/manifest";
+import { SosaOwnerReview } from "@/tools/sales-operating-system-audit/components/SosaOwnerReview";
 
 export const Route = createFileRoute(
   "/_authenticated/app/admin/review/$ownerId",
 )({
   component: OwnerReviewDetail,
+  head: () => ({ meta: [
+    { title: "Owner Audit Detail | Salesman Lab" },
+    { name: "description", content: "Read an owner's audit answers and submissions in Salesman Lab." },
+    { property: "og:title", content: "Owner Audit Detail | Salesman Lab" },
+    { property: "og:description", content: "Read owner submissions by section or SOP." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
 });
 
 const SLOTS = [
   { key: "audit", label: "Selling Systems Audit" },
+  { key: "sosa", label: "Sales OS Audit" },
   { key: "salescode", label: "SalesCode" },
   { key: "brief", label: "Business Brief" },
   { key: "daily-log", label: "Daily Log" },
@@ -29,6 +42,9 @@ type SlotKey = (typeof SLOTS)[number]["key"];
 
 function OwnerReviewDetail() {
   const { ownerId } = Route.useParams();
+  const { user } = Route.useRouteContext();
+  const { data: roles } = useMyRoles(user.id);
+  const showSosa = roles?.includes("admin") || (!salesOperatingSystemAuditManifest.adminOnly && roles?.includes("mentor"));
   const list = useServerFn(listOwners);
   const owners = useQuery({
     queryKey: ["admin", "owners"],
@@ -63,12 +79,13 @@ function OwnerReviewDetail() {
       <div
         role="tablist"
         aria-label="Review sections"
-        className="inline-flex items-center gap-1 rounded-xl border border-border bg-[var(--surface-raised)] p-1 w-fit"
+        className="inline-flex flex-wrap items-center gap-1 rounded-xl border border-border bg-[var(--surface-raised)] p-1 w-fit"
       >
-        {SLOTS.map((s) => {
+        {SLOTS.filter((s) => s.key !== "sosa" || showSosa).map((s) => {
           const active = slot === s.key;
           return (
-            <button
+            <Button
+              variant="ghost"
               key={s.key}
               type="button"
               role="tab"
@@ -82,13 +99,14 @@ function OwnerReviewDetail() {
               )}
             >
               {s.label}
-            </button>
+            </Button>
           );
         })}
       </div>
 
       <div>
         {slot === "audit" && <OwnerAuditDetail ownerId={ownerId} />}
+        {slot === "sosa" && showSosa && <SosaOwnerReview key={ownerId} ownerId={ownerId} />}
         {slot === "salescode" && <OwnerSalesCodeDetail ownerId={ownerId} />}
         {slot === "brief" && <OwnerBusinessBriefDetail ownerId={ownerId} />}
         {slot === "daily-log" && <OwnerDailyLogDetail ownerId={ownerId} />}

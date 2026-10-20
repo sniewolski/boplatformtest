@@ -6,6 +6,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { isBriefComplete } from "@/core/business-brief/businessBrief.functions";
+import { salesOperatingSystemAuditManifest } from "@/tools/sales-operating-system-audit/manifest";
+import { getSosaReviewStatus, sosaAnswerFromRow, type SosaReviewStatus } from "@/tools/sales-operating-system-audit/engine/adminReview";
+import type { Answers } from "@/tools/sales-operating-system-audit/engine/rules";
 
 const AUDIT_TABLES = [
   "selling_systems_audit_conversion",
@@ -27,6 +30,7 @@ export type OwnerReviewStatus = {
   auditSubmitted: boolean;
   salescodeTaken: boolean;
   briefFilled: boolean;
+  sosaStatus?: SosaReviewStatus;
 };
 
 export const listOwnerReviewStatuses = createServerFn({ method: "GET" })
@@ -74,15 +78,49 @@ export const listOwnerReviewStatuses = createServerFn({ method: "GET" })
       }
     }
 
+    const sosaByOwner = new Map<string, Answers>();
+    const sosaSubmissions = new Map<string, string>();
+    let canReadSosa = !salesOperatingSystemAuditManifest.adminOnly;
+    if (!canReadSosa) {
+      const { data: isAdmin, error } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+      if (error) throw new Error("Failed to verify role");
+      canReadSosa = !!isAdmin;
+    }
+    if (canReadSosa) {
+      // Page through all rows; the Data API's default cap must not truncate owner progress.
+      for (let offset = 0; ; offset += 1000) {
+        const { data: rows, error } = await context.supabase.from("sosa_answers")
+          .select("owner_id, question_id, value, estimates, marker, updated_at")
+          .order("owner_id").order("question_id").range(offset, offset + 999);
+        if (error) throw new Error(error.message);
+        for (const row of rows ?? []) {
+          const answers = sosaByOwner.get(row.owner_id) ?? {};
+          answers[row.question_id] = sosaAnswerFromRow(row);
+          sosaByOwner.set(row.owner_id, answers);
+        }
+        if ((rows?.length ?? 0) < 1000) break;
+      }
+      for (let offset = 0; ; offset += 1000) {
+        const { data: rows, error } = await context.supabase.from("sosa_submissions")
+          .select("owner_id, submitted_at").order("owner_id").range(offset, offset + 999);
+        if (error) throw new Error(error.message);
+        for (const row of rows ?? []) sosaSubmissions.set(row.owner_id, row.submitted_at);
+        if ((rows?.length ?? 0) < 1000) break;
+      }
+    }
+
     const owners = new Set<string>([
       ...auditOwners,
       ...salescodeOwners,
       ...briefOwners,
+      ...sosaByOwner.keys(),
+      ...sosaSubmissions.keys(),
     ]);
     return Array.from(owners).map((ownerId) => ({
       ownerId,
       auditSubmitted: auditOwners.has(ownerId),
       salescodeTaken: salescodeOwners.has(ownerId),
       briefFilled: briefOwners.has(ownerId),
+      ...(canReadSosa ? { sosaStatus: getSosaReviewStatus(sosaByOwner.get(ownerId) ?? {}, sosaSubmissions.get(ownerId) ?? null) } : {}),
     }));
   });
