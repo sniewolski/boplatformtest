@@ -12,7 +12,5 @@ export const salesOperatingSystemAuditManifest: ToolManifest = {
     icon: ListChecks,
     navGroup: "coaching",
   },
-  // BUILD-ONLY GATE: admins only until launch. Remove this line to launch.
-  adminOnly: true,
   Component: SalesOperatingSystemAuditApp,
 };
