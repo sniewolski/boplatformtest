@@ -1,10 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CalendarCheck, Lock } from "lucide-react";
+import { CalendarCheck } from "lucide-react";
 import { toolRegistry } from "@/tools/registry";
-import { useSession } from "@/core/auth/useSession";
-import { useBookingReadiness } from "@/lib/useBookingReadiness";
 
 export const Route = createFileRoute("/_authenticated/app/")({
+  head: () => ({
+    meta: [
+      { title: "Dashboard | Salesman Lab" },
+      { name: "description", content: "Your Salesman Lab tools and 1:1 call booking." },
+      { property: "og:title", content: "Dashboard | Salesman Lab" },
+      { property: "og:description", content: "Your Salesman Lab tools and 1:1 call booking." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: Dashboard,
 });
 
@@ -12,33 +20,6 @@ const BOOK_TILE_CLASSES =
   "block border border-border rounded-xl p-5 aspect-[4/3] flex flex-col h-full hover:bg-[var(--surface-raised)] transition-[background-color] duration-[120ms]";
 
 function BookCallTile() {
-  const { session } = useSession();
-  const userId = session?.user.id;
-  const { allComplete } = useBookingReadiness(userId);
-
-  if (!allComplete) {
-    return (
-      <div
-        className={BOOK_TILE_CLASSES + " opacity-50"}
-        aria-disabled="true"
-      >
-        <span className="text-ink-muted text-xs uppercase tracking-wider">
-          Book a 1:1 call
-        </span>
-        <div className="flex-1 flex flex-col items-center justify-center text-center gap-2">
-          <Lock
-            className="size-8 text-ink-muted"
-            strokeWidth={1.5}
-            aria-label="Locked until audit and assessment are complete"
-          />
-          <span className="text-ink-muted text-sm">
-            Finish your audit and assessment to unlock.
-          </span>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <Link to="/app/book-call" className={BOOK_TILE_CLASSES}>
       <span className="text-ink-muted text-xs uppercase tracking-wider">

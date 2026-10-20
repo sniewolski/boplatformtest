@@ -10,3 +10,4 @@
 <!-- LOVABLE:END -->
 
 - Sales OS Audit admin reads use the dedicated read-only data module and shared pure review-status helper; never mount owner autosave hooks in a viewed-owner review, to avoid writing or mixing identities.
+- Keep Vitest configured independently of the Vite route-splitting plugins so tests can render route components directly.
