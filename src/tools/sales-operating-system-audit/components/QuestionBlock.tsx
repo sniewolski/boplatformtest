@@ -21,9 +21,9 @@ export function QuestionBlock({ question }: { question: SosaQuestion }) {
   const marker = api.answer.marker;
 
   return (
-    <section className="flex flex-col gap-3" aria-labelledby={`q-${question.id}`}>
+    <section id={`q-${question.id}`} className="flex flex-col gap-3 scroll-mt-6" aria-labelledby={`qh-${question.id}`}>
       <div className="flex flex-col gap-1">
-        <h3 id={`q-${question.id}`} className="text-base text-ink font-medium flex items-baseline gap-2">
+        <h3 id={`qh-${question.id}`} className="text-base text-ink font-medium flex items-baseline gap-2">
           <span className="text-ink-muted tabular-nums font-normal inline-flex items-center gap-1 shrink-0">
             {question.number}
             {answered && <Check className="size-3.5 text-ink" aria-label="Answered" />}
