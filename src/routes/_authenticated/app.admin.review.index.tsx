@@ -6,12 +6,26 @@ import { Check, Minus } from "lucide-react";
 import { listOwners } from "@/lib/admin.functions";
 import { listOwnerReviewStatuses } from "@/lib/adminReviewStatus.functions";
 import { Input } from "@/components/ui/input";
+import { useMyRoles } from "@/core/roles/useMyRoles";
+import { salesOperatingSystemAuditManifest } from "@/tools/sales-operating-system-audit/manifest";
+import { getSosaReviewStatus, sosaReviewStatusLabel, type SosaReviewStatus } from "@/tools/sales-operating-system-audit/engine/adminReview";
 
 export const Route = createFileRoute("/_authenticated/app/admin/review/")({
   component: ReviewRoster,
+  head: () => ({ meta: [
+    { title: "Owner Review | Salesman Lab" },
+    { name: "description", content: "Review owner submissions and Sales OS Audit progress in Salesman Lab." },
+    { property: "og:title", content: "Owner Review | Salesman Lab" },
+    { property: "og:description", content: "Review owner submissions and audit progress." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
 });
 
 function ReviewRoster() {
+  const { user } = Route.useRouteContext();
+  const { data: roles } = useMyRoles(user.id);
+  const showSosa = roles?.includes("admin") || (!salesOperatingSystemAuditManifest.adminOnly && roles?.includes("mentor"));
   const list = useServerFn(listOwners);
   const owners = useQuery({
     queryKey: ["admin", "owners"],
@@ -27,13 +41,14 @@ function ReviewRoster() {
   const statusById = useMemo(() => {
     const map = new Map<
       string,
-      { auditSubmitted: boolean; salescodeTaken: boolean; briefFilled: boolean }
+      { auditSubmitted: boolean; salescodeTaken: boolean; briefFilled: boolean; sosaStatus?: SosaReviewStatus }
     >();
     for (const s of statuses.data ?? []) {
       map.set(s.ownerId, {
         auditSubmitted: s.auditSubmitted,
         salescodeTaken: s.salescodeTaken,
         briefFilled: s.briefFilled,
+        sosaStatus: s.sosaStatus,
       });
     }
     return map;
@@ -101,7 +116,7 @@ function ReviewRoster() {
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-4 shrink-0">
+                    <div className="flex flex-wrap items-center justify-end gap-4">
                       <StatusPill
                         label="Audit"
                         done={!!s?.auditSubmitted}
@@ -117,6 +132,7 @@ function ReviewRoster() {
                         notDoneAria="not filled"
                       />
 
+                      {showSosa && <span className="text-xs text-ink-muted">Sales OS Audit: {statuses.isPending ? "Loading…" : statuses.error ? "Unavailable" : sosaReviewStatusLabel(s?.sosaStatus ?? getSosaReviewStatus({}, null))}</span>}
                       <span className="text-ink-muted text-xs">Review →</span>
                     </div>
                   </Link>
