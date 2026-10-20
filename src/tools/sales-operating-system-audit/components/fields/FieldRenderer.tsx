@@ -13,6 +13,7 @@ import {
   type ChoiceValue,
   type MultiValue,
 } from "./Fields";
+import { UploadField } from "./UploadField";
 import { LinkedFieldControl, ListFieldControl } from "./ListFields";
 
 /** Renders one field of a question with the right control, honouring showWhen. */
@@ -65,6 +66,9 @@ export function FieldRenderer({
       break;
     case "script":
       control = <ScriptField label={label} value={typeof v === "string" ? v : undefined} onChange={set} />;
+      break;
+    case "upload":
+      control = <UploadField question={question} field={field} api={api} />;
       break;
     case "list":
       control = <ListFieldControl question={question} field={field} api={api} />;
