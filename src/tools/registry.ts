@@ -15,6 +15,7 @@ import type { ComponentType, ReactNode } from "react";
 import type { AnyRoute } from "@tanstack/react-router";
 
 import { sellingSystemsAuditManifest } from "./selling-systems-audit/manifest";
+import { salesOperatingSystemAuditManifest } from "./sales-operating-system-audit/manifest";
 import { salescodeManifest } from "./salescode/manifest";
 import { sopsManifest } from "./sops/manifest";
 import { resourcesManifest } from "./resources/manifest";
@@ -49,11 +50,14 @@ export type ToolManifest = {
   Component?: ComponentType<ToolComponentProps>;
   appRoutes?: AnyRoute[];
   publicRoutes?: AnyRoute[];
+  /** When true, nav entry and pages are visible to role 'admin' only. */
+  adminOnly?: boolean;
 };
 
 export const toolRegistry: ToolManifest[] = [
   watchFirstManifest,
   dailyLogManifest,
+  salesOperatingSystemAuditManifest,
   sellingSystemsAuditManifest,
   salescodeManifest,
   sopsManifest,

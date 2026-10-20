@@ -43,6 +43,13 @@
       "when": 1791362455443,
       "tag": "0005_tracker_optin_event_types",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792504762972,
+      "tag": "0006_sosa_answers_and_submissions",
+      "breakpoints": true
     }
   ]
 }

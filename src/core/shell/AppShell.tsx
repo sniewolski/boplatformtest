@@ -250,6 +250,7 @@ export function AppShell({
   // assigned to groups explicitly below. Dashboard is always first, ungrouped.
   const registryItems: NavItem[] = toolRegistry
     .filter((t) => !!t.navEntry)
+    .filter((t) => !t.adminOnly || isAdmin)
     .map((t) => ({
       to: `/app/tools/${t.key}`,
       label: t.navEntry!.label,

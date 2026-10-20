@@ -879,6 +879,57 @@ export type Database = {
           },
         ]
       }
+      sosa_answers: {
+        Row: {
+          created_at: string
+          estimates: Json
+          marker: string | null
+          owner_id: string
+          question_id: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          estimates?: Json
+          marker?: string | null
+          owner_id: string
+          question_id: string
+          updated_at?: string
+          value?: Json
+        }
+        Update: {
+          created_at?: string
+          estimates?: Json
+          marker?: string | null
+          owner_id?: string
+          question_id?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
+      sosa_submissions: {
+        Row: {
+          created_at: string
+          owner_id: string
+          submitted_at: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          owner_id: string
+          submitted_at: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          owner_id?: string
+          submitted_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
