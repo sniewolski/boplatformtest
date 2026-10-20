@@ -239,3 +239,9 @@ export function isScreeningComplete(answers: Answers): boolean {
     return !!firstKey && hasValue(answers[item.questionId]?.value[firstKey]);
   });
 }
+
+/** True when an answer changed after the (server-time) submission. */
+export function isEditedAfterSubmit(answer: SosaAnswer | undefined, submittedAt: string | null | undefined): boolean {
+  if (!answer || !submittedAt || !answer.updatedAt) return false;
+  return new Date(answer.updatedAt).getTime() > new Date(submittedAt).getTime();
+}
