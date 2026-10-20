@@ -15,8 +15,8 @@ function ScreeningItem({ item }: { item: SosaScreeningItem }) {
   return (
     <section className="flex flex-col gap-3">
       <h3 className="text-base text-ink font-medium">{item.prompt}</h3>
-      {fields.map((f) => (
-        <FieldRenderer key={f.key} question={question} field={f} api={api} />
+      {fields.map((f, i) => (
+        <FieldRenderer key={f.key} question={question} field={f} api={api} hideLabel={i === 0} />
       ))}
     </section>
   );

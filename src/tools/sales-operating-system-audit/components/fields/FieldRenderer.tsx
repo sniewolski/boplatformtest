@@ -21,10 +21,12 @@ export function FieldRenderer({
   question,
   field,
   api,
+  hideLabel = false,
 }: {
   question: SosaQuestion;
   field: SosaField;
   api: SosaAnswerApi;
+  hideLabel?: boolean;
 }) {
   const { answers } = useSosaAnswers();
   const { answer, setFieldValue, setEstimate } = api;
@@ -82,7 +84,7 @@ export function FieldRenderer({
 
   return (
     <div className="flex flex-col gap-2">
-      {field.label && <span className="text-sm text-ink">{field.label}</span>}
+      {field.label && !hideLabel && <span className="text-xs text-ink-muted">{field.label}</span>}
       {control}
     </div>
   );
