@@ -231,7 +231,7 @@ export function ListFieldControl({
       <div className="flex items-center gap-4">
         {!atMax && (
           <Button type="button" variant="outline" size="sm" onClick={add}>
-            <Plus className="size-4" /> Add {field.itemLabel.toLowerCase()}
+            <Plus className="size-4" /> Add {field.itemLabel}
           </Button>
         )}
         {field.maxItems !== undefined && (
