@@ -155,6 +155,31 @@ export function getLinkedRows(
   return [];
 }
 
+/** Linked source field has a value (no marker, source question visible). */
+export function linkedSourceHasValue(
+  linkedField: Extract<SosaField, { type: "linked" }>,
+  answers: Answers,
+): boolean {
+  const srcQ = getQuestion(linkedField.source.question);
+  if (!srcQ || !isQuestionVisible(srcQ, answers)) return false;
+  const a = answers[linkedField.source.question];
+  if (!a || a.marker) return false;
+  return hasValue(a.value[linkedField.source.field]);
+}
+
+/** Every linked field (with its question) whose source is the given list/multi field. */
+export function getLinkedFieldsForSource(questionId: string, fieldKey: string) {
+  const out: { question: SosaQuestion; field: Extract<SosaField, { type: "linked" }> }[] = [];
+  for (const q of QUESTIONS) {
+    for (const f of q.fields) {
+      if (f.type === "linked" && f.source.question === questionId && f.source.field === fieldKey) {
+        out.push({ question: q, field: f });
+      }
+    }
+  }
+  return out;
+}
+
 function fieldAnswered(field: SosaField, v: SosaFieldValue | undefined, answers: Answers): boolean {
   switch (field.type) {
     case "number":
@@ -172,11 +197,16 @@ function fieldAnswered(field: SosaField, v: SosaFieldValue | undefined, answers:
       if (v.keys.length === 1 && v.keys[0] === "other") return !!v.other?.trim();
       return true;
     case "upload":
-    case "list":
       return !!v && typeof v === "object" && "items" in v && v.items.length > 0;
+    case "list": {
+      if (!v || typeof v !== "object" || !("items" in v)) return false;
+      const items = v.items as { id: string; values?: Record<string, SosaFieldValue> }[];
+      return items.some((it) => Object.values(it.values ?? {}).some((x) => hasValue(x)));
+    }
     case "linked": {
+      if (!linkedSourceHasValue(field, answers)) return false;
       const rows = getLinkedRows(field, answers);
-      if (rows.length === 0) return false;
+      if (rows.length === 0) return true;
       const first = field.rowFields[0];
       const data = v && typeof v === "object" && "rows" in v ? v.rows : {};
       return rows.every((r) => !!first && hasValue(data[r.rowKey]?.[first.key]));

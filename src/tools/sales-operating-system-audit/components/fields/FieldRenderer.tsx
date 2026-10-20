@@ -13,6 +13,7 @@ import {
   type ChoiceValue,
   type MultiValue,
 } from "./Fields";
+import { LinkedFieldControl, ListFieldControl } from "./ListFields";
 
 /** Renders one field of a question with the right control, honouring showWhen. */
 export function FieldRenderer({
@@ -64,6 +65,12 @@ export function FieldRenderer({
       break;
     case "script":
       control = <ScriptField label={label} value={typeof v === "string" ? v : undefined} onChange={set} />;
+      break;
+    case "list":
+      control = <ListFieldControl question={question} field={field} api={api} />;
+      break;
+    case "linked":
+      control = <LinkedFieldControl field={field} api={api} />;
       break;
     default:
       control = <p className="text-ink-muted text-sm">Coming in a later phase</p>;
