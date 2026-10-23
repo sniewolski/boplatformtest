@@ -12,6 +12,7 @@ import {
   uploadSosaFile,
 } from "../../data/sosaUploads";
 import { Button } from "@/components/ui/button";
+import { useBufferedValue } from "./useBufferedValue";
 
 type UploadFieldDef = Extract<SosaField, { type: "upload" }>;
 
@@ -87,16 +88,20 @@ function LinkForm({ onAdd, onCancel }: { onAdd: (url: string, name?: string) => 
     if (!/^https?:\/\//i.test(u)) return setErr("Enter a full link starting with https://");
     onAdd(u, name.trim() || undefined);
   };
+  const bufferedUrl = useBufferedValue(url, (next) => {
+    setUrl(next);
+    setErr(null);
+  });
+  const bufferedName = useBufferedValue(name, setName);
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-border p-3">
       <div className="flex flex-wrap gap-2">
         <input
           type="url"
-          value={url}
-          onChange={(e) => {
-            setUrl(e.target.value);
-            setErr(null);
-          }}
+          value={bufferedUrl.value}
+          onChange={(e) => bufferedUrl.setValue(e.target.value)}
+          onFocus={bufferedUrl.onFocus}
+          onBlur={bufferedUrl.onBlur}
           onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), submit())}
           placeholder="https://"
           aria-label="Link"
@@ -106,8 +111,10 @@ function LinkForm({ onAdd, onCancel }: { onAdd: (url: string, name?: string) => 
         />
         <input
           type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          value={bufferedName.value}
+          onChange={(e) => bufferedName.setValue(e.target.value)}
+          onFocus={bufferedName.onFocus}
+          onBlur={bufferedName.onBlur}
           onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), submit())}
           placeholder="Name (optional)"
           aria-label="Name (optional)"
