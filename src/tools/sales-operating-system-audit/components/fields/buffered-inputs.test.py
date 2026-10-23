@@ -20,7 +20,7 @@ async def main():
           window.$RefreshReg$ = () => {};
           window.$RefreshSig$ = () => type => type;
           window.__vite_plugin_react_preamble_installed__ = true;
-          const React = await import('/node_modules/.vite/deps/react.js');
+          const React = (await import('/node_modules/.vite/deps/react.js')).default;
           const {createRoot} = (await import('/node_modules/.vite/deps/react-dom_client.js')).default;
           const {QueryClient, QueryClientProvider, useQuery} = await import('/node_modules/.vite/deps/@tanstack_react-query.js');
           const {TextField, ScriptField, NumberField, ChoiceField, MultiField} = await import('/src/tools/sales-operating-system-audit/components/fields/Fields.tsx');
