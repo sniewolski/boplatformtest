@@ -15,6 +15,11 @@ async def main():
             content_type="text/html", body='<div id="controls"></div>'))
         await page.goto("http://localhost:8080/buffer-regression")
         await page.evaluate("""async () => {
+          const Refresh = (await import("/@react-refresh")).default;
+          Refresh.injectIntoGlobalHook(window);
+          window.$RefreshReg$ = () => {};
+          window.$RefreshSig$ = () => type => type;
+          window.__vite_plugin_react_preamble_installed__ = true;
           const React = await import('/node_modules/.vite/deps/react.js');
           const {createRoot} = await import('/node_modules/.vite/deps/react-dom_client.js');
           const {QueryClient, QueryClientProvider, useQuery} = await import('/node_modules/.vite/deps/@tanstack_react-query.js');
