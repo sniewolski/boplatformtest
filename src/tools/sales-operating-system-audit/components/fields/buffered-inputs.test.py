@@ -48,7 +48,7 @@ async def main():
               h(NumberField,{label:'Number',value:data.number,onChange:change('number'),estimate:false,onEstimateChange:()=>{}}),
               h('div',{'data-testid':'choice'},h(ChoiceField,{options:[],allowOther:true,value:data.choice,onChange:change('choice')})),
               h('div',{'data-testid':'multi'},h(MultiField,{options:[],allowOther:true,value:data.multi,onChange:change('multi')})),
-              h(UploadField,{question:upload,field:{type:'upload',key:'files'},api:{answer:{value:{},estimates:{},marker:null},setFieldValue:change('files'),setEstimate:()=>{},setMarker:()=>{}}}),
+              h(UploadField,{question:upload,field:{type:'upload',key:'files'},api:{answer:{value:{},estimates:{},marker:null},setFieldValue:(key,value)=>change('files')(value),setEstimate:()=>{},setMarker:()=>{}}}),
               h('button',{type:'button'},'Outside'));
           }
           createRoot(document.getElementById('controls')).render(React.createElement(QueryClientProvider,{client:qc},React.createElement(Controls)));
