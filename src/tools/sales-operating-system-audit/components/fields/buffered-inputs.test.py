@@ -94,6 +94,7 @@ async def main():
         await middle_edit(page.get_by_role("textbox", name="Link", exact=True), "https://example.com/abcdef", "https://example.com/abcXdef", position=23)
         await middle_edit(page.get_by_role("textbox", name="Name (optional)", exact=True), "abcdef", "abcXdef")
         await page.get_by_role("button", name="Add link", exact=True).click()
+        await page.wait_for_timeout(50)
         saved = await page.evaluate("window.changes.at(-1)")
         assert saved[0] == "files"
         assert saved[1]["items"][0]["url"] == "https://example.com/abcXdef"
