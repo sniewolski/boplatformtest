@@ -10,6 +10,9 @@ async def main():
     async with async_playwright() as playwright:
         browser = await playwright.chromium.launch(headless=True)
         page = await browser.new_page(viewport={"width": 1280, "height": 1800})
+        page.on("pageerror", lambda error: print("Browser error:", str(error)))
+        page.on("console", lambda message: print("Browser console:", message.text) if message.type == "error" else None)
+        page.set_default_timeout(5000)
         # Isolate the actual field controls from the app, auth and save manager.
         await page.route("http://localhost:8080/buffer-regression", lambda route: route.fulfill(
             content_type="text/html", body='<div id="controls"></div>'))
