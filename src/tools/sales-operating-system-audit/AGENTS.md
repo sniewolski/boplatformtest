@@ -1,0 +1,1 @@
+- All typed controls share `useBufferedValue`; keep raw text local while focused and call existing setters on every accepted change so query notifications cannot reset the caret or alter autosave.

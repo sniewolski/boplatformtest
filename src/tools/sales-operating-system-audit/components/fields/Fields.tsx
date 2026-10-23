@@ -2,7 +2,8 @@
  * Tool-local field controls. Classes mirror the Selling Systems Audit's
  * IntakeFields so the two tools look the same; that shared file is untouched.
  */
-import { useEffect, useId, useState } from "react";
+import { useId } from "react";
+import { useBufferedValue } from "./useBufferedValue";
 import type { SosaOption, SosaUnit } from "../../config/questionBank";
 import { useCurrency } from "@/core/settings/useCurrency";
 import { currencySymbol } from "@/lib/format-currency";
@@ -19,11 +20,14 @@ function chipCls(on: boolean) {
 }
 
 function OtherInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const buffered = useBufferedValue(value, onChange);
   return (
     <input
       type="text"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
+      value={buffered.value}
+      onChange={(e) => buffered.setValue(e.target.value)}
+      onFocus={buffered.onFocus}
+      onBlur={buffered.onBlur}
       placeholder="Other (please specify)"
       aria-label="Other (please specify)"
       className={`w-full max-w-md ${inputCls}`}
@@ -187,14 +191,11 @@ export function NumberField({
 }) {
   const id = useId();
   const { currency } = useCurrency();
-  const [text, setText] = useState(value === undefined ? "" : String(value));
-
-  // Follow external changes (e.g. the same answer edited elsewhere).
-  useEffect(() => {
-    const parsed = text.trim() === "" ? undefined : Number(text);
-    if (parsed !== value) setText(value === undefined ? "" : String(value));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value]);
+  const buffered = useBufferedValue(value === undefined ? "" : String(value), (raw) => {
+    if (raw.trim() === "" || raw === "-" || raw === ".") return onChange(undefined);
+    const n = Number(raw);
+    onChange(Number.isFinite(n) ? n : undefined);
+  });
 
   const prefix = unit === "money" && currency ? currencySymbol(currency) : "";
   const suffix = unit && unit !== "money" ? (UNIT_SUFFIX[unit] ?? "") : "";
@@ -208,14 +209,13 @@ export function NumberField({
           type="text"
           inputMode="decimal"
           aria-label={label}
-          value={text}
+          value={buffered.value}
+          onFocus={buffered.onFocus}
+          onBlur={buffered.onBlur}
           onChange={(e) => {
             const raw = e.target.value.replace(/,/g, "");
             if (raw !== "" && !/^-?\d*\.?\d*$/.test(raw)) return;
-            setText(raw);
-            if (raw.trim() === "" || raw === "-" || raw === ".") return onChange(undefined);
-            const n = Number(raw);
-            onChange(Number.isFinite(n) ? n : undefined);
+            buffered.setValue(raw);
           }}
           className={`w-36 tabular-nums ${inputCls}`}
         />
@@ -245,12 +245,15 @@ export function TextField({
   onChange: (v: string | undefined) => void;
   label?: string;
 }) {
+  const buffered = useBufferedValue(value ?? "", (next) => onChange(next === "" ? undefined : next));
   return (
     <textarea
       rows={3}
       aria-label={label}
-      value={value ?? ""}
-      onChange={(e) => onChange(e.target.value === "" ? undefined : e.target.value)}
+      value={buffered.value}
+      onChange={(e) => buffered.setValue(e.target.value)}
+      onFocus={buffered.onFocus}
+      onBlur={buffered.onBlur}
       className={`max-w-2xl ${textareaCls}`}
     />
   );
@@ -265,13 +268,16 @@ export function ScriptField({
   onChange: (v: string | undefined) => void;
   label?: string;
 }) {
+  const buffered = useBufferedValue(value ?? "", (next) => onChange(next === "" ? undefined : next));
   return (
     <textarea
       rows={8}
       aria-label={label}
       placeholder="Paste the exact wording"
-      value={value ?? ""}
-      onChange={(e) => onChange(e.target.value === "" ? undefined : e.target.value)}
+      value={buffered.value}
+      onChange={(e) => buffered.setValue(e.target.value)}
+      onFocus={buffered.onFocus}
+      onBlur={buffered.onBlur}
       className={`max-w-3xl ${textareaCls}`}
     />
   );
