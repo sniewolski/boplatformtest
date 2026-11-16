@@ -64,6 +64,13 @@
       "when": 1792508671436,
       "tag": "0008_sosa_submissions_submitted_at_default",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794838139430,
+      "tag": "0009_coaching_tab",
+      "breakpoints": true
     }
   ]
 }

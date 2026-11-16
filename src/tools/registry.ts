@@ -20,6 +20,7 @@ import { salescodeManifest } from "./salescode/manifest";
 import { sopsManifest } from "./sops/manifest";
 import { resourcesManifest } from "./resources/manifest";
 import { willAiManifest } from "./will-ai/manifest";
+import { coachingManifest } from "./coaching/manifest";
 import { dailyLogManifest } from "./daily-log/manifest";
 import { watchFirstManifest } from "./watch-first/manifest";
 
@@ -56,6 +57,7 @@ export type ToolManifest = {
 
 export const toolRegistry: ToolManifest[] = [
   watchFirstManifest,
+  coachingManifest,
   dailyLogManifest,
   salesOperatingSystemAuditManifest,
   sellingSystemsAuditManifest,

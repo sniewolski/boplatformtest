@@ -189,6 +189,63 @@ export type Database = {
         }
         Relationships: []
       }
+      coaching_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          owner_id: string
+          sender_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          owner_id: string
+          sender_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          owner_id?: string
+          sender_id?: string
+        }
+        Relationships: []
+      }
+      coaching_tasks: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          done: boolean
+          done_at: string | null
+          id: string
+          owner_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          done?: boolean
+          done_at?: string | null
+          id?: string
+          owner_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          done?: boolean
+          done_at?: string | null
+          id?: string
+          owner_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       content_review_assets: {
         Row: {
           audit_id: string
@@ -1519,6 +1576,10 @@ export type Database = {
         Returns: number
       }
       reserve_youtube_quota: { Args: { requested: number }; Returns: number }
+      set_coaching_task_done: {
+        Args: { _done: boolean; _task_id: string }
+        Returns: undefined
+      }
       will_ai_ingestion_dispatch: { Args: never; Returns: undefined }
     }
     Enums: {
