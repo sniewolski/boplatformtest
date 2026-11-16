@@ -5,7 +5,7 @@ import { CoachingApp } from "./routes/App";
 export const coachingManifest: ToolManifest = {
   key: "coaching",
   name: "Chat",
-  description: "Your private thread with the team, plus your coaching tasks.",
+  description: "Your private chat with the team, plus your tasks.",
   icon: MessageCircleMore,
   navEntry: {
     label: "Chat",

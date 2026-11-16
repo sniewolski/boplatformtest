@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode, type ComponentType } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, ChevronRight, LayoutDashboard, Lock, Shield, ClipboardList, FileText, FolderDown, LogOut, CalendarDays, MessagesSquare, Briefcase, Radio, PlayCircle, Inbox, Handshake } from "lucide-react";
+import { Check, ChevronRight, LayoutDashboard, Lock, Shield, ClipboardList, FileText, FolderDown, LogOut, CalendarDays, MessagesSquare, Briefcase, Radio, PlayCircle, Inbox, MessageCircleMore } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toolRegistry } from "@/tools/registry";
@@ -471,7 +471,7 @@ export function AppShell({
                   className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-ink hover:bg-background transition-colors"
                   activeProps={{ className: "bg-background font-medium" }}
                 >
-                  <Handshake className="size-4" />
+                  <MessageCircleMore className="size-4" />
                   <span className="flex-1">Chat inbox</span>
                   {coachingAwaiting > 0 && (
                     <span
