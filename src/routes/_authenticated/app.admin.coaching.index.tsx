@@ -44,7 +44,7 @@ function CoachingInbox() {
   return (
     <div className="app-content py-16 flex flex-col gap-10">
       <header className="flex flex-col gap-2">
-        <h1 className="text-3xl">Coaching inbox</h1>
+        <h1 className="text-3xl">Chat inbox</h1>
         <p className="text-ink-muted text-sm max-w-prose">
           Private threads with each owner. Threads waiting on a reply come first.
         </p>

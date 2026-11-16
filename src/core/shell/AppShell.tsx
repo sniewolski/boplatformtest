@@ -472,7 +472,7 @@ export function AppShell({
                   activeProps={{ className: "bg-background font-medium" }}
                 >
                   <Handshake className="size-4" />
-                  <span className="flex-1">Coaching inbox</span>
+                  <span className="flex-1">Chat inbox</span>
                   {coachingAwaiting > 0 && (
                     <span
                       className="min-w-5 h-5 px-1.5 rounded-full bg-[var(--red)] text-primary-foreground text-[11px] font-medium leading-5 text-center tabular-nums shrink-0"

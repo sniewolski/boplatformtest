@@ -8,7 +8,7 @@ export function CoachingApp(_props: ToolComponentProps) {
   const ownerId = session?.user?.id ?? null;
   return (
     <CoachingLayout
-      header={<h1 className="text-2xl">Coaching</h1>}
+      header={<h1 className="text-2xl">Chat</h1>}
       ownerId={ownerId}
       viewerId={ownerId}
       viewer="owner"

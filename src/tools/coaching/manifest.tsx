@@ -1,15 +1,15 @@
-import { Handshake } from "lucide-react";
+import { MessageCircleMore } from "lucide-react";
 import type { ToolManifest } from "../registry";
 import { CoachingApp } from "./routes/App";
 
 export const coachingManifest: ToolManifest = {
   key: "coaching",
-  name: "Coaching",
+  name: "Chat",
   description: "Your private thread with the team, plus your coaching tasks.",
-  icon: Handshake,
+  icon: MessageCircleMore,
   navEntry: {
-    label: "Coaching",
-    icon: Handshake,
+    label: "Chat",
+    icon: MessageCircleMore,
     navGroup: "resources",
   },
   Component: CoachingApp,
