@@ -26,6 +26,7 @@ import { Route as FreeAuditTokenDoneRouteImport } from './routes/free-audit.$tok
 import { Route as RTokenIndexRouteImport } from './routes/r.$token.index'
 import { Route as RTokenSplatRouteImport } from './routes/r.$token.$'
 import { Route as AuthenticatedAppAdminIndexRouteImport } from './routes/_authenticated/app.admin.index'
+import { Route as AuthenticatedAppAdminCoachingRouteImport } from './routes/_authenticated/app.admin.coaching'
 import { Route as AuthenticatedAppAdminLeadAuditsRouteImport } from './routes/_authenticated/app.admin.lead-audits'
 import { Route as AuthenticatedAppAdminResourcesRouteImport } from './routes/_authenticated/app.admin.resources'
 import { Route as AuthenticatedAppAdminReviewRouteImport } from './routes/_authenticated/app.admin.review'
@@ -46,6 +47,8 @@ import { Route as ApiPublicRValidateRouteImport } from './routes/api/public/r/va
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as AuthenticatedAppAdminCoachingIndexRouteImport } from './routes/_authenticated/app.admin.coaching.index'
+import { Route as AuthenticatedAppAdminCoachingOwnerIdRouteImport } from './routes/_authenticated/app.admin.coaching.$ownerId'
 import { Route as AuthenticatedAppAdminLeadAuditsIndexRouteImport } from './routes/_authenticated/app.admin.lead-audits.index'
 import { Route as AuthenticatedAppAdminLeadAuditsSessionIdRouteImport } from './routes/_authenticated/app.admin.lead-audits.$sessionId'
 import { Route as AuthenticatedAppAdminResourcesIndexRouteImport } from './routes/_authenticated/app.admin.resources.index'
@@ -140,6 +143,12 @@ const AuthenticatedAppAdminIndexRoute =
   AuthenticatedAppAdminIndexRouteImport.update({
     id: '/',
     path: '/',
+    getParentRoute: () => AuthenticatedAppAdminRoute,
+  } as any)
+const AuthenticatedAppAdminCoachingRoute =
+  AuthenticatedAppAdminCoachingRouteImport.update({
+    id: '/coaching',
+    path: '/coaching',
     getParentRoute: () => AuthenticatedAppAdminRoute,
   } as any)
 const AuthenticatedAppAdminLeadAuditsRoute =
@@ -253,6 +262,18 @@ const LovableEmailQueueProcessRoute =
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedAppAdminCoachingIndexRoute =
+  AuthenticatedAppAdminCoachingIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAppAdminCoachingRoute,
+  } as any)
+const AuthenticatedAppAdminCoachingOwnerIdRoute =
+  AuthenticatedAppAdminCoachingOwnerIdRouteImport.update({
+    id: '/$ownerId',
+    path: '/$ownerId',
+    getParentRoute: () => AuthenticatedAppAdminCoachingRoute,
+  } as any)
 const AuthenticatedAppAdminLeadAuditsIndexRoute =
   AuthenticatedAppAdminLeadAuditsIndexRouteImport.update({
     id: '/',
@@ -312,6 +333,7 @@ export interface FileRoutesByFullPath {
   '/app/': typeof AuthenticatedAppIndexRoute
   '/free-audit/$token/': typeof FreeAuditTokenIndexRoute
   '/r/$token/': typeof RTokenIndexRoute
+  '/app/admin/coaching': typeof AuthenticatedAppAdminCoachingRouteWithChildren
   '/app/admin/lead-audits': typeof AuthenticatedAppAdminLeadAuditsRouteWithChildren
   '/app/admin/resources': typeof AuthenticatedAppAdminResourcesRouteWithChildren
   '/app/admin/review': typeof AuthenticatedAppAdminReviewRouteWithChildren
@@ -333,9 +355,11 @@ export interface FileRoutesByFullPath {
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/app/admin/': typeof AuthenticatedAppAdminIndexRoute
+  '/app/admin/coaching/$ownerId': typeof AuthenticatedAppAdminCoachingOwnerIdRoute
   '/app/admin/lead-audits/$sessionId': typeof AuthenticatedAppAdminLeadAuditsSessionIdRoute
   '/app/admin/review/$ownerId': typeof AuthenticatedAppAdminReviewOwnerIdRoute
   '/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
+  '/app/admin/coaching/': typeof AuthenticatedAppAdminCoachingIndexRoute
   '/app/admin/lead-audits/': typeof AuthenticatedAppAdminLeadAuditsIndexRoute
   '/app/admin/resources/': typeof AuthenticatedAppAdminResourcesIndexRoute
   '/app/admin/review/': typeof AuthenticatedAppAdminReviewIndexRoute
@@ -370,9 +394,11 @@ export interface FileRoutesByTo {
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/app/admin': typeof AuthenticatedAppAdminIndexRoute
+  '/app/admin/coaching/$ownerId': typeof AuthenticatedAppAdminCoachingOwnerIdRoute
   '/app/admin/lead-audits/$sessionId': typeof AuthenticatedAppAdminLeadAuditsSessionIdRoute
   '/app/admin/review/$ownerId': typeof AuthenticatedAppAdminReviewOwnerIdRoute
   '/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
+  '/app/admin/coaching': typeof AuthenticatedAppAdminCoachingIndexRoute
   '/app/admin/lead-audits': typeof AuthenticatedAppAdminLeadAuditsIndexRoute
   '/app/admin/resources': typeof AuthenticatedAppAdminResourcesIndexRoute
   '/app/admin/review': typeof AuthenticatedAppAdminReviewIndexRoute
@@ -396,6 +422,7 @@ export interface FileRoutesById {
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/free-audit/$token/': typeof FreeAuditTokenIndexRoute
   '/r/$token/': typeof RTokenIndexRoute
+  '/_authenticated/app/admin/coaching': typeof AuthenticatedAppAdminCoachingRouteWithChildren
   '/_authenticated/app/admin/lead-audits': typeof AuthenticatedAppAdminLeadAuditsRouteWithChildren
   '/_authenticated/app/admin/resources': typeof AuthenticatedAppAdminResourcesRouteWithChildren
   '/_authenticated/app/admin/review': typeof AuthenticatedAppAdminReviewRouteWithChildren
@@ -417,9 +444,11 @@ export interface FileRoutesById {
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/_authenticated/app/admin/': typeof AuthenticatedAppAdminIndexRoute
+  '/_authenticated/app/admin/coaching/$ownerId': typeof AuthenticatedAppAdminCoachingOwnerIdRoute
   '/_authenticated/app/admin/lead-audits/$sessionId': typeof AuthenticatedAppAdminLeadAuditsSessionIdRoute
   '/_authenticated/app/admin/review/$ownerId': typeof AuthenticatedAppAdminReviewOwnerIdRoute
   '/_authenticated/app/tools/$key/$': typeof AuthenticatedAppToolsKeySplatRoute
+  '/_authenticated/app/admin/coaching/': typeof AuthenticatedAppAdminCoachingIndexRoute
   '/_authenticated/app/admin/lead-audits/': typeof AuthenticatedAppAdminLeadAuditsIndexRoute
   '/_authenticated/app/admin/resources/': typeof AuthenticatedAppAdminResourcesIndexRoute
   '/_authenticated/app/admin/review/': typeof AuthenticatedAppAdminReviewIndexRoute
@@ -443,6 +472,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/free-audit/$token/'
     | '/r/$token/'
+    | '/app/admin/coaching'
     | '/app/admin/lead-audits'
     | '/app/admin/resources'
     | '/app/admin/review'
@@ -464,9 +494,11 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
     | '/app/admin/'
+    | '/app/admin/coaching/$ownerId'
     | '/app/admin/lead-audits/$sessionId'
     | '/app/admin/review/$ownerId'
     | '/app/tools/$key/$'
+    | '/app/admin/coaching/'
     | '/app/admin/lead-audits/'
     | '/app/admin/resources/'
     | '/app/admin/review/'
@@ -501,9 +533,11 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
     | '/app/admin'
+    | '/app/admin/coaching/$ownerId'
     | '/app/admin/lead-audits/$sessionId'
     | '/app/admin/review/$ownerId'
     | '/app/tools/$key/$'
+    | '/app/admin/coaching'
     | '/app/admin/lead-audits'
     | '/app/admin/resources'
     | '/app/admin/review'
@@ -526,6 +560,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/'
     | '/free-audit/$token/'
     | '/r/$token/'
+    | '/_authenticated/app/admin/coaching'
     | '/_authenticated/app/admin/lead-audits'
     | '/_authenticated/app/admin/resources'
     | '/_authenticated/app/admin/review'
@@ -547,9 +582,11 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
     | '/_authenticated/app/admin/'
+    | '/_authenticated/app/admin/coaching/$ownerId'
     | '/_authenticated/app/admin/lead-audits/$sessionId'
     | '/_authenticated/app/admin/review/$ownerId'
     | '/_authenticated/app/tools/$key/$'
+    | '/_authenticated/app/admin/coaching/'
     | '/_authenticated/app/admin/lead-audits/'
     | '/_authenticated/app/admin/resources/'
     | '/_authenticated/app/admin/review/'
@@ -698,6 +735,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAppAdminRoute
     }
+    '/_authenticated/app/admin/coaching': {
+      id: '/_authenticated/app/admin/coaching'
+      path: '/coaching'
+      fullPath: '/app/admin/coaching'
+      preLoaderRoute: typeof AuthenticatedAppAdminCoachingRouteImport
+      parentRoute: typeof AuthenticatedAppAdminRoute
+    }
     '/_authenticated/app/admin/lead-audits': {
       id: '/_authenticated/app/admin/lead-audits'
       path: '/lead-audits'
@@ -838,6 +882,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/app/admin/coaching/': {
+      id: '/_authenticated/app/admin/coaching/'
+      path: '/'
+      fullPath: '/app/admin/coaching/'
+      preLoaderRoute: typeof AuthenticatedAppAdminCoachingIndexRouteImport
+      parentRoute: typeof AuthenticatedAppAdminCoachingRoute
+    }
+    '/_authenticated/app/admin/coaching/$ownerId': {
+      id: '/_authenticated/app/admin/coaching/$ownerId'
+      path: '/$ownerId'
+      fullPath: '/app/admin/coaching/$ownerId'
+      preLoaderRoute: typeof AuthenticatedAppAdminCoachingOwnerIdRouteImport
+      parentRoute: typeof AuthenticatedAppAdminCoachingRoute
+    }
     '/_authenticated/app/admin/lead-audits/': {
       id: '/_authenticated/app/admin/lead-audits/'
       path: '/'
@@ -889,6 +947,24 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AuthenticatedAppAdminCoachingRouteChildren {
+  AuthenticatedAppAdminCoachingOwnerIdRoute: typeof AuthenticatedAppAdminCoachingOwnerIdRoute
+  AuthenticatedAppAdminCoachingIndexRoute: typeof AuthenticatedAppAdminCoachingIndexRoute
+}
+
+const AuthenticatedAppAdminCoachingRouteChildren: AuthenticatedAppAdminCoachingRouteChildren =
+  {
+    AuthenticatedAppAdminCoachingOwnerIdRoute:
+      AuthenticatedAppAdminCoachingOwnerIdRoute,
+    AuthenticatedAppAdminCoachingIndexRoute:
+      AuthenticatedAppAdminCoachingIndexRoute,
+  }
+
+const AuthenticatedAppAdminCoachingRouteWithChildren =
+  AuthenticatedAppAdminCoachingRoute._addFileChildren(
+    AuthenticatedAppAdminCoachingRouteChildren,
+  )
 
 interface AuthenticatedAppAdminLeadAuditsRouteChildren {
   AuthenticatedAppAdminLeadAuditsSessionIdRoute: typeof AuthenticatedAppAdminLeadAuditsSessionIdRoute
@@ -956,6 +1032,7 @@ const AuthenticatedAppAdminSopsRouteWithChildren =
   )
 
 interface AuthenticatedAppAdminRouteChildren {
+  AuthenticatedAppAdminCoachingRoute: typeof AuthenticatedAppAdminCoachingRouteWithChildren
   AuthenticatedAppAdminLeadAuditsRoute: typeof AuthenticatedAppAdminLeadAuditsRouteWithChildren
   AuthenticatedAppAdminResourcesRoute: typeof AuthenticatedAppAdminResourcesRouteWithChildren
   AuthenticatedAppAdminReviewRoute: typeof AuthenticatedAppAdminReviewRouteWithChildren
@@ -967,6 +1044,8 @@ interface AuthenticatedAppAdminRouteChildren {
 }
 
 const AuthenticatedAppAdminRouteChildren: AuthenticatedAppAdminRouteChildren = {
+  AuthenticatedAppAdminCoachingRoute:
+    AuthenticatedAppAdminCoachingRouteWithChildren,
   AuthenticatedAppAdminLeadAuditsRoute:
     AuthenticatedAppAdminLeadAuditsRouteWithChildren,
   AuthenticatedAppAdminResourcesRoute:

@@ -78,6 +78,13 @@
       "when": 1794838644790,
       "tag": "0010_coaching_sender_names",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1794839136656,
+      "tag": "0011_coaching_inbox",
+      "breakpoints": true
     }
   ]
 }

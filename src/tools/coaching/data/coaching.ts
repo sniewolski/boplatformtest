@@ -50,10 +50,11 @@ export function useCoachingMessages(ownerId: string | null) {
   });
 }
 
-export function useCoachingSenderNames(ownerId: string | null) {
+/** Owner view only: the RPC resolves names for the caller's own thread. */
+export function useCoachingSenderNames(ownerId: string | null, enabled = true) {
   return useQuery({
     queryKey: coachingKeys.senders(ownerId),
-    enabled: !!ownerId,
+    enabled: enabled && !!ownerId,
     refetchOnWindowFocus: true,
     queryFn: async (): Promise<Record<string, string | null>> => {
       const { data, error } = await supabase.rpc("get_coaching_sender_names");
@@ -63,14 +64,18 @@ export function useCoachingSenderNames(ownerId: string | null) {
   });
 }
 
-/** Inserts one message in the owner's own thread and returns the stored row. */
+/**
+ * Inserts one message in an owner's thread and returns the stored row.
+ * Owners send with senderId = ownerId; admins send with their own id.
+ */
 export async function insertCoachingMessage(
   ownerId: string,
+  senderId: string,
   body: string,
 ): Promise<CoachingMessage> {
   const { data, error } = await supabase
     .from("coaching_messages")
-    .insert({ owner_id: ownerId, sender_id: ownerId, body })
+    .insert({ owner_id: ownerId, sender_id: senderId, body })
     .select("id, owner_id, sender_id, body, created_at")
     .single();
   if (error) throw error;

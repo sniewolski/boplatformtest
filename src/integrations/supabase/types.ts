@@ -1510,6 +1510,20 @@ export type Database = {
           fact_text: string
         }[]
       }
+      get_coaching_inbox: {
+        Args: never
+        Returns: {
+          awaiting_reply: boolean
+          awaiting_since: string
+          email: string
+          full_name: string
+          last_message_at: string
+          last_message_body: string
+          owner_id: string
+          tasks_done: number
+          tasks_total: number
+        }[]
+      }
       get_coaching_sender_names: {
         Args: never
         Returns: {

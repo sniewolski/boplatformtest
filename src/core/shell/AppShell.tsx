@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode, type ComponentType } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, ChevronRight, LayoutDashboard, Lock, Shield, ClipboardList, FileText, FolderDown, LogOut, CalendarDays, MessagesSquare, Briefcase, Radio, PlayCircle, Inbox } from "lucide-react";
+import { Check, ChevronRight, LayoutDashboard, Lock, Shield, ClipboardList, FileText, FolderDown, LogOut, CalendarDays, MessagesSquare, Briefcase, Radio, PlayCircle, Inbox, Handshake } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toolRegistry } from "@/tools/registry";
@@ -9,6 +9,7 @@ import { useMyRoles } from "@/core/roles/useMyRoles";
 import { useBookingReadiness } from "@/lib/useBookingReadiness";
 import { useSosaSubmission } from "@/tools/sales-operating-system-audit/data/sosaSubmission";
 import { useWillAiSettings } from "@/lib/useWillAiSettings";
+import { countAwaitingReply, useCoachingInbox } from "@/lib/useCoachingInbox";
 import { useBusinessBriefNeedsAttention } from "@/core/business-brief/useBusinessBrief";
 import { logActivityEvent } from "@/lib/activity.functions";
 import { Button } from "@/components/ui/button";
@@ -55,6 +56,9 @@ export function AppShell({
   const isAdmin = roles.includes("admin");
   const isMentor = roles.includes("mentor");
   const showAdminSection = isAdmin || isMentor;
+  // Admin-only: polls every 30 s and on focus; the RPC rejects non-admins.
+  const { data: coachingInbox } = useCoachingInbox(isAdmin);
+  const coachingAwaiting = isAdmin ? countAwaitingReply(coachingInbox) : 0;
   const { isLoading: readinessLoading, incomplete } = useBookingReadiness(userId);
   const { data: willAiSettings } = useWillAiSettings();
   const willAiPausedForOwner =
@@ -430,7 +434,17 @@ export function AppShell({
                 className="w-full px-6 py-6 flex items-center justify-between text-left text-ink-muted font-semibold text-base cursor-pointer"
                 style={{ letterSpacing: "-0.02em" }}
               >
-                Admin
+                <span className="flex items-center gap-2">
+                  Admin
+                  {!adminOpen && coachingAwaiting > 0 && (
+                    <span
+                      className="min-w-5 h-5 px-1.5 rounded-full bg-[var(--red)] text-primary-foreground text-[11px] font-medium leading-5 text-center tabular-nums"
+                      aria-label={`${coachingAwaiting} coaching ${coachingAwaiting === 1 ? "thread" : "threads"} awaiting reply`}
+                    >
+                      {coachingAwaiting}
+                    </span>
+                  )}
+                </span>
                 <ChevronRight
                   className={`size-4 shrink-0 text-ink-muted transition-transform duration-150 motion-reduce:transition-none${
                     adminOpen ? " rotate-90" : ""
@@ -449,6 +463,24 @@ export function AppShell({
                 >
                   <Shield className="size-4" />
                   Admin
+                </Link>
+              )}
+              {isAdmin && (
+                <Link
+                  to="/app/admin/coaching"
+                  className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-ink hover:bg-background transition-colors"
+                  activeProps={{ className: "bg-background font-medium" }}
+                >
+                  <Handshake className="size-4" />
+                  <span className="flex-1">Coaching inbox</span>
+                  {coachingAwaiting > 0 && (
+                    <span
+                      className="min-w-5 h-5 px-1.5 rounded-full bg-[var(--red)] text-primary-foreground text-[11px] font-medium leading-5 text-center tabular-nums shrink-0"
+                      aria-label={`${coachingAwaiting} awaiting reply`}
+                    >
+                      {coachingAwaiting}
+                    </span>
+                  )}
                 </Link>
               )}
               <Link
