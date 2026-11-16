@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   useCoachingTasks,
+  useCoachingTasksLive,
   useSetCoachingTaskDone,
   type CoachingTask,
 } from "../data/coaching";
@@ -35,6 +36,7 @@ export function CoachingTasks({
   viewer: CoachingViewer;
 }) {
   const tasks = useCoachingTasks(ownerId);
+  useCoachingTasksLive(ownerId);
   const rows = tasks.data ?? [];
   const isAdminView = viewer === "admin";
 

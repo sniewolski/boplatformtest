@@ -1,11 +1,14 @@
 /**
  * Admin Coaching inbox: one row per owner from get_coaching_inbox()
  * (admin-only on the database side). Shared by the sidebar badge and the
- * inbox page so both read the same cache entry. Polls every 30 s and on
- * window focus until live updates land.
+ * inbox page so both read the same cache entry. Any new coaching message
+ * (admins receive all of them via Realtime) refetches the inbox; it also
+ * refetches on window focus and every 2 minutes as a safety net in case the
+ * live connection drops.
  */
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useCoachingRealtime } from "@/tools/coaching/lib/realtime";
 
 export type CoachingInboxRow = {
   owner_id: string;
@@ -21,9 +24,20 @@ export type CoachingInboxRow = {
 
 export const coachingInboxKey = ["coaching", "inbox"] as const;
 
-export const COACHING_INBOX_POLL_MS = 30_000;
+export const COACHING_INBOX_POLL_MS = 120_000;
 
+/** Pass `enabled` only for admins: the inbox and its live feed are admin-only. */
 export function useCoachingInbox(enabled: boolean) {
+  const queryClient = useQueryClient();
+  useCoachingRealtime({
+    name: "coaching-inbox",
+    table: "coaching_messages",
+    listen: [{ event: "INSERT" }],
+    enabled,
+    onChange: () => {
+      queryClient.invalidateQueries({ queryKey: coachingInboxKey });
+    },
+  });
   return useQuery({
     queryKey: coachingInboxKey,
     enabled,

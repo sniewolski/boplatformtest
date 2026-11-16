@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import {
   coachingKeys,
   insertCoachingMessage,
+  mergeCoachingMessage,
   useCoachingMessages,
+  useCoachingMessagesLive,
   useCoachingSenderNames,
   type CoachingMessage,
 } from "../data/coaching";
@@ -58,14 +60,41 @@ export function CoachingChat({
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState<PendingMessage[]>([]);
 
+  // Live new messages. When the viewer's own message comes back, drop the
+  // matching optimistic copy so it never shows twice.
+  useCoachingMessagesLive(ownerId, (row) => {
+    if (row.sender_id !== viewerId) return;
+    setPending((list) => {
+      const i = list.findIndex((p) => p.status === "sending" && p.body === row.body);
+      return i === -1 ? list : [...list.slice(0, i), ...list.slice(i + 1)];
+    });
+  });
+
   // Auto-scroll to the newest message on load, on send, on a failed send and when re-shown.
+  // Other new messages (live or refetched) only scroll if the reader is already at the bottom.
   const pendingStatusKey = pending.map((p) => p.status).join(",");
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
+  const atBottomRef = useRef(true);
+  const scrollToBottom = () => {
     const el = scrollRef.current;
     if (!el) return;
     el.scrollTop = el.scrollHeight;
-  }, [rows.length, pending.length, pendingStatusKey, visible]);
+    atBottomRef.current = true;
+  };
+  const handleScroll = () => {
+    const el = scrollRef.current;
+    if (!el || el.clientHeight === 0) return;
+    atBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+  };
+  const prevRowCount = useRef(0);
+  useEffect(() => {
+    const wasEmpty = prevRowCount.current === 0;
+    prevRowCount.current = rows.length;
+    if (wasEmpty || atBottomRef.current) scrollToBottom();
+  }, [rows.length]);
+  useEffect(() => {
+    scrollToBottom();
+  }, [pending.length, pendingStatusKey, visible]);
 
   // Grow the composer with its content, up to the CSS max height.
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -83,9 +112,8 @@ export function CoachingChat({
     );
     try {
       const saved = await insertCoachingMessage(ownerId, viewerId, item.body);
-      queryClient.setQueryData<CoachingMessage[]>(
-        coachingKeys.messages(ownerId),
-        (list) => (list?.some((m) => m.id === saved.id) ? list : [...(list ?? []), saved]),
+      queryClient.setQueryData<CoachingMessage[]>(coachingKeys.messages(ownerId), (list) =>
+        mergeCoachingMessage(list, saved),
       );
       setPending((list) => list.filter((p) => p.tempId !== item.tempId));
       queryClient.invalidateQueries({ queryKey: coachingKeys.messages(ownerId) });
@@ -126,6 +154,7 @@ export function CoachingChat({
     <div className="flex-1 min-h-0 flex flex-col">
       <div
         ref={scrollRef}
+        onScroll={handleScroll}
         className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 lg:px-10 py-6"
         aria-live="polite"
       >

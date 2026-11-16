@@ -85,6 +85,13 @@
       "when": 1794839136656,
       "tag": "0011_coaching_inbox",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1794840801169,
+      "tag": "0012_coaching_realtime",
+      "breakpoints": true
     }
   ]
 }

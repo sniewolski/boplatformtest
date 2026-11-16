@@ -2,13 +2,15 @@
  * The ONLY module that talks to the coaching tables for the owner's page.
  *
  * - Messages: this owner's thread, oldest first. Refetched on window focus
- *   and after each send (no live updates yet).
+ *   and after each send; new rows also arrive live (useCoachingMessagesLive).
  * - Sender names: via get_coaching_sender_names() because owners cannot
  *   read admin profiles directly.
  * - Tasks: read-only list; ticking goes through set_coaching_task_done().
+ *   Any task change for the thread refetches the list (useCoachingTasksLive).
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useCoachingRealtime } from "../lib/realtime";
 
 export type CoachingMessage = {
   id: string;
@@ -127,6 +129,81 @@ export function useSetCoachingTaskDone(ownerId: string | null) {
       if (ctx?.previous) queryClient.setQueryData(key, ctx.previous);
     },
     onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: key });
+    },
+  });
+}
+
+/** Adds a stored message to the cached thread once, keeping oldest-first order. */
+export function mergeCoachingMessage(
+  list: CoachingMessage[] | undefined,
+  row: CoachingMessage,
+): CoachingMessage[] {
+  const current = list ?? [];
+  if (current.some((m) => m.id === row.id)) return current;
+  return [...current, row].sort(
+    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+  );
+}
+
+/**
+ * Live new messages for one thread (owner page and admin thread page).
+ * Each new row is merged into the cached thread; `onInsert` lets the chat
+ * reconcile its own optimistic message with the stored one.
+ */
+export function useCoachingMessagesLive(
+  ownerId: string | null,
+  onInsert?: (row: CoachingMessage) => void,
+) {
+  const queryClient = useQueryClient();
+  useCoachingRealtime({
+    name: `coaching-messages-${ownerId ?? "none"}`,
+    table: "coaching_messages",
+    listen: [{ event: "INSERT", filter: `owner_id=eq.${ownerId}` }],
+    enabled: !!ownerId,
+    onChange: (payload) => {
+      const row = payload.new as CoachingMessage;
+      if (!row?.id || row.owner_id !== ownerId) return;
+      queryClient.setQueryData<CoachingMessage[]>(coachingKeys.messages(ownerId), (list) =>
+        mergeCoachingMessage(list, row),
+      );
+      // Owner page: a staff member who hasn't written before needs a name lookup.
+      const names = queryClient.getQueryData<Record<string, string | null>>(
+        coachingKeys.senders(ownerId),
+      );
+      if (names && row.sender_id !== ownerId && !(row.sender_id in names)) {
+        queryClient.invalidateQueries({ queryKey: coachingKeys.senders(ownerId) });
+      }
+      onInsert?.(row);
+    },
+  });
+}
+
+/**
+ * Live task changes for one thread: any insert, update or delete refetches
+ * that owner's task list. Realtime cannot filter deletes (and with RLS only
+ * the id is sent), so a delete refetches when the id is in this list.
+ */
+export function useCoachingTasksLive(ownerId: string | null) {
+  const queryClient = useQueryClient();
+  const key = coachingKeys.tasks(ownerId);
+  useCoachingRealtime({
+    name: `coaching-tasks-${ownerId ?? "none"}`,
+    table: "coaching_tasks",
+    listen: [
+      { event: "INSERT", filter: `owner_id=eq.${ownerId}` },
+      { event: "UPDATE", filter: `owner_id=eq.${ownerId}` },
+      { event: "DELETE" },
+    ],
+    enabled: !!ownerId,
+    onChange: (payload) => {
+      if (payload.eventType === "DELETE") {
+        const old = payload.old as Partial<CoachingTask>;
+        const cached = queryClient.getQueryData<CoachingTask[]>(key);
+        const ours =
+          old.owner_id === ownerId || (!!old.id && !!cached?.some((t) => t.id === old.id));
+        if (!ours) return;
+      }
       queryClient.invalidateQueries({ queryKey: key });
     },
   });
