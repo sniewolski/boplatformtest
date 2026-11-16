@@ -24,7 +24,7 @@ const CLAIM_MAX_AGE_MS = 60 * 60_000
 
 const ok = (body: Record<string, unknown> = { ok: true }) => Response.json(body)
 
-export const Route = createFileRoute('/lovable/email/coaching/reply-notify')({
+export const Route = createFileRoute('/api/public/coaching/reply-notify')({
   server: {
     handlers: {
       POST: async ({ request }) => {

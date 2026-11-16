@@ -42,6 +42,7 @@ import { Route as ApiPublicAuditLeadSetCurrencyRouteImport } from './routes/api/
 import { Route as ApiPublicAuditLeadStartRouteImport } from './routes/api/public/audit-lead/start'
 import { Route as ApiPublicAuditLeadStateRouteImport } from './routes/api/public/audit-lead/state'
 import { Route as ApiPublicAuditLeadSubmitSectionRouteImport } from './routes/api/public/audit-lead/submit-section'
+import { Route as ApiPublicCoachingReplyNotifyRouteImport } from './routes/api/public/coaching/reply-notify'
 import { Route as ApiPublicRCaptureRouteImport } from './routes/api/public/r/capture'
 import { Route as ApiPublicRCompleteRouteImport } from './routes/api/public/r/complete'
 import { Route as ApiPublicRSaveRouteImport } from './routes/api/public/r/save'
@@ -49,7 +50,6 @@ import { Route as ApiPublicRStateRouteImport } from './routes/api/public/r/state
 import { Route as ApiPublicRValidateRouteImport } from './routes/api/public/r/validate'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
-import { Route as LovableEmailCoachingReplyNotifyRouteImport } from './routes/lovable/email/coaching/reply-notify'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
@@ -242,6 +242,12 @@ const ApiPublicAuditLeadSubmitSectionRoute =
     path: '/api/public/audit-lead/submit-section',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCoachingReplyNotifyRoute =
+  ApiPublicCoachingReplyNotifyRouteImport.update({
+    id: '/api/public/coaching/reply-notify',
+    path: '/api/public/coaching/reply-notify',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicRCaptureRoute = ApiPublicRCaptureRouteImport.update({
   id: '/api/public/r/capture',
   path: '/api/public/r/capture',
@@ -277,12 +283,6 @@ const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
   path: '/lovable/email/auth/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LovableEmailCoachingReplyNotifyRoute =
-  LovableEmailCoachingReplyNotifyRouteImport.update({
-    id: '/lovable/email/coaching/reply-notify',
-    path: '/lovable/email/coaching/reply-notify',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
     id: '/lovable/email/queue/process',
@@ -388,6 +388,7 @@ export interface FileRoutesByFullPath {
   '/api/public/audit-lead/start': typeof ApiPublicAuditLeadStartRoute
   '/api/public/audit-lead/state': typeof ApiPublicAuditLeadStateRoute
   '/api/public/audit-lead/submit-section': typeof ApiPublicAuditLeadSubmitSectionRoute
+  '/api/public/coaching/reply-notify': typeof ApiPublicCoachingReplyNotifyRoute
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
   '/api/public/r/save': typeof ApiPublicRSaveRoute
@@ -395,7 +396,6 @@ export interface FileRoutesByFullPath {
   '/api/public/r/validate': typeof ApiPublicRValidateRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
-  '/lovable/email/coaching/reply-notify': typeof LovableEmailCoachingReplyNotifyRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
@@ -433,6 +433,7 @@ export interface FileRoutesByTo {
   '/api/public/audit-lead/start': typeof ApiPublicAuditLeadStartRoute
   '/api/public/audit-lead/state': typeof ApiPublicAuditLeadStateRoute
   '/api/public/audit-lead/submit-section': typeof ApiPublicAuditLeadSubmitSectionRoute
+  '/api/public/coaching/reply-notify': typeof ApiPublicCoachingReplyNotifyRoute
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
   '/api/public/r/save': typeof ApiPublicRSaveRoute
@@ -440,7 +441,6 @@ export interface FileRoutesByTo {
   '/api/public/r/validate': typeof ApiPublicRValidateRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
-  '/lovable/email/coaching/reply-notify': typeof LovableEmailCoachingReplyNotifyRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
@@ -489,6 +489,7 @@ export interface FileRoutesById {
   '/api/public/audit-lead/start': typeof ApiPublicAuditLeadStartRoute
   '/api/public/audit-lead/state': typeof ApiPublicAuditLeadStateRoute
   '/api/public/audit-lead/submit-section': typeof ApiPublicAuditLeadSubmitSectionRoute
+  '/api/public/coaching/reply-notify': typeof ApiPublicCoachingReplyNotifyRoute
   '/api/public/r/capture': typeof ApiPublicRCaptureRoute
   '/api/public/r/complete': typeof ApiPublicRCompleteRoute
   '/api/public/r/save': typeof ApiPublicRSaveRoute
@@ -496,7 +497,6 @@ export interface FileRoutesById {
   '/api/public/r/validate': typeof ApiPublicRValidateRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
-  '/lovable/email/coaching/reply-notify': typeof LovableEmailCoachingReplyNotifyRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
@@ -545,6 +545,7 @@ export interface FileRouteTypes {
     | '/api/public/audit-lead/start'
     | '/api/public/audit-lead/state'
     | '/api/public/audit-lead/submit-section'
+    | '/api/public/coaching/reply-notify'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
     | '/api/public/r/save'
@@ -552,7 +553,6 @@ export interface FileRouteTypes {
     | '/api/public/r/validate'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
-    | '/lovable/email/coaching/reply-notify'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
@@ -590,6 +590,7 @@ export interface FileRouteTypes {
     | '/api/public/audit-lead/start'
     | '/api/public/audit-lead/state'
     | '/api/public/audit-lead/submit-section'
+    | '/api/public/coaching/reply-notify'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
     | '/api/public/r/save'
@@ -597,7 +598,6 @@ export interface FileRouteTypes {
     | '/api/public/r/validate'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
-    | '/lovable/email/coaching/reply-notify'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
@@ -645,6 +645,7 @@ export interface FileRouteTypes {
     | '/api/public/audit-lead/start'
     | '/api/public/audit-lead/state'
     | '/api/public/audit-lead/submit-section'
+    | '/api/public/coaching/reply-notify'
     | '/api/public/r/capture'
     | '/api/public/r/complete'
     | '/api/public/r/save'
@@ -652,7 +653,6 @@ export interface FileRouteTypes {
     | '/api/public/r/validate'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
-    | '/lovable/email/coaching/reply-notify'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
@@ -682,6 +682,7 @@ export interface RootRouteChildren {
   ApiPublicAuditLeadStartRoute: typeof ApiPublicAuditLeadStartRoute
   ApiPublicAuditLeadStateRoute: typeof ApiPublicAuditLeadStateRoute
   ApiPublicAuditLeadSubmitSectionRoute: typeof ApiPublicAuditLeadSubmitSectionRoute
+  ApiPublicCoachingReplyNotifyRoute: typeof ApiPublicCoachingReplyNotifyRoute
   ApiPublicRCaptureRoute: typeof ApiPublicRCaptureRoute
   ApiPublicRCompleteRoute: typeof ApiPublicRCompleteRoute
   ApiPublicRSaveRoute: typeof ApiPublicRSaveRoute
@@ -689,7 +690,6 @@ export interface RootRouteChildren {
   ApiPublicRValidateRoute: typeof ApiPublicRValidateRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
-  LovableEmailCoachingReplyNotifyRoute: typeof LovableEmailCoachingReplyNotifyRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
   LovableEmailTransactionalSendRoute: typeof LovableEmailTransactionalSendRoute
@@ -928,6 +928,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAuditLeadSubmitSectionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/coaching/reply-notify': {
+      id: '/api/public/coaching/reply-notify'
+      path: '/api/public/coaching/reply-notify'
+      fullPath: '/api/public/coaching/reply-notify'
+      preLoaderRoute: typeof ApiPublicCoachingReplyNotifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/r/capture': {
       id: '/api/public/r/capture'
       path: '/api/public/r/capture'
@@ -975,13 +982,6 @@ declare module '@tanstack/react-router' {
       path: '/lovable/email/auth/webhook'
       fullPath: '/lovable/email/auth/webhook'
       preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/coaching/reply-notify': {
-      id: '/lovable/email/coaching/reply-notify'
-      path: '/lovable/email/coaching/reply-notify'
-      fullPath: '/lovable/email/coaching/reply-notify'
-      preLoaderRoute: typeof LovableEmailCoachingReplyNotifyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lovable/email/queue/process': {
@@ -1263,6 +1263,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAuditLeadStartRoute: ApiPublicAuditLeadStartRoute,
   ApiPublicAuditLeadStateRoute: ApiPublicAuditLeadStateRoute,
   ApiPublicAuditLeadSubmitSectionRoute: ApiPublicAuditLeadSubmitSectionRoute,
+  ApiPublicCoachingReplyNotifyRoute: ApiPublicCoachingReplyNotifyRoute,
   ApiPublicRCaptureRoute: ApiPublicRCaptureRoute,
   ApiPublicRCompleteRoute: ApiPublicRCompleteRoute,
   ApiPublicRSaveRoute: ApiPublicRSaveRoute,
@@ -1270,7 +1271,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicRValidateRoute: ApiPublicRValidateRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
-  LovableEmailCoachingReplyNotifyRoute: LovableEmailCoachingReplyNotifyRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
   LovableEmailTransactionalSendRoute: LovableEmailTransactionalSendRoute,

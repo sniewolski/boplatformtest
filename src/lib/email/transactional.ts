@@ -6,7 +6,7 @@
  * service-role client.
  */
 import * as React from 'react'
-import { render } from '@react-email/render'
+import { render } from 'react-email'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { TEMPLATES } from '@/lib/email-templates/registry'
 
