@@ -107,14 +107,38 @@ export const setAccountStatus = createServerFn({ method: "POST" })
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Suspension is enforced at the auth level, not just in the app UI:
+    // a banned user can't sign in and can't refresh an existing session.
+    // Ban first, so a failure leaves the account status unchanged.
+    const ban = banDurationFor(data.status);
+    const { error: banError } = await supabaseAdmin.auth.admin.updateUserById(
+      data.userId,
+      { ban_duration: ban },
+    );
+    if (banError) throw new Error(`Could not update sign-in access: ${banError.message}`);
+
     const { error } = await supabaseAdmin
       .from("profiles")
       .update({ account_status: data.status })
       .eq("id", data.userId);
-    if (error) throw new Error(error.message);
+    if (error) {
+      // Keep auth and profile in step: undo the ban change.
+      await supabaseAdmin.auth.admin
+        .updateUserById(data.userId, {
+          ban_duration: banDurationFor(data.status === "suspended" ? "active" : "suspended"),
+        })
+        .catch(() => {});
+      throw new Error(error.message);
+    }
 
     return { ok: true };
   });
+
+/** ~100 years for suspended (treated as permanent); "none" lifts the ban. */
+export function banDurationFor(status: "active" | "suspended"): string {
+  return status === "suspended" ? "876000h" : "none";
+}
 
 export const deleteUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
