@@ -125,15 +125,15 @@ function InboxRow({ row, meta }: { row: CoachingInboxRow; meta: React.ReactNode 
       <Link
         to="/app/admin/coaching/$ownerId"
         params={{ ownerId: row.owner_id }}
-        className="flex items-center gap-4 px-5 py-4 hover:bg-[var(--surface-raised)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl transition-colors"
+        className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:gap-4 px-5 py-4 hover:bg-[var(--surface-raised)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl transition-colors"
       >
         <div className="flex-1 min-w-0 flex flex-col gap-0.5">
-          <span className="text-sm font-medium text-ink truncate">{ownerLabel(row)}</span>
-          <span className="text-sm text-ink-muted truncate">
+          <span className="text-sm font-medium text-ink break-words sm:truncate">{ownerLabel(row)}</span>
+          <span className="text-sm text-ink-muted line-clamp-2 break-words sm:line-clamp-none sm:truncate">
             {row.last_message_body ?? "No messages yet"}
           </span>
         </div>
-        <div className="shrink-0 flex flex-col items-end gap-1">
+        <div className="shrink-0 flex flex-row flex-wrap gap-x-3 gap-y-1 sm:flex-col sm:items-end sm:gap-1">
           {meta}
           {row.tasks_total > 0 && (
             <span className="text-xs text-ink-muted tabular-nums whitespace-nowrap">

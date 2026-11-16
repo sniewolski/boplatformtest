@@ -182,7 +182,7 @@ function AdminTaskList({ ownerId, rows }: { ownerId: string; rows: CoachingTask[
         {rows.map((t) => {
           const editing = editingId === t.id;
           return (
-            <li key={t.id} className="group flex items-start gap-3 rounded-md py-2">
+            <li key={t.id} className="group flex flex-wrap items-start gap-x-3 gap-y-1 rounded-md py-2">
               <Checkbox
                 checked={t.done}
                 disabled
@@ -190,7 +190,7 @@ function AdminTaskList({ ownerId, rows }: { ownerId: string; rows: CoachingTask[
                 className="mt-0.5 disabled:cursor-default"
               />
               {editing ? (
-                <div className="flex-1 min-w-0 flex items-center gap-1">
+                <div className="flex-1 min-w-[7rem] flex flex-wrap items-center gap-1">
                   <label htmlFor={`coaching-edit-${t.id}`} className="sr-only">
                     Task title
                   </label>
@@ -208,7 +208,7 @@ function AdminTaskList({ ownerId, rows }: { ownerId: string; rows: CoachingTask[
                         cancelEdit();
                       }
                     }}
-                    className="h-8 bg-background"
+                    className="h-8 bg-background flex-1 min-w-[7rem]"
                   />
                   <Button
                     type="button"
@@ -235,13 +235,13 @@ function AdminTaskList({ ownerId, rows }: { ownerId: string; rows: CoachingTask[
               ) : (
                 <>
                   <span
-                    className={`flex-1 min-w-0 text-sm leading-snug break-words ${
+                    className={`flex-1 min-w-[7rem] text-sm leading-snug break-words ${
                       t.done ? "text-ink-muted line-through" : "text-ink"
                     }`}
                   >
                     {t.title}
                   </span>
-                  <div className="flex items-center gap-0.5 shrink-0 -mt-1">
+                  <div className="flex items-center gap-0.5 shrink-0 -mt-1 ml-auto">
                     <Button
                       type="button"
                       variant="ghost"
