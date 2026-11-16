@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import logoAsset from "@/assets/logo.png.asset.json";
+import { PAUSED_MESSAGE, isBannedError } from "@/lib/authErrors";
 
 export const Route = createFileRoute("/login")({
   ssr: false,
@@ -40,6 +41,10 @@ function LoginPage() {
         email: trimmed,
         options: { shouldCreateUser: false },
       });
+      if (otpErr && isBannedError(otpErr)) {
+        setError(PAUSED_MESSAGE);
+        return;
+      }
       if (otpErr) throw new Error(otpErr.message);
       setNotice(`We've sent a 6-digit code to ${trimmed}. It expires shortly.`);
       setStep("code");
@@ -61,6 +66,10 @@ function LoginPage() {
         token: trimmed,
         type: "email",
       });
+      if (verifyErr && isBannedError(verifyErr)) {
+        setError(PAUSED_MESSAGE);
+        return;
+      }
       if (verifyErr) throw new Error(verifyErr.message);
       try {
         const sessionId = crypto.randomUUID();
