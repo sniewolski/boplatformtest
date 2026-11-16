@@ -71,6 +71,13 @@
       "when": 1794838139430,
       "tag": "0009_coaching_tab",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794838644790,
+      "tag": "0010_coaching_sender_names",
+      "breakpoints": true
     }
   ]
 }

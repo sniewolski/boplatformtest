@@ -1,4 +1,4 @@
-import { MessagesSquare } from "lucide-react";
+import { Handshake } from "lucide-react";
 import type { ToolManifest } from "../registry";
 import { CoachingApp } from "./routes/App";
 
@@ -6,10 +6,10 @@ export const coachingManifest: ToolManifest = {
   key: "coaching",
   name: "Coaching",
   description: "Your private thread with the team, plus your coaching tasks.",
-  icon: MessagesSquare,
+  icon: Handshake,
   navEntry: {
     label: "Coaching",
-    icon: MessagesSquare,
+    icon: Handshake,
     navGroup: "resources",
   },
   Component: CoachingApp,

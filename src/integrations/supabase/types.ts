@@ -1510,6 +1510,13 @@ export type Database = {
           fact_text: string
         }[]
       }
+      get_coaching_sender_names: {
+        Args: never
+        Returns: {
+          full_name: string
+          id: string
+        }[]
+      }
       get_ingest_cron_token: { Args: never; Returns: string }
       has_role: {
         Args: {
