@@ -213,6 +213,30 @@ export type Database = {
         }
         Relationships: []
       }
+      coaching_notifications: {
+        Row: {
+          email_queued_at: string | null
+          last_message_id: string
+          last_notified_at: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          email_queued_at?: string | null
+          last_message_id: string
+          last_notified_at: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          email_queued_at?: string | null
+          last_message_id?: string
+          last_notified_at?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       coaching_tasks: {
         Row: {
           created_at: string

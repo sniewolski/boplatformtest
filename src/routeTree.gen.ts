@@ -13,6 +13,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as FreeAuditRouteImport } from './routes/free-audit'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
+import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as FreeAuditIndexRouteImport } from './routes/free-audit.index'
 import { Route as FreeAuditTokenRouteImport } from './routes/free-audit.$token'
 import { Route as RTokenRouteImport } from './routes/r.$token'
@@ -23,6 +25,7 @@ import { Route as AuthenticatedAppBusinessBriefRouteImport } from './routes/_aut
 import { Route as FreeAuditTokenIndexRouteImport } from './routes/free-audit.$token.index'
 import { Route as FreeAuditTokenSectionKeyRouteImport } from './routes/free-audit.$token.$sectionKey'
 import { Route as FreeAuditTokenDoneRouteImport } from './routes/free-audit.$token.done'
+import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as RTokenIndexRouteImport } from './routes/r.$token.index'
 import { Route as RTokenSplatRouteImport } from './routes/r.$token.$'
 import { Route as AuthenticatedAppAdminIndexRouteImport } from './routes/_authenticated/app.admin.index'
@@ -46,7 +49,10 @@ import { Route as ApiPublicRStateRouteImport } from './routes/api/public/r/state
 import { Route as ApiPublicRValidateRouteImport } from './routes/api/public/r/validate'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailCoachingReplyNotifyRouteImport } from './routes/lovable/email/coaching/reply-notify'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
+import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as AuthenticatedAppAdminCoachingIndexRouteImport } from './routes/_authenticated/app.admin.coaching.index'
 import { Route as AuthenticatedAppAdminCoachingOwnerIdRouteImport } from './routes/_authenticated/app.admin.coaching.$ownerId'
 import { Route as AuthenticatedAppAdminLeadAuditsIndexRouteImport } from './routes/_authenticated/app.admin.lead-audits.index'
@@ -74,6 +80,16 @@ const FreeAuditRoute = FreeAuditRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UnsubscribeRoute = UnsubscribeRouteImport.update({
+  id: '/unsubscribe',
+  path: '/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
+  id: '/email/unsubscribe',
+  path: '/email/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FreeAuditIndexRoute = FreeAuditIndexRouteImport.update({
@@ -128,6 +144,11 @@ const FreeAuditTokenDoneRoute = FreeAuditTokenDoneRouteImport.update({
   id: '/done',
   path: '/done',
   getParentRoute: () => FreeAuditTokenRoute,
+} as any)
+const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
+  id: '/lovable/email/suppression',
+  path: '/lovable/email/suppression',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const RTokenIndexRoute = RTokenIndexRouteImport.update({
   id: '/',
@@ -256,10 +277,28 @@ const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
   path: '/lovable/email/auth/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LovableEmailCoachingReplyNotifyRoute =
+  LovableEmailCoachingReplyNotifyRouteImport.update({
+    id: '/lovable/email/coaching/reply-notify',
+    path: '/lovable/email/coaching/reply-notify',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
     id: '/lovable/email/queue/process',
     path: '/lovable/email/queue/process',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailTransactionalSendRoute =
+  LovableEmailTransactionalSendRouteImport.update({
+    id: '/lovable/email/transactional/send',
+    path: '/lovable/email/transactional/send',
     getParentRoute: () => rootRouteImport,
   } as any)
 const AuthenticatedAppAdminCoachingIndexRoute =
@@ -321,6 +360,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/free-audit': typeof FreeAuditRouteWithChildren
   '/login': typeof LoginRoute
+  '/unsubscribe': typeof UnsubscribeRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/free-audit/$token': typeof FreeAuditTokenRouteWithChildren
   '/r/$token': typeof RTokenRouteWithChildren
   '/free-audit/': typeof FreeAuditIndexRoute
@@ -329,6 +370,7 @@ export interface FileRoutesByFullPath {
   '/app/business-brief': typeof AuthenticatedAppBusinessBriefRoute
   '/free-audit/$token/$sectionKey': typeof FreeAuditTokenSectionKeyRoute
   '/free-audit/$token/done': typeof FreeAuditTokenDoneRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/r/$token/$': typeof RTokenSplatRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/free-audit/$token/': typeof FreeAuditTokenIndexRoute
@@ -353,7 +395,10 @@ export interface FileRoutesByFullPath {
   '/api/public/r/validate': typeof ApiPublicRValidateRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
+  '/lovable/email/coaching/reply-notify': typeof LovableEmailCoachingReplyNotifyRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/app/admin/': typeof AuthenticatedAppAdminIndexRoute
   '/app/admin/coaching/$ownerId': typeof AuthenticatedAppAdminCoachingOwnerIdRoute
   '/app/admin/lead-audits/$sessionId': typeof AuthenticatedAppAdminLeadAuditsSessionIdRoute
@@ -368,11 +413,14 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/unsubscribe': typeof UnsubscribeRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/free-audit': typeof FreeAuditIndexRoute
   '/app/book-call': typeof AuthenticatedAppBookCallRoute
   '/app/business-brief': typeof AuthenticatedAppBusinessBriefRoute
   '/free-audit/$token/$sectionKey': typeof FreeAuditTokenSectionKeyRoute
   '/free-audit/$token/done': typeof FreeAuditTokenDoneRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/r/$token/$': typeof RTokenSplatRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/free-audit/$token': typeof FreeAuditTokenIndexRoute
@@ -392,7 +440,10 @@ export interface FileRoutesByTo {
   '/api/public/r/validate': typeof ApiPublicRValidateRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
+  '/lovable/email/coaching/reply-notify': typeof LovableEmailCoachingReplyNotifyRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/app/admin': typeof AuthenticatedAppAdminIndexRoute
   '/app/admin/coaching/$ownerId': typeof AuthenticatedAppAdminCoachingOwnerIdRoute
   '/app/admin/lead-audits/$sessionId': typeof AuthenticatedAppAdminLeadAuditsSessionIdRoute
@@ -410,6 +461,8 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/free-audit': typeof FreeAuditRouteWithChildren
   '/login': typeof LoginRoute
+  '/unsubscribe': typeof UnsubscribeRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/free-audit/$token': typeof FreeAuditTokenRouteWithChildren
   '/r/$token': typeof RTokenRouteWithChildren
   '/free-audit/': typeof FreeAuditIndexRoute
@@ -418,6 +471,7 @@ export interface FileRoutesById {
   '/_authenticated/app/business-brief': typeof AuthenticatedAppBusinessBriefRoute
   '/free-audit/$token/$sectionKey': typeof FreeAuditTokenSectionKeyRoute
   '/free-audit/$token/done': typeof FreeAuditTokenDoneRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/r/$token/$': typeof RTokenSplatRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/free-audit/$token/': typeof FreeAuditTokenIndexRoute
@@ -442,7 +496,10 @@ export interface FileRoutesById {
   '/api/public/r/validate': typeof ApiPublicRValidateRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
+  '/lovable/email/coaching/reply-notify': typeof LovableEmailCoachingReplyNotifyRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/_authenticated/app/admin/': typeof AuthenticatedAppAdminIndexRoute
   '/_authenticated/app/admin/coaching/$ownerId': typeof AuthenticatedAppAdminCoachingOwnerIdRoute
   '/_authenticated/app/admin/lead-audits/$sessionId': typeof AuthenticatedAppAdminLeadAuditsSessionIdRoute
@@ -460,6 +517,8 @@ export interface FileRouteTypes {
     | '/'
     | '/free-audit'
     | '/login'
+    | '/unsubscribe'
+    | '/email/unsubscribe'
     | '/free-audit/$token'
     | '/r/$token'
     | '/free-audit/'
@@ -468,6 +527,7 @@ export interface FileRouteTypes {
     | '/app/business-brief'
     | '/free-audit/$token/$sectionKey'
     | '/free-audit/$token/done'
+    | '/lovable/email/suppression'
     | '/r/$token/$'
     | '/app/'
     | '/free-audit/$token/'
@@ -492,7 +552,10 @@ export interface FileRouteTypes {
     | '/api/public/r/validate'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
+    | '/lovable/email/coaching/reply-notify'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
     | '/app/admin/'
     | '/app/admin/coaching/$ownerId'
     | '/app/admin/lead-audits/$sessionId'
@@ -507,11 +570,14 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/unsubscribe'
+    | '/email/unsubscribe'
     | '/free-audit'
     | '/app/book-call'
     | '/app/business-brief'
     | '/free-audit/$token/$sectionKey'
     | '/free-audit/$token/done'
+    | '/lovable/email/suppression'
     | '/r/$token/$'
     | '/app'
     | '/free-audit/$token'
@@ -531,7 +597,10 @@ export interface FileRouteTypes {
     | '/api/public/r/validate'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
+    | '/lovable/email/coaching/reply-notify'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
     | '/app/admin'
     | '/app/admin/coaching/$ownerId'
     | '/app/admin/lead-audits/$sessionId'
@@ -548,6 +617,8 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/free-audit'
     | '/login'
+    | '/unsubscribe'
+    | '/email/unsubscribe'
     | '/free-audit/$token'
     | '/r/$token'
     | '/free-audit/'
@@ -556,6 +627,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/business-brief'
     | '/free-audit/$token/$sectionKey'
     | '/free-audit/$token/done'
+    | '/lovable/email/suppression'
     | '/r/$token/$'
     | '/_authenticated/app/'
     | '/free-audit/$token/'
@@ -580,7 +652,10 @@ export interface FileRouteTypes {
     | '/api/public/r/validate'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
+    | '/lovable/email/coaching/reply-notify'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
     | '/_authenticated/app/admin/'
     | '/_authenticated/app/admin/coaching/$ownerId'
     | '/_authenticated/app/admin/lead-audits/$sessionId'
@@ -598,7 +673,10 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   FreeAuditRoute: typeof FreeAuditRouteWithChildren
   LoginRoute: typeof LoginRoute
+  UnsubscribeRoute: typeof UnsubscribeRoute
+  EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   RTokenRoute: typeof RTokenRouteWithChildren
+  LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicAuditLeadSaveDraftRoute: typeof ApiPublicAuditLeadSaveDraftRoute
   ApiPublicAuditLeadSetCurrencyRoute: typeof ApiPublicAuditLeadSetCurrencyRoute
   ApiPublicAuditLeadStartRoute: typeof ApiPublicAuditLeadStartRoute
@@ -611,7 +689,10 @@ export interface RootRouteChildren {
   ApiPublicRValidateRoute: typeof ApiPublicRValidateRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
+  LovableEmailCoachingReplyNotifyRoute: typeof LovableEmailCoachingReplyNotifyRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
+  LovableEmailTransactionalSendRoute: typeof LovableEmailTransactionalSendRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -642,6 +723,20 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/unsubscribe': {
+      id: '/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/unsubscribe'
+      preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/email/unsubscribe': {
+      id: '/email/unsubscribe'
+      path: '/email/unsubscribe'
+      fullPath: '/email/unsubscribe'
+      preLoaderRoute: typeof EmailUnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/free-audit/': {
@@ -713,6 +808,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/free-audit/$token/done'
       preLoaderRoute: typeof FreeAuditTokenDoneRouteImport
       parentRoute: typeof FreeAuditTokenRoute
+    }
+    '/lovable/email/suppression': {
+      id: '/lovable/email/suppression'
+      path: '/lovable/email/suppression'
+      fullPath: '/lovable/email/suppression'
+      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/r/$token/': {
       id: '/r/$token/'
@@ -875,11 +977,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lovable/email/coaching/reply-notify': {
+      id: '/lovable/email/coaching/reply-notify'
+      path: '/lovable/email/coaching/reply-notify'
+      fullPath: '/lovable/email/coaching/reply-notify'
+      preLoaderRoute: typeof LovableEmailCoachingReplyNotifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/queue/process': {
       id: '/lovable/email/queue/process'
       path: '/lovable/email/queue/process'
       fullPath: '/lovable/email/queue/process'
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/send': {
+      id: '/lovable/email/transactional/send'
+      path: '/lovable/email/transactional/send'
+      fullPath: '/lovable/email/transactional/send'
+      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app/admin/coaching/': {
@@ -1131,7 +1254,10 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   FreeAuditRoute: FreeAuditRouteWithChildren,
   LoginRoute: LoginRoute,
+  UnsubscribeRoute: UnsubscribeRoute,
+  EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   RTokenRoute: RTokenRouteWithChildren,
+  LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicAuditLeadSaveDraftRoute: ApiPublicAuditLeadSaveDraftRoute,
   ApiPublicAuditLeadSetCurrencyRoute: ApiPublicAuditLeadSetCurrencyRoute,
   ApiPublicAuditLeadStartRoute: ApiPublicAuditLeadStartRoute,
@@ -1144,7 +1270,10 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicRValidateRoute: ApiPublicRValidateRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
+  LovableEmailCoachingReplyNotifyRoute: LovableEmailCoachingReplyNotifyRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
+  LovableEmailTransactionalSendRoute: LovableEmailTransactionalSendRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
