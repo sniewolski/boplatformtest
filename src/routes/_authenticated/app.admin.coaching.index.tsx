@@ -13,9 +13,9 @@ export const Route = createFileRoute("/_authenticated/app/admin/coaching/")({
   component: CoachingInbox,
   head: () => ({
     meta: [
-      { title: "Coaching inbox · Sales Lab admin" },
+      { title: "Chat inbox · Sales Lab admin" },
       { name: "description", content: "Owner coaching threads awaiting a reply, and every owner's thread." },
-      { property: "og:title", content: "Coaching inbox · Sales Lab admin" },
+      { property: "og:title", content: "Chat inbox · Sales Lab admin" },
       { property: "og:description", content: "Owner coaching threads awaiting a reply, and every owner's thread." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
