@@ -49,3 +49,10 @@ describe("coaching inbox", () => {
     expect(formatWaiting("2026-11-14T12:00:00Z", now)).toBe("2 days");
   });
 });
+
+describe("inbox safety-net poll", () => {
+  it("refetches every 2 minutes", async () => {
+    const { COACHING_INBOX_POLL_MS } = await import("./useCoachingInbox");
+    expect(COACHING_INBOX_POLL_MS).toBe(120_000);
+  });
+});
