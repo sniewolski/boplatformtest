@@ -34,13 +34,14 @@ export function CoachingChat({
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState<PendingMessage[]>([]);
 
-  // Auto-scroll to the newest message on load, on send and when re-shown.
+  // Auto-scroll to the newest message on load, on send, on a failed send and when re-shown.
+  const pendingStatusKey = pending.map((p) => p.status).join(",");
   const scrollRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     el.scrollTop = el.scrollHeight;
-  }, [rows.length, pending.length, visible]);
+  }, [rows.length, pending.length, pendingStatusKey, visible]);
 
   // Grow the composer with its content, up to the CSS max height.
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
