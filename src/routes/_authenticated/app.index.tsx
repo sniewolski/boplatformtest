@@ -39,7 +39,8 @@ function BookCallTile() {
 }
 
 function Dashboard() {
-  const hasTools = toolRegistry.length > 0;
+  const visibleTools = toolRegistry.filter((t) => !t.hidden);
+  const hasTools = visibleTools.length > 0;
 
   return (
     <div className="app-content py-16 flex flex-col gap-8">
@@ -56,7 +57,7 @@ function Dashboard() {
         </div>
       ) : (
         <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {toolRegistry.map((tool) => (
+          {visibleTools.map((tool) => (
             <li key={tool.key}>
               {tool.dashboardWidget ? (
                 tool.dashboardWidget.render()

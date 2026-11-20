@@ -1,4 +1,4 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute, Navigate, notFound } from "@tanstack/react-router";
 import { toolRegistry } from "@/tools/registry";
 import { useIsAdmin } from "@/core/roles/useMyRoles";
 
@@ -22,6 +22,12 @@ function ToolMountPoint() {
   const params = Route.useParams() as { key: string; _splat?: string };
   const splat = params._splat ?? "";
   const isAdmin = useIsAdmin();
+
+  // Hidden tools are off for owners: a direct visit to their URL goes back to
+  // the dashboard. Admins keep access so existing data stays reachable.
+  if (tool.hidden && !isAdmin) {
+    return <Navigate to="/app" />;
+  }
 
   // Tools flagged adminOnly render nothing usable for non-admins.
   if (tool.adminOnly && !isAdmin) {

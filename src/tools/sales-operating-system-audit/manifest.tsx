@@ -8,6 +8,10 @@ export const salesOperatingSystemAuditManifest: ToolManifest = {
   name: "Sales Operating System Audit",
   description: "How your sales operation runs today, start to finish.",
   icon: ListChecks,
+  // Hidden from owners (sidebar, dashboard, direct URL) while the audit is not
+  // offered. Code, tables, data and storage stay intact — remove this line to
+  // bring it back.
+  hidden: true,
   navEntry: {
     label: "Sales Operating System Audit",
     icon: ListChecks,

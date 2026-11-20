@@ -53,6 +53,10 @@ export type ToolManifest = {
   publicRoutes?: AnyRoute[];
   /** When true, nav entry and pages are visible to role 'admin' only. */
   adminOnly?: boolean;
+  /** When true, the tool is hidden from owners: no sidebar entry, no dashboard
+   * widget, and direct owner visits to its URL redirect to /app. Admin screens
+   * are unaffected. Remove the flag to bring the tool back. */
+  hidden?: boolean;
 };
 
 export const toolRegistry: ToolManifest[] = [
